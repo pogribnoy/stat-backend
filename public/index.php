@@ -13,7 +13,7 @@ try {
 	 * Read the configuration
 	 */
 	if (file_exists(APP_PATH . 'app/config/config.php')) require APP_PATH . 'app/config/config.php';
-	else echo "Config file not found";
+	else echo "Config file not found: " . APP_PATH . 'app/config/config.php';
 
 	/**
 	 * Auto-loader configuration
