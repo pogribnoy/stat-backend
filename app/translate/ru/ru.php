@@ -58,6 +58,8 @@ $messages = array(
 "text_entity_property_related_data" => "Связанные записи",
 "text_entity_property_role" => "Роль",
 "text_entity_property_status" => "Статус",
+"text_entity_property_street" => "Улица",
+"text_entity_property_street_type" => "Тип улицы",
 "text_entity_property_value" => "Значение",
 
 // Statuses

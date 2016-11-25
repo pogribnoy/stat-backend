@@ -41,10 +41,17 @@ class ExpenseController extends ControllerEntity {
 			),
 			'street_type' =>	array(
 				'id' => 'street_type',
-				'name' => $this->t->_("text_entity_property_street"),
+				'name' => $this->t->_("text_entity_property_street_type"),
 				'type' => 'select',
 				'style' => 'id', //name
 				'linkEntityName' => 'streettype',
+				'required' => 1,
+				'newEntityValue' => null,
+			),
+			'street' =>	array(
+				'id' => 'street',
+				'name' => $this->t->_("text_entity_property_street"),
+				'type' => 'test',
 				'required' => 1,
 				'newEntityValue' => null,
 			),

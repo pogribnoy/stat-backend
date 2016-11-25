@@ -92,7 +92,7 @@ class OrganizationController extends ControllerEntity {
 	*/
 	protected function getPhql() {
 		// строим запрос к БД на выборку данных
-		return "SELECT Organization.*, Region.id AS region_id, Region.name AS region_name, StreetType.id AS street_type_id, StreetType.name AS street_type_name FROM Organization JOIN Region on Region.id=Organization.region_id JOIN StreetType on StreetType.id=Organization.street_type_id WHERE Organization.id = '" . $this->filter_values["id"] . "' LIMIT 1";
+		return "SELECT Organization.*, Region.id AS region_id, Region.name AS region_name FROM Organization JOIN Region on Region.id=Organization.region_id WHERE Organization.id = '" . $this->filter_values["id"] . "' LIMIT 1";
 	}
 	
 	/* 
