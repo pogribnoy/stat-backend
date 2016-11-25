@@ -1,0 +1,565 @@
+<script id="entity_template" type="text/x-jsrender">
+<span></span>
+<!--<br>templates\form_template-->
+<div class="container-fluid" id="{{:descriptor.local_data.container_id}}"><!---->
+	<div class="row">
+		<div class="pull-right">
+			{{if !~inModal}}
+				{{if descriptor.operations ~descriptor=descriptor}}
+					{{for descriptor.operations tmpl="operation" /}}
+				{{/if}}
+				<button type="button" class="btn btn-default" data-dismiss="modal" onclick="hideModal('{{:descriptor.local_data.container_id}}');">Отмена</button>
+			{{/if}}
+			<div>&nbsp;</div>
+		</div><!-- /.pull-right -->
+	</div><!-- /.row -->
+	<div class="row">
+		<div class="form-horizontal">
+			{{if descriptor.fields ~fields=~utilities.objectToArray(descriptor.fields) ~descriptor=descriptor}}
+				{{for ~fields}}
+					<div class="form-group" name="field_{{:id}}">
+						<label for="field_{{:id}}_value" class="col-sm-2 control-label">{{:name}}</label>
+						<div class="col-sm-8">
+							{{if type == "label"}}
+								{{include tmpl = ~descriptor.actionName + "_entity_field_label" /}}
+							{{else type == "text"}}
+								{{include tmpl = ~descriptor.actionName + "_entity_field_text" /}}
+							{{else type == "textarea"}}
+								{{include tmpl = ~descriptor.actionName + "_entity_field_textarea" /}}
+							{{else type == "select"}}
+								{{include tmpl = ~descriptor.actionName + "_entity_field_select" /}}
+							{{else type == "email"}}
+								{{include tmpl = ~descriptor.actionName + "_entity_field_text" /}}
+							{{else type == "amount"}}
+								{{include tmpl = ~descriptor.actionName + "_entity_field_amount" /}}
+							{{else type == "date"}}
+								{{include tmpl = ~descriptor.actionName + "_entity_field_text" /}}
+							{{else type == "password"}}
+								{{include tmpl = ~descriptor.actionName + "_entity_field_password" /}}
+							{{else type == "bool"}}
+								{{include tmpl = ~descriptor.actionName + "_entity_field_bool" /}}
+							{{else type == "link"}}
+								{{include tmpl = ~descriptor.actionName + "_entity_field_link" /}}
+							{{else type == "img"}}
+								{{include tmpl = ~descriptor.actionName + "_entity_field_img" /}}
+							{{/if}}
+						</div>
+					</div>
+				{{/for}}
+			{{/if}}
+		</div><!-- /.form-horizontal -->
+		{{if descriptor.scrollers ~scrollers=~utilities.objectToArray(descriptor.scrollers)}}
+			{{for ~scrollers }}
+				<div class="row">
+					<div id="placeholder_{{:#data.local_data.container_id}}"></div>
+				</div><!-- /.row -->
+				<!--<p>placeholder_{{:type}}_{{:controllerName}}_{{:udid}}</p>-->
+			{{/for}}
+		{{/if}}
+	</div><!-- /.row -->
+</div><!-- /.container-fluid -->
+</script>
+
+<script type="text/javascript"><!--
+
+/* Cохраняет данные сущности на сервер из локальных данных. Если вызванв из интерфейса, то предварительно сохраняет формы локально
+* @container_id - идентификатор контейнера сущности (располагается либо на отдельной странице, либо в модалке), передается при вызове из интерфейса
+* @item - сущность, которую надо сохранить, передается при вызове из кода для сохранения на сервер
+*/
+function entitySave(container_id, item) {
+	// описатель сохраняемой сущности
+	var descriptor;
+	// если вызвана из интерфейса, то сохраняем
+	if(container_id) {
+		descriptor = containers[container_id].data;
+		// сохраняем данные формы локально
+		if(!entitySaveToLocalFromHTML(container_id)) return;
+	}
+	else descriptor = item;
+	
+	// сохраняем на сервер новые записи в скроллерах с типом связи 'n', т.к. они еще не имеют нормального id, также у них нет container_id (т.к. они не отображаются отдельно), поэтому используется метод
+	var deferreds = [];
+	if(descriptor.scrollers) {
+		for (var key in descriptor.scrollers) {
+			var scroller = descriptor.scrollers[key];
+			if(scroller.relationType == 'n' )	{
+				// сохраняем добавленные сущности
+				if(scroller.local_data.added_items) {
+					var len = scroller.local_data.added_items.length;
+					for (var i = 0; i<len; i++) {
+						deferreds.push(entitySave(null, scroller.local_data.added_items[i]));
+					}
+				}
+				// сохраняем измененные сущности
+				var len = scroller.items.length;
+				for (var i = 0; i<len; i++) {
+					if(scroller.items[i].local_data.status == 'edited') deferreds.push(entitySave(null, scroller.items[i]));
+				}
+			}
+		}
+	}
+	
+	// привязываем сохранение на сервер сразу после сохранения сущностей дочерних скроллеров
+	var res = $.when.apply($, deferreds);
+	
+	var def = $.Deferred();
+	res.done(function() {
+		var asd;
+		// текущую сущность сохраняем на сервер, если она не открыта на редактирование или не 
+		if((!descriptor.local_data.relationType || descriptor.local_data.relationType != 'n' || !container_id) && descriptor.local_data.status == 'edited') {
+			asd = $.when(entitySaveToServer(descriptor)).done(function() {
+				def.resolve();
+			});
+		}
+		else {
+			def.resolve();
+		}
+	});
+	def.done(function() {
+		// если сущность открывалась на редактирование для другого контейнера, то надо его обновить и закрыть модалку
+		if(descriptor.local_data.target_container_id) {
+			//var container = containers[descriptor.local_data.container_id];
+			// перерисовываем скроллер
+			var tContainerData = containers[descriptor.local_data.target_container_id].data;
+			
+			// добавляем сущность в скроллер
+			var opts = {
+				confirmFromServer: ((descriptor.local_data.relationType && descriptor.local_data.relationType == 'n') || !container_id) ? false : true,
+			}
+			if(tContainerData.type == 'scroller') addItemToScroller(descriptor, tContainerData, opts);
+			
+			// перерисовываем грид/скроллер
+			renderScroller(tContainerData, false);
+			
+			hideModal(containers[container_id].parent_container_id);
+		}
+	});
+	
+	
+	// если сохраняем из визуалки, то надо уведомить пользователя, что сохранение успешно
+	/*if(container_id) def.done(function(){
+		
+	});*/
+	
+	return def;
+}
+
+/* Удаляет сущность с сервера. Вызывается из страницы скроллера или состраницы редактирования сущности
+* @container_id - идентификатор контейнера скроллера или сущности (располагается либо на отдельной странице, либо в модалке)
+* @id - ID сущности, которую надо удалить, передается при вызове из кода для удаления на сервере
+*/
+function entityDelete(container_id, id) {
+	var scroller;
+	var entity;
+	// родительский контейнер: скроллер/грид, с элементом которого работаем, или сущность
+	var container = containers[container_id];
+	// описатель сущности, которую надо удалить
+	var entity = entities[container.data.entity][id];
+	
+	var def = $.Deferred();
+	if(entity.fields.id.value==-1) {
+		delete entities[container.data.entity][id];
+		def.resolve();
+	}
+	else {
+		confirmDelete(container, id).done(function (){ 
+			$.ajax({
+				url: '/' + entity.entity + '/delete?id=' + id,
+				dataType: 'json',
+				method: 'get',
+				beforeSend: function() {
+						// показываем прогрессбар
+				},
+				complete: function() {
+					// скрываем прогрессбар
+				},			
+				success: function(json) {
+					if(!handleAjaxError(json.error)) {
+						// удаляем локальную сущность
+						//entity.local_data.status = 'deleted';
+						//deleteItemFromScroller(scroller);
+						
+						handleAjaxSuccess(json.success)
+						//console.log("С сервера получены полные данные сущности скроллера:");
+						console.log(json);
+						
+						// TODO. Уведомить открытые скролеры и сущности, что сущность удалена
+						// если удаляем запись скроллера
+						if(container.data.type == 'scroller') {
+							//deleteItemFromScroller(entity, container.data, {confirmFromServer:true});
+							
+							// перерисовываем скроллер
+							//renderScroller(container.data);
+						}
+						// если удаляем сущность
+						else {
+							def.resolve();
+							// закрываем модалку или переходим к скроллеру сущностей
+							if(container.parent_container_id) {
+								//var parent_container = containers[container.parent_container_id)
+								hideModal(container.parent_container_id);
+								
+							}
+							else if(json.redirectURL) {
+								setTimeout(function(){
+									document.location = json.redirectURL;
+								}, 1000);
+							}
+						}
+					}
+					else def.reject();
+				},
+				error: function(xhr, ajaxOptions, thrownError) {
+					console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+					handleAjaxError({
+						messages: [{
+							title: 'Ошибка обмена данными',
+							msg: 'Ошибка обработки запроса на стороне сервера. Обратитесь в службу поддержки',
+						}],
+					});
+					def.reject();
+				}
+			});  
+		});
+	}
+	return def;
+}
+
+/* Cохраняет данные формы локально
+* @container_id - идентификатор контейнера сущности
+*/
+function entitySaveToLocalFromHTML(container_id) {
+	// описатель сущности, которую надо сохранить
+	var descriptor = containers[container_id].data;
+	// объект jquery контейнера сущности, которую надо сохранить
+	var jqobj = containers[container_id].jqobj;
+	
+	// собираем поля формы по идентификаторам в локальной сущности
+	if(descriptor.fields) {
+		var field, field_jqobj, val, val_id = "undefined";
+		var tmpFields = {};
+		var error={messages:[],};
+		
+		for(field_id in descriptor.fields) {
+			field = descriptor.fields[field_id];
+			
+			// все, кроме статичного текста, можно сохранять
+			if(field.type != 'label') {
+				if(field.id != "operations") {
+					if(field.type=='text' || field.type=='textarea' || field.type=='number' || field.type=='email' || field.type=='password' || field.type=='date' || field.type=='amount') {
+						field_jqobj = jqobj.find("#field_"+field.id+"_value");
+						if(field_jqobj.length>0) val = field_jqobj.val();
+						else val = "";
+						if(field.type=='password') val = sha1(val);
+					}
+					else if(field.type=='select') {
+						field_jqobj = jqobj.find("#field_"+field.id+"_value");
+						if(field_jqobj.val()) {
+							val = field_jqobj.find("option:selected").text();
+							val_id = field_jqobj.val();
+						}
+						else {
+							val = "";
+							val_id = "";
+						}
+					}
+					else if(field.type=='link') {
+						field_jqobj = jqobj.find("#field_"+field.id+"_value");
+						if(field_jqobj.length>0) val = field_jqobj.val();
+						else val = "";
+					}
+					
+					// проверка на обязательность не зависимо от типа
+					if(field.required && field.required == 1 && (!val || val == null || val == '' || val == 'undefined')) {
+						error.messages.push({
+							title: "Ошибка",
+							msg: 'Поле "' +  field.name + '" обязательно для указания',
+						});
+					}
+					// если поле заполнено, то выполняем остальные проверки
+					else {
+						if(field.type == 'amount') {
+							if(field.min && val < field.min) {
+								error.messages.push({
+									title: "Ошибка",
+									msg: 'Поле "' + field.name + '" содержит значение меньше допустимого',
+								});
+							}
+							if(field.max && val > field.max) {
+								error.messages.push({
+									title: "Ошибка",
+									msg: 'Поле "' + field.name + '" содержит значение больше допустимого',
+								});
+							}
+						}
+						if(field.type == 'email') {
+							if(val != null) { // TODO. Сделать проверку по рег. выражению
+								error.messages.push({
+									title: "Ошибка",
+									msg: 'Поле "' + field.name + '" содержит значение, не соответствущее адресу электронной почты',
+								});
+							}
+						}
+						if(field.type == 'text' || val == 'textarea') {
+							if(field.min && val < field.min) {
+								error.messages.push({
+									title: "Ошибка",
+									msg: 'Поле "' + field.name + '" содержит слишком короткое значение (должно быть не менее ' + field.min + ' символов)',
+								});
+							}
+							if(field.max && val > field.max) {
+								error.messages.push({
+									title: "Ошибка",
+									msg: 'Поле "' + field.name + '" содержит слишком длинное значение (должно быть не более ' + field.max + ' символов)',
+								});
+							}
+						}
+					}
+					if(error.messages.length==0) { 
+						tmpFields[field.id] = {value: val};
+						if(val_id != "undefined") tmpFields[field.id].value_id = val_id;
+					}
+				}
+			}
+		}
+		if(error.messages.length>0) { handleAjaxError(error); return null; }
+		else {
+			// переносим значения в локальную сущность
+			for(tmpID in tmpFields) {
+				tmpField = tmpFields[tmpID];
+				descriptor.fields[tmpID].value = tmpField.value;
+				descriptor.fields[tmpID].value_id = tmpField.value_id;
+				//field.value = val;
+				//if(val_id != "undefined") field.value_id = val_id;
+			}
+		}
+		
+		// обрабатка скроллеров не выполняется, т.к. сущности в скроллере уже в группе "added_items", а сами сущности в состоянии "edited".
+		// помечаем сущность, как измененную локально
+		if(descriptor.local_data.status == 'actual') descriptor.local_data.status = "edited";
+		
+		// TODO. Сообщить остальным контейнерам, что сущность обновлена, а в текущем контейнере убрать такое уведомление, т.к. сущность актуальна
+		
+		return descriptor;
+	}
+}
+
+
+/* Cохраняет данные сущности на сервер и возвращает Deffered
+* @descriptor - описатель сущности, которую надо сохранить
+*/
+function entitySaveToServer(descriptor){
+	var def = $.Deferred();
+	var container = containers[descriptor.local_data.container_id];
+	
+	// сохраняем сущность на сервер
+	var data = {
+		fields: descriptor.fields
+	}
+	
+	// готовим записи скроллеров
+	if(descriptor.scrollers) {
+		data.scrollers = {};
+		for (var key in descriptor.scrollers) {
+			var scroller = descriptor.scrollers[key];
+			data.scrollers[key] = {};
+			// сохраняем добавленные сущности
+			if(scroller.local_data.added_items) {
+				data.scrollers[key].added_items = [];
+				var len = scroller.local_data.added_items.length;
+				for (var i = 0; i<len; i++) {
+					data.scrollers[key].added_items.push(scroller.local_data.added_items[i].fields.id.value);
+				}
+			}
+			// удаляем удаленные сущности
+			if(scroller.local_data.deleted_items) {
+				data.scrollers[key].deleted_items = [];
+				var len = scroller.local_data.deleted_items.length;
+				for (var i = 0; i<len; i++) data.scrollers[key].deleted_items.push(scroller.local_data.deleted_items[i].fields.id.value);
+			}
+		}
+	}
+	
+	$.ajax({
+		url: '/' + descriptor.entity + '/save?id=' + descriptor.fields.id.value,
+		dataType: 'json',
+		data:  $.toJSON(data),
+		method: 'post',
+		beforeSend: function() {
+			// показываем прогрессбар
+		},
+		complete: function() {
+			// скрываем прогрессбар
+		},			
+		success: function(json) {
+			//console.log("Сущность сохранена на сервер");
+			console.log(json);
+			if(!descriptor.local_data.relationType || descriptor.local_data.relationType != 'n') handleAjaxSuccess(json.success);
+			// если нет ошибок
+			if(!handleAjaxError(json.error)) {
+				if(json.newID) {
+					descriptor.fields.id.value = json.newID;
+					entities[descriptor.entity][json.newID] = entities[descriptor.entity][descriptor.local_data.eid];
+					delete entities[descriptor.entity][descriptor.local_data.eid];
+					descriptor.local_data.eid = json.newID;
+				}
+				descriptor.local_data.status = 'actual';
+				
+				// очищаем локальные списки добавленных/удаленных элементов
+				if(descriptor.scrollers) {
+					for(var key in descriptor.scrollers) {
+						var scroller = descriptor.scrollers[key];
+						if(scroller.local_data.added_items) {
+							var len = scroller.local_data.added_items.length;
+							for (var i = len-1; i>=0; i--) {
+								scroller.items.unshift(scroller.local_data.added_items[i]);
+							}
+							delete scroller.local_data.added_items;
+						}
+						var len = scroller.items.length;
+						for (var i = 0; i<len; i++) {
+							scroller.items[i].local_data.status = 'actual';
+						}
+						delete scroller.local_data.deleted_items;
+						
+						// и перерисовываем скроллеры
+						renderScroller(scroller, false);
+					}
+				}
+				
+				def.resolve({descriptor: descriptor, container: container});
+			}
+			else def.reject();
+		},
+		error: function(xhr, ajaxOptions, thrownError) {
+			console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+			handleAjaxError({
+				messages: [{
+					title: 'Ошибка обмена данными',
+					msg: 'Ошибка обработки запроса на стороне сервера. Обратитесь в службу поддержки',
+				}],
+			});
+			def.reject();
+		}
+	});
+	
+	// если сохранение данных на сервер успешно, то сохраняем файлы
+	var filesDef = $.Deferred();
+	def.done(function(data) {
+		var container = data.container;
+		var descriptor = data.descriptor;
+		
+		// загружаем и удаляем файлы
+		var deferreds = [];
+		for(var key in descriptor.fields) {
+			var field = descriptor.fields[key];
+			if(field.type == 'img') {
+				// создаем отложенное уведомление о завершении загрузки
+				var deferredUpload = $.Deferred();
+				var deferredDelete = $.Deferred();
+				// помещаем уведомление в сущность, чтобы вызвать из событий загрузки файла
+				descriptor.local_data.fields[key].deferredUpload = deferredUpload;
+				descriptor.local_data.fields[key].deferredDelete = deferredDelete;
+				// после загрузки всех файлов одног поля сущности запускаем отложенное удаление файлов
+				deferredUpload.done(function(){
+					deleteEntityFiles(descriptor, key);
+				});
+				// помещаем в общий массив полей сущности с файлами
+				deferreds.push(deferredUpload);
+				deferreds.push(deferredDelete);
+				
+				descriptor.local_data.fields[key].inputJQ.fileinput('upload');
+				//$("input[type='file'][id='field_" + field.id + "']").fileinput('upload');
+			}
+		}
+		$.when.apply($, deferreds).done(function(){
+			// загрузка и удаление файлов выполнены
+			filesDef.resolve();
+		});
+		// если загрузка файлов не требуется, то обновляем целевой скроллер здесь
+		if(deferreds.length==0) {
+			descriptor.local_data.status = 'actual';
+		
+			if(descriptor.local_data.target_container_id) {
+				//var container = containers[descriptor.local_data.container_id];
+				// перерисовываем скроллер
+				var tContainerData = containers[descriptor.local_data.target_container_id].data;
+				
+				// добавляем сущность в скроллер
+				if(tContainerData.type == 'scroller') addItemToScroller(descriptor, tContainerData, {confirmFromServer:true});
+				
+				// перерисовываем грид/скроллер
+				renderScroller(tContainerData, false);
+				
+				if(container) hideModal(container.parent_container_id);
+			}
+			filesDef.resolve();
+		}
+	});
+    
+	return filesDef;
+}
+
+/* Удаляет файл из поля после успешной загрузки
+* @descriptor - описатель сущности
+* @fieldName - наименование поля сущности, для которого выполняется удаление
+*/
+function deleteEntityFiles(descriptor, fieldName) {
+	var dfiles;
+	if(!descriptor.local_data.fields || !descriptor.local_data.fields[fieldName] || !descriptor.local_data.fields[fieldName].deletedFiles || descriptor.local_data.fields[fieldName].deletedFiles.length==0) {
+		if(descriptor.local_data.fields[fieldName].deferredDelete) descriptor.local_data.fields[fieldName].deferredDelete.resolve();
+		return;
+	}
+	dfiles = descriptor.local_data.fields[fieldName].deletedFiles;
+	
+	//var deferreds = [];
+	
+	//var dfilesLength = dfiles.length;
+	var data = {
+		files: dfiles,
+		parent_entity_id: descriptor.local_data.eid,
+		parent_entity_name: descriptor.entity,
+		parent_entity_field: fieldName,
+	}
+
+	//for(var i=0; i < dfilesLength; i++) {
+		//var dfile = dfiles[i];
+	$.when($.ajax({
+		url: '/file/delete',
+		dataType: 'json',
+		data:  data,//$.toJSON(data),
+		method: 'post',
+		beforeSend: function() {
+			// показываем прогрессбар
+		},
+		complete: function() {
+			// скрываем прогрессбар
+		},			
+		success: function(json) {
+			//console.log("Сущность сохранена на сервер");
+			console.log(json);
+			handleAjaxSuccess(json.success);
+			// если нет ошибок
+			if(!handleAjaxError(json.error)) {
+				delete descriptor.local_data.fields[fieldName].deletedFiles;
+				
+			}
+		},
+		error: function(xhr, ajaxOptions, thrownError) {
+			console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+			handleAjaxError({
+				messages: [{
+					title: 'Ошибка обмена данными',
+					msg: 'Ошибка обработки запроса на стороне сервера. Обратитесь в службу поддержки',
+				}],
+			});
+		}
+	})).done(function(){
+		descriptor.local_data.fields[fieldName].deferredDelete.resolve();
+	}).fail(function(){
+		descriptor.local_data.fields[fieldName].deferredDelete.reject();
+	});
+	//}
+}
+
+//--></script>

@@ -1,0 +1,39 @@
+.stat-id-input-field {
+	width:50px;
+}
+
+.stat-row-checkbox-td {
+	width:25px;
+}
+
+.stat-id-td {
+	width:50px;
+}
+
+.stat-active-td {
+	width:50px;
+}
+
+.stat-operations-td {
+	width:200px;
+}
+
+.stat-scroller-header {
+	font-size: 18px;
+}
+
+.stat-pager {
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+/* Уведомления. Заголовок */
+.alert > [data-notify="title"] {
+	display: block;
+	font-weight: bold;
+	margin-bottom: 5px;
+}
+.alert, [data-notify="container"] {
+	padding: 5px;
+	font-size: 90%;
+}

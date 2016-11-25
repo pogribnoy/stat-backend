@@ -1,0 +1,266 @@
+﻿<!DOCTYPE html>
+<html>
+	<head lang="ru">
+		<title>Whitesquare</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1"> 
+		<link href="../public/bootstrap-3.3.6-dist/css/bootstrap.min.css" rel="stylesheet" type="text/css"> 
+		
+		<!--[if lt IE 9]>
+			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+			<script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+		<![endif]-->
+		
+	</head>
+	<body>
+		<div class="container">
+			<header>
+				<a href="/"><img src="" alt="Whitesquare logo"></a>
+			</header>
+			<nav class="navbar navbar-default">
+				<div class="container-fluid">
+					<!-- Brand and toggle get grouped for better mobile display -->
+					<div class="navbar-header">
+					  <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+						<span class="sr-only">Toggle navigation</span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+					  </button>
+					  <a class="navbar-brand" href="#">Brand</a>
+					</div>
+					
+					<!-- Collect the nav links, forms, and other content for toggling -->
+					<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+						<ul class="nav navbar-nav">
+							<li><a href="C:\wamp64\www\stat.admin\client\index.html">Главная</a></li>
+							<li><a href="/news/">Новости</a></li>
+							<li class="active"><a href="C:\wamp64\www\stat.admin\client\expensetypelist.html">Общая статистика</a></li>
+							<li><a href="/about/">О проекте</a></li>			
+							<li><a href="/help/">Обращение в службу поддержки</a></li>
+						</ul>
+						<ul class="nav navbar-nav navbar-right">
+							<li><button type="button" class="btn btn-default navbar-btn" data-toggle="modal" data-target="#logonModal">Вход</button></li>
+							<li><button type="button" class="btn btn-default navbar-btn" data-toggle="modal" data-target="#registerModal">Регистрация</button></li>
+						</ul>
+					</div><!-- /.navbar-collapse -->
+				</div><!-- /.container-fluid -->
+			</nav>
+			
+			<!-- Chart -->
+			<div class="row">
+				<div class="col-lg-12" >
+					<div id="myPieChart" style="width: 100%; height: 728px;"/>
+				</div>
+			</div>
+		</div>
+		<footer>
+			footer
+		</footer>
+		
+		<!-- Модальные окна -->
+		<div class="modal fade" id="logonModal" tabindex="-1" role="dialog" aria-labelledby="logonModalHeader">
+			<div class="modal-dialog" role="document">
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+						<h4 class="modal-title" id="logonModalHeader">Добро пожаловать</h4>
+					</div>
+					<div class="modal-body">
+						<div class="row">
+							<div class="col-lg-1"></div>
+							<div class="col-lg-offset-1 col-lg-10 center-block">
+								<form class="form-signin">
+									<h2 class="form-signin-heading text-center">Авторизация</h2>
+									<div class="input-group">
+										<span class="input-group-addon"><i class="glyphicon glyphicon-envelope"></i></span>
+										<input type="email" id="email" class="form-control" placeholder="Email" autofocus="">
+									</div>
+									<div class="row"><div class="col-lg-12 text-center">ИЛИ</div></div>
+									<div class="input-group">
+											<span class="input-group-addon"><i class="glyphicon glyphicon-phone-alt"></i></span>
+											<input id="phone" type="tel" class="form-control" name="phone" value="" placeholder="Телефон" pattern="[0-9]+" maxlength="12">                                        
+									</div>
+									<div class="row"><div class="col-lg-12 text-center">&nbsp;</div></div>
+									<div class="input-group">
+										<span class="input-group-addon"><i class="glyphicon glyphicon-lock"></i></span>
+										<input id="password" type="password" class="form-control" name="password" value="" required="" placeholder="Пароль">                                        
+									</div>
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" value="remember-me"> Запомнить меня
+										</label>
+									</div>
+									<!--<button class="btn btn-lg btn-primary btn-block" type="submit" formmethod="get" formaction="/session/start">Войти</button>-->
+									<button class="btn btn-lg btn-primary btn-block" onclick="login();">Войти</button>
+								</form>
+							</div>
+						</div>
+					</div>
+					<div class="modal-footer">
+						<!--<button type="button" class="btn btn-default" data-dismiss="modal">Отмена</button>-->
+					</div>
+				</div><!-- /.modal-content -->
+			</div><!-- /.modal-dialog -->
+		</div>
+		<div class="modal fade" id="registerModal" tabindex="-1" role="dialog" aria-labelledby="registerModalHeader">
+			<div class="modal-dialog" role="document">
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+						<h4 class="modal-title" id="registerModalHeader">Добро пожаловать</h4>
+					</div>
+					<div class="modal-body">
+						<div class="row">
+							<div class="col-lg-1"></div>
+							<div class="col-lg-offset-1 col-lg-10 center-block">
+								<!-- wizard: http://vadimg.com/twitter-bootstrap-wizard-example/#examples -->
+								<form class="form-signin">
+									<h2 class="form-signin-heading text-center">Регистрация</h2>
+									<div class="input-group">
+										<span class="input-group-addon"><i class="glyphicon glyphicon-envelope"></i></span>
+										<input type="email" id="email" class="form-control" placeholder="Email" autofocus="">
+									</div>
+									<div class="row"><div class="col-lg-12 text-center">И/ИЛИ</div></div>
+									<div class="input-group">
+											<span class="input-group-addon"><i class="glyphicon glyphicon-phone-alt"></i></span>
+											<input id="phone" type="tel" class="form-control" name="phone" value="" placeholder="Телефон" pattern="[0-9]+" maxlength="12">                                        
+									</div>
+									<div class="row"><div class="col-lg-12 text-center">&nbsp;</div></div>
+									<div class="input-group">
+										<span class="input-group-addon"><i class="glyphicon glyphicon-lock"></i></span>
+										<input id="password" type="password" class="form-control" name="password" value="" required="" placeholder="Пароль">                                        
+									</div>
+									<div class="row"><div class="col-lg-12 text-center">&nbsp;</div></div>
+									<div class="input-group">
+										<span class="input-group-addon"><i class="glyphicon glyphicon-lock"></i></span>
+										<input id="password2" type="password" class="form-control" name="password2" value="" required="" placeholder="Повторите пароль">                                        
+									</div>
+									<div class="row"><div class="col-lg-12 text-center">&nbsp;</div></div>
+									<!--<button class="btn btn-lg btn-primary btn-block" type="submit" formmethod="get" formaction="/session/start">Войти</button>-->
+									<button class="btn btn-lg btn-primary btn-block" onclick="register();">Зарегистрироваться</button>
+								</form>
+							</div>
+						</div>
+					</div>
+					<div class="modal-footer">
+						<!--<button type="button" class="btn btn-default" data-dismiss="modal">Отмена</button>-->
+					</div>
+				</div><!-- /.modal-content -->
+			</div><!-- /.modal-dialog -->
+		</div>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+		<script src="../public/bootstrap-3.3.6-dist/js/bootstrap.min.js"></script>
+		<script src="../public/jsrender.js"></script>
+		<!--<script src="../public/sha1.js"></script>-->
+		<!-- https://www.npmjs.com/package/js-sha1 -->
+		<script src="../public/js-sha1-0.3.0.js"></script>
+		
+		<script type="text/javascript"><!--
+			function login() {
+				var url = '/session/start';
+				var modal = $("#logonModal");
+				
+				var phone = modal.find('#phone').val();
+				if (phone) url += '&phone=' + encodeURIComponent(phone);
+				var email = modal.find('#email').val();
+				if (email) url += '&email=' + encodeURIComponent(email);
+				var password = modal.find('#password').val();
+				password = sha1(password);
+				if (password) url += '&password=' + encodeURIComponent(password);
+				
+				
+				console.log(url);
+				
+				/*$.ajax({
+					url: url,
+					dataType: 'json',
+					method: 'post',
+					beforeSend: function() {
+							// показываем прогрессбар
+					},
+					complete: function() {
+						// скрываем прогрессбар
+					},			
+					success: function(json) {
+						if(json.ok){
+							if(json.redirect) document.location = json.redirect;
+							else document.location.reload();
+						}
+						else {
+							console.log("Login failed");
+						}
+					},
+					error: function(xhr, ajaxOptions, thrownError) {
+						//console.log(thrownError + "\r\n" + (xhr != null ? xhr.statusText + "\r\n" + xhr.responseText + "\r\n" : ""));
+						console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+						//console.log(thrownError);
+						//alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+					}
+				});*/
+			}
+			
+			function register() {
+			}
+		//--></script>
+		
+		<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+		<script type="text/javascript">
+			var descriptor = {
+				columns: [
+					{type: 'string', value: 'Тип расхода'},
+					{type: 'number', value: 'Сумма, тыс. р.'},
+					{type: 'number', value: 'Средний расход, тыс. р.'},
+					{type: 'number', value: 'Идентификатор'}
+				],
+				rows: [
+					['Ремонт дороги', 45, 234, 2],
+					['Закупка канцелярии', 34, 123, 14],
+					['Закупка транспортных средств', 21, 332, 5]
+				]
+			}
+			google.charts.load('current', {packages: ['corechart']});
+			google.charts.setOnLoadCallback(drawChart);
+
+			function drawChart() {
+				// Define the chart to be drawn.
+				var data = new google.visualization.DataTable();
+				var len = descriptor.columns.length;
+				for(var i = 0; i < len; i++) data.addColumn(descriptor.columns[i].type, descriptor.columns[i].value);
+				data.addRows(descriptor.rows);
+				
+				var options = {
+					title: 'Топ 20 направлений расхода',
+					//pieHole: 0.4 // You can't combine the pieHole and is3D options; if you do, pieHole will be ignored.
+					//is3D: true,
+				};
+				
+				var chart = new google.visualization.PieChart(document.getElementById('myPieChart'));
+				// The select handler. Call the chart's getSelection() method
+				function selectHandler(e) {
+					var selectedItem = chart.getSelection()[0];
+					if (selectedItem) {
+						var rowID = selectedItem.row
+						var row = descriptor.rows[rowID];
+						var value = row[0] + ' = ' + row[1];
+						//alert('Выбрано: ' + value);
+						console.log('Выбрано: ' + value);
+						var url = 'C:\\wamp64/www/stat.admin/client/expensetype.html';// + '/details?id=' + row[3];
+						document.location = url;
+						
+						console.log('document.location = ' + url);
+					}
+				}
+
+				// Listen for the 'select' event, and call my function selectHandler() when
+				// the user selects something on the chart.
+				google.visualization.events.addListener(chart, 'select', selectHandler);
+
+				// Instantiate and draw the chart.
+				chart.draw(data, options);
+			}
+			
+			
+			
+	  </script>
+	</body>
+</html>
