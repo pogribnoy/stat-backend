@@ -48,6 +48,7 @@ class ControllerEntity extends ControllerBase {
 	*/
 	public function editAction() {
 		$this->createDescriptor();
+		
 		if($this->request->isAjax()) {
 			$this->view->disable();
 			$this->response->setContentType('application/json', 'UTF-8');
@@ -276,7 +277,7 @@ class ControllerEntity extends ControllerBase {
 		$this->fillOperations();
 		
 		$this->initFields();
-		$this->logger->log("initFields");
+		//$this->logger->log("initFields");
 		
 		//$this->fillFieldsWithLists();
 		
@@ -297,6 +298,8 @@ class ControllerEntity extends ControllerBase {
 					'controller' => 'errors',
 					'action'     => 'show404',
 				]);
+				$this->logger->log(__CLASS__ . ". " .  __FUNCTION__ . ". Не установлено значение fields['id']['value']");
+				$this->logger->log(__CLASS__ . ". " .  __FUNCTION__ . ". Строка, выбранная из БД (rows): " . json_encode($rows));
 				return;
 			}
 				// наполняем поля с файлами
@@ -763,7 +766,7 @@ class ControllerEntity extends ControllerBase {
 	*/
 	protected function fillFieldWithLists(&$field) {
 		$linkEntityName = $field['linkEntityName'];
-		$rows = $linkEntityName::find();
+		$rows = $linkEntityName::find(['order' => 'name ASC']);
 		//$this->logger->log('rows: ' . json_encode($rows));// DEBUG
 		$entities = array();
 		foreach ($rows as $row) {

@@ -59,8 +59,8 @@ class Tools extends Component {
 				'name' => $t->_('button_show')
 			);
 		}
-		if($actionName == "edit" || $actionName == 'index') {
-			if($acl->isAllowed($role_id, $entity, 'edit') && ($actionName == "edit" || $actionName == 'index')) {
+		if($actionName != "show") {
+			if($acl->isAllowed($role_id, $entity, 'edit')) {
 				$operations["item_operations"][] = array(
 					'id' => 'edit',
 					'name' => $t->_('button_edit')
@@ -77,7 +77,7 @@ class Tools extends Component {
 		
 		// массив операций на основе разрешений, не привязанных к одной сущности
 		$operations["common_operations"] = array();
-		if($acl->isAllowed($role_id, $entity, 'add') && ($actionName == "edit" || $actionName == 'index')) {
+		if($acl->isAllowed($role_id, $entity, 'add') && $actionName != "show") {
 			// для скроллера
 			$operations["common_operations"][] = array(
 				'id' => 'add',

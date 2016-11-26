@@ -48,6 +48,7 @@ $messages = array(
 "text_entity_property_id" => "ID",
 "text_entity_property_image" => "Изображение",
 "text_entity_property_images" => "Изображения",
+"text_entity_property_house_building" => "Дом, строение",
 "text_entity_property_login" => "Логин",
 "text_entity_property_n" => "№",
 "text_entity_property_name" => "Наименование",

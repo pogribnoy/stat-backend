@@ -940,6 +940,25 @@ function initEntityScripts(container_id) {
 			});
 		});
 	});
+	
+	// для полей с суммой разрешаем ввод только цифр и "."
+	for (var key in container.data.fields) {
+		if(container.data.fields[key].type == 'amount') {
+			var jqField = container.jqobj.find('#field_'+key+'_value');
+			jqField.keyup(function(e){
+				if (e.which === 32) {
+					//alert('No space are allowed in amount');
+					var str = $(this).val();
+					str = str.replace(/\s/g,'');
+					$(this).val(str);            
+				}
+			}).blur(function() {
+				var str = $(this).val();
+				str = str.replace(/\s/g,'');
+				$(this).val(str);            
+			});
+		}
+	}
 }
 
 /* Отображает уведомления об ошибках

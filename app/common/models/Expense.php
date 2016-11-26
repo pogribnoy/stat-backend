@@ -8,9 +8,13 @@ class Expense extends Model{
 	public $date;
 	public $expense_type_id;
 	public $organization_id;
+	public $street_type_id;
+	public $street;
+	public $house;
 		
 	public function initialize() {
 		$this->belongsTo("expense_type_id", "ExpenseType", "id");
 		$this->belongsTo("organization_id", "Organization", "id");
+		$this->belongsTo("street_type_id", "StreetType", "id");
   }
 }

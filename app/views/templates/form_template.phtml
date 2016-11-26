@@ -236,11 +236,13 @@ function entitySaveToLocalFromHTML(container_id) {
 	
 	// собираем поля формы по идентификаторам в локальной сущности
 	if(descriptor.fields) {
-		var field, field_jqobj, val, val_id = "undefined";
+		var field, field_jqobj, val, val_id;
 		var tmpFields = {};
 		var error={messages:[],};
 		
 		for(field_id in descriptor.fields) {
+			val = null;
+			val_id = null;
 			field = descriptor.fields[field_id];
 			
 			// все, кроме статичного текста, можно сохранять
@@ -270,7 +272,7 @@ function entitySaveToLocalFromHTML(container_id) {
 					}
 					
 					// проверка на обязательность не зависимо от типа
-					if(field.required && field.required == 1 && (!val || val == null || val == '' || val == 'undefined')) {
+					if(field.required && field.required == 1 && (val == null || val == '' || val == 'undefined')) {
 						error.messages.push({
 							title: "Ошибка",
 							msg: 'Поле "' +  field.name + '" обязательно для указания',
@@ -293,7 +295,7 @@ function entitySaveToLocalFromHTML(container_id) {
 							}
 						}
 						if(field.type == 'email') {
-							if(val != null) { // TODO. Сделать проверку по рег. выражению
+							if(val == null || !(val.indexOf('@') > -1) ) {
 								error.messages.push({
 									title: "Ошибка",
 									msg: 'Поле "' + field.name + '" содержит значение, не соответствущее адресу электронной почты',

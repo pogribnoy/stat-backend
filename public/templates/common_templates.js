@@ -32,7 +32,7 @@ edit_entity_field_textarea: '<textarea rows="3" class="form-control" id="field_{
 show_entity_field_textarea: '<p id="field_{{:id}}_value" class="form-control-static">{{:value}}</p>',
 edit_entity_field_password: '<p id="field_{{:id}}_value" class="form-control-static">**********</p>',
 edit_entity_field_bool: '<input type="checkbox" id="field_{{:id}}_value" {{if value == 1}}checked="checked"{{/if}} value="" disabled>',
-edit_entity_field_select: '<select id="field_{{:id}}_value" class="form-control" style="width:auto;">{{if (nullable && nullable==1) }}<option value="*" {{if value_id==\'\'}}selected="selected"{{/if}}></option>{{:value_id}}{{/if}}\
+edit_entity_field_select: '<select id="field_{{:id}}_value" class="form-control" style="width:auto;">{{if (nullable && nullable==1) }}<option value="*" {{if value_id==\'\'}}selected="selected"{{/if}}></option>{{:value_id}}{{else required && required==1 && (value==\'\' || value == null)}}<option disabled selected value> --- Выберите --- </option>{{/if}}\
 {{if style == "id" tmpl="edit_entity_field_select_id_style_options"}}\
 {{else tmpl="edit_entity_field_select_text_style_options"}}{{/if}}</select>',
 show_entity_field_select: '<p id="field_{{:id}}_value" class="form-control-static">{{:value}}</p>',
