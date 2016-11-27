@@ -15,7 +15,7 @@
 }
 
 .stat-operations-td {
-	width:200px;
+	width:120px;
 }
 
 .stat-scroller-header {
@@ -27,7 +27,7 @@
 	margin-bottom: 0;
 }
 
-/* Óâåäîìëåíèÿ. Çàãîëîâîê */
+/* Ð£Ð²ÐµÐ´Ð¾Ð¼Ð»ÐµÐ½Ð¸Ñ. Ð—Ð°Ð³Ð¾Ð»Ð¾Ð²Ð¾Ðº */
 .alert > [data-notify="title"] {
 	display: block;
 	font-weight: bold;

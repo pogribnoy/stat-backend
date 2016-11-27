@@ -28,6 +28,16 @@ class ExpenseController extends ControllerEntity {
 				'required' => 1,
 				'newEntityValue' => null,
 			),
+			'expense_status' => array(
+				'id' => 'expense_status',
+				'name' => $this->t->_("text_entity_property_status"),
+				'type' => 'select',
+				'style' => 'id', //name
+				//'values' => $expense_types
+				'linkEntityName' => 'ExpenseStatus',
+				'required' => 1,
+				'newEntityValue' => null,
+			),
 			'name' => array(
 				'id' => 'name',
 				'name' => $this->t->_("text_entity_property_name"),
@@ -71,14 +81,10 @@ class ExpenseController extends ControllerEntity {
 				'type' => 'text',
 				'newEntityValue' => null,
 			),
-			'expense_type' => array(
-				'id' => 'expense_type',
-				'name' => $this->t->_("text_expense_expensetype"),
-				'type' => 'select',
-				'style' => 'id', //name
-				//'values' => $expense_types
-				'linkEntityName' => 'ExpenseType',
-				'required' => 1,
+			'executor' =>	array(
+				'id' => 'executor',
+				'name' => $this->t->_("text_entity_property_executor"),
+				'type' => 'text',
 				'newEntityValue' => null,
 			),
 		];
@@ -93,12 +99,14 @@ class ExpenseController extends ControllerEntity {
 	protected function fillModelFieldsFromSaveRq() {
 		//$this->entity->id получен ранее при select из БД или будет присвоен при создании записи в БД
 		$this->entity->expense_type_id = $this->fields['expense_type']['value_id'];
+		$this->entity->expense_status_id = $this->fields['expense_status']['value_id'];
 		$this->entity->name = $this->fields['name']['value'];
 		$this->entity->date = $this->fields['date']['value'];
 		$this->entity->amount = $this->fields['amount']['value'];
 		$this->entity->street_type_id = $this->fields['street_type']['value_id'];
 		$this->entity->street = $this->fields['street']['value'];
 		$this->entity->house = $this->fields['house']['value'];
+		$this->entity->executor = $this->fields['executor']['value'];
 	}
 	
 	/* 
@@ -107,7 +115,7 @@ class ExpenseController extends ControllerEntity {
 	*/
 	public function getPhql() {
 		// строим запрос к БД на выборку данных
-		return "SELECT Expense.*, ExpenseType.id AS expense_type_id, ExpenseType.name AS expense_type_name, StreetType.id AS street_type_id, StreetType.name AS street_type_name FROM Expense JOIN ExpenseType on ExpenseType.id=Expense.expense_type_id LEFT JOIN StreetType on StreetType.id=Expense.street_type_id WHERE Expense.id = '" . $this->filter_values["id"] . "' LIMIT 1";
+		return "SELECT Expense.*, ExpenseType.id AS expense_type_id, ExpenseType.name AS expense_type_name, StreetType.id AS street_type_id, StreetType.name AS street_type_name, ExpenseStatus.id AS expense_status_id, ExpenseStatus.name AS expense_status_name FROM Expense JOIN ExpenseType ON ExpenseType.id=Expense.expense_type_id LEFT JOIN ExpenseStatus ON ExpenseStatus.id=Expense.expense_status_id LEFT JOIN StreetType ON StreetType.id=Expense.street_type_id WHERE Expense.id = '" . $this->filter_values["id"] . "' LIMIT 1";
 	}
 	
 	/* 
@@ -118,6 +126,8 @@ class ExpenseController extends ControllerEntity {
 		//$this->logger->log(json_encode($row));
 		$this->fields["expense_type"]["value"] = $row->expense_type_name;
 		$this->fields["expense_type"]["value_id"] = $row->expense_type_id;
+		$this->fields["expense_status"]["value"] = $row->expense_status_name;
+		$this->fields["expense_status"]["value_id"] = $row->expense_status_id;
 		$this->fields["id"]["value"] = $row->expense->id;
 		$this->fields["name"]["value"] = $row->expense->name;
 		$this->fields["date"]["value"] = $row->expense->date;
@@ -126,6 +136,7 @@ class ExpenseController extends ControllerEntity {
 		$this->fields["street_type"]["value_id"] = $row->street_type_id;
 		$this->fields["street"]["value"] = $row->expense->street;
 		$this->fields["house"]["value"] = $row->expense->house;
+		$this->fields["executor"]["value"] = $row->expense->executor;
 	}
 		
 	/* 
@@ -198,6 +209,15 @@ class ExpenseController extends ControllerEntity {
 			if($val == '') $this->fields['house']['value'] = null;
 			else $this->fields['house']['value'] = $val;
 			$this->logger->log('val = ' . $this->fields['house']['value']);
+		}
+		else return false;
+		
+		//executor
+		if(isset($rq->fields->executor) && isset($rq->fields->executor->value)) {
+			$val = $this->filter->sanitize(urldecode($rq->fields->executor->value), ["trim", "string"]);
+			if($val == '') $this->fields['executor']['value'] = null;
+			else $this->fields['executor']['value'] = $val;
+			$this->logger->log('val = ' . $this->fields['executor']['value']);
 		}
 		else return false;
 		

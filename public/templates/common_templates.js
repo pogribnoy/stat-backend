@@ -23,6 +23,7 @@ userrolelist_row: '{{include tmpl="scroller_row" /}}',
 regionlist_row: '{{include tmpl="scroller_row" /}}',
 newslist_row: '{{include tmpl="scroller_row" /}}',
 streettypelist_row: '{{include tmpl="scroller_row" /}}',
+expensestatuslist_row: '{{include tmpl="scroller_row" /}}',
 
 edit_entity_field_label: '<p id="field_{{:id}}_value" class="form-control-static">{{if (id==\'id\' && (value==\'-1\' || value==null)) }}-{{else}}{{:value}}{{/if}}</p>',
 show_entity_field_label: '<p id="field_{{:id}}_value" class="form-control-static">{{if (id==\'id\' && (value==\'-1\' || value==null)) }}-{{else}}{{:value}}{{/if}}</p>',

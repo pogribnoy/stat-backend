@@ -329,8 +329,8 @@ function entitySaveToLocalFromHTML(container_id) {
 			// переносим значения в локальную сущность
 			for(tmpID in tmpFields) {
 				tmpField = tmpFields[tmpID];
-				descriptor.fields[tmpID].value = tmpField.value;
-				descriptor.fields[tmpID].value_id = tmpField.value_id;
+				descriptor.fields[tmpID].value = encodeURIComponent(tmpField.value);
+				descriptor.fields[tmpID].value_id = encodeURIComponent(tmpField.value_id);
 				//field.value = val;
 				//if(val_id != "undefined") field.value_id = val_id;
 			}

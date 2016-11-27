@@ -20,8 +20,7 @@
 					<ul class="dropdown-menu">
 						<?php if($controller->acl->isAllowed($controller->userData['role_id'], 'organizationlist', 'index')) { ?><li><a href="/organizationlist">Организации</a></li><?php } ?>
 						<!--<li role="separator" class="divider"></li>-->
-						<?php if($controller->acl->isAllowed($controller->userData['role_id'], 'expensetypelist', 'index')) { ?><li><a href="/expensetypelist">Типы расходов</a></li><?php } ?>
-						<?php if($controller->acl->isAllowed($controller->userData['role_id'], 'regionlist', 'index')) { ?><li><a href="/regionlist">Регионы</a></li><?php } ?>
+						
 						<?php if($controller->acl->isAllowed($controller->userData['role_id'], 'newslist', 'index')) { ?><li><a href="/newslist">Новости</a></li><?php } ?>
 					</ul>
 				</li>
@@ -33,6 +32,9 @@
 						<?php if($controller->acl->isAllowed($controller->userData['role_id'], 'resourcelist', 'index')) { ?><li><a href="/resourcelist">Ресурсы сайта</a></li><?php } ?>
 						<?php if($controller->acl->isAllowed($controller->userData['role_id'], 'settinglist', 'index')) { ?><li><a href="/settinglist">Настройки (параметры)</a></li><?php } ?>
 						<?php if($controller->acl->isAllowed($controller->userData['role_id'], 'streettypelist', 'index')) { ?><li><a href="/streettypelist">Типы улиц</a></li><?php } ?>
+						<?php if($controller->acl->isAllowed($controller->userData['role_id'], 'expensetypelist', 'index')) { ?><li><a href="/expensetypelist">Типы расходов</a></li><?php } ?>
+						<?php if($controller->acl->isAllowed($controller->userData['role_id'], 'regionlist', 'index')) { ?><li><a href="/regionlist">Регионы</a></li><?php } ?>
+						<?php if($controller->acl->isAllowed($controller->userData['role_id'], 'expensestatuslist', 'index')) { ?><li><a href="/expensestatuslist">Статусы расходов</a></li><?php } ?>
 					</ul>
 				</li>
 				

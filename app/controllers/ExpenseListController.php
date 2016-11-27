@@ -44,6 +44,29 @@ class ExpenseListController extends ControllerList {
 				'filter_value' => isset($this->filter_values['date']) ? $this->filter_values['date'] : '',
 				"sortable" => "DESC"
 			),
+			'street_type' => array(
+				'id' => 'street_type',
+				'name' => $this->controller->t->_("text_entity_property_street_type"),
+				'filter' => 'select',
+				'filter_value' => isset($this->filter_values['street_type_id']) ? $this->filter_values['street_type_id'] : '',
+				'filter_id' => 'street_type_id', // задается, если отличается от id
+				'style' => 'id',
+				"sortable" => "DESC",
+			),
+			'street' => array(
+				'id' => 'street',
+				'name' => $this->controller->t->_("text_entity_property_street"),
+				'filter' => 'text',
+				'filter_value' => isset($this->filter_values['street']) ? $this->filter_values['street'] : '',
+				"sortable" => "DESC",
+			),
+			'house' => array(
+				'id' => 'house',
+				'name' => $this->controller->t->_("text_entity_property_house_building"),
+				'filter' => 'text',
+				'filter_value' => isset($this->filter_values['house']) ? $this->filter_values['house'] : '',
+				"sortable" => "DESC",
+			),
 			'expense_type' => array(
 				'id' => 'expense_type',
 				'name' => $this->controller->t->_("text_expenselist_expensetype"),
@@ -52,6 +75,22 @@ class ExpenseListController extends ControllerList {
 				'filter_id' => 'expense_type_id', // задается, если отличается от id
 				'style' => 'id',
 				"sortable" => "DESC"
+			),
+			'expense_status' => array(
+				'id' => 'expense_status',
+				'name' => $this->controller->t->_("text_entity_property_status"),
+				'filter' => 'select',
+				'filter_value' => isset($this->filter_values['expense_status']) ? $this->filter_values['expense_status'] : '',
+				'filter_id' => 'expense_status_id', // задается, если отличается от id
+				'style' => 'id',
+				"sortable" => "DESC"
+			),
+			'executor' => array(
+				'id' => 'executor',
+				'name' => $this->controller->t->_("text_entity_property_executor"),
+				'filter' => 'text',
+				'filter_value' => isset($this->filter_values['executor']) ? $this->filter_values['executor'] : '',
+				"sortable" => "DESC",
 			),
 			'operations' => array(
 				'id' => 'operations',
@@ -76,6 +115,30 @@ class ExpenseListController extends ControllerList {
 			);
 		}
 		$this->columns['expense_type']['filter_values'] = $expense_types;
+		
+		// статусы расходов для фильтрации
+		$expense_status_rows = ExpenseStatus::find();
+		$expense_statuses = array();
+		foreach ($expense_status_rows as $row) {
+			// наполняем массив
+			$expense_statuses[] = array(
+				'id' => $row->id,
+				"name" => $row->name
+			);
+		}
+		$this->columns['expense_status']['filter_values'] = $expense_statuses;
+		
+		// типы улиц для фильтрации
+		$street_type_rows = StreetType::find();
+		$street_types = array();
+		foreach ($street_type_rows as $row) {
+			// наполняем массив
+			$street_types[] = array(
+				'id' => $row->id,
+				"name" => $row->name
+			);
+		}
+		$this->columns['street_type']['filter_values'] = $street_types;
 	}
 	
 	/* 
@@ -86,7 +149,7 @@ class ExpenseListController extends ControllerList {
 		$userRoleID = $this->controller->userData['role_id'];
 		
 		// строим запрос к БД на выборку данных
-		$phql = "SELECT <TableName>.*, ExpenseType.id AS expense_type_id, ExpenseType.name AS expense_type_name FROM <TableName> JOIN ExpenseType on ExpenseType.id=<TableName>.expense_type_id";
+		$phql = "SELECT <TableName>.*, ExpenseType.id AS expense_type_id, ExpenseType.name AS expense_type_name, ExpenseStatus.id AS expense_status_id, ExpenseStatus.name AS expense_status_name, StreetType.id AS street_type_id, StreetType.name AS street_type_name FROM <TableName> JOIN ExpenseType on ExpenseType.id=<TableName>.expense_type_id LEFT JOIN ExpenseStatus ON ExpenseStatus.id = <TableName>.expense_status_id LEFT JOIN StreetType ON StreetType.id = <TableName>.street_type_id";
 		if($userRoleID != 1) $phql .= ' JOIN Organization ON Organization.id = <TableName>.organization_id INNER JOIN UserOrganization ON UserOrganization.organization_id = <TableName>.organization_id AND UserOrganization.user_id = ' . $userRoleID;
 		
 		$phql .= " WHERE 1=1";
@@ -134,10 +197,33 @@ class ExpenseListController extends ControllerList {
 					'id' => 'date',
 					'value' =>  $row->expense->date,
 				),
+				"street_type" => array(
+					'id' => 'street_type',
+					'value_id' => $row->street_type_id ? $row->street_type_id : '',
+					'value' => $row->street_type_name ? $row->street_type_name : '',
+				),
+				"street" => array(
+					'id' => 'street',
+					'value' =>  $row->expense->street ? $row->expense->street : '',
+				),
+				"house" => array(
+					'id' => 'house',
+					'value' =>  $row->expense->house ? $row->expense->house : '',
+				),
+				"executor" => array(
+					'id' => 'executor',
+					'value' =>  $row->expense->executor ? $row->expense->executor : '',
+				),
 				"expense_type" => array(
+					'id' => 'expense_type',
 					'value_id' => $row->expense_type_id ? $row->expense_type_id : '',
-					'value' => $row->expense_type_name ? $row->expense_type_name : ''
-				)
+					'value' => $row->expense_type_name ? $row->expense_type_name : '',
+				),
+				"expense_status" => array(
+					'id' => 'expense_status',
+					'value_id' => $row->expense_status_id ? $row->expense_status_id : '',
+					'value' => $row->expense_status_name ? $row->expense_status_name : '',
+				),
 			)
 		);
 	}

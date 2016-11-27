@@ -374,6 +374,7 @@ class ControllerEntity extends ControllerBase {
 	* Заполняет свойство descriptor данными
 	*/
 	protected function createDescriptorObject() {
+		//$this->logger->log(json_encode($this->fields["name"]));
 		$this->descriptor = array(
 			"controllerName" => $this->controllerName,
 			"entity" => $this->entityName,
@@ -383,7 +384,7 @@ class ControllerEntity extends ControllerBase {
 			"operations" => $this->operations,
 			"filter_values" => $this->filter_values,
 			"title" => (isset($this->fields["name"]) && $this->fields["name"]["value"] != '') ? $this->fields["name"]["value"] : 
-				($this->fields["id"] == -1) ? $this->t->_("text_" . $this->controllerName . "_new_entity_title") : $this->t->_("text_" . $this->controllerName . "_title"),
+				(($this->fields["id"] == -1) ? $this->t->_("text_" . $this->controllerName . "_new_entity_title") : $this->t->_("text_" . $this->controllerName . "_title")),
 			"template" => $this->getTmpl(),
 			'data' => $this->data,
 			'actionName' => $this->actionName,
