@@ -20,7 +20,7 @@ class ExpenseListController extends ControllerList {
 				'type' => 'number',
 				'filter' => 'number',
 				'filter_value' => isset($this->filter_values['id']) ? $this->filter_values['id'] : '',
-				"sortable" => "DESC"
+				"sortable" => "DESC",
 			),
 			'name' => array(
 				'id' => 'name',
@@ -28,21 +28,21 @@ class ExpenseListController extends ControllerList {
 				'type' => 'text',
 				'filter' => 'text',
 				'filter_value' => isset($this->filter_values['name']) ? $this->filter_values['name'] : '',
-				"sortable" => "DESC"
+				"sortable" => "DESC",
 			),
 			'amount' => array(
 				'id' => 'amount',
 				'name' => $this->controller->t->_("text_entity_property_amount"),
 				'filter' => 'text',
 				'filter_value' => isset($this->filter_values['amount']) ? $this->filter_values['amount'] : '',
-				"sortable" => "DESC"
+				"sortable" => "DESC",
 			),
 			'date' => array(
 				'id' => 'date',
 				'name' => $this->controller->t->_("text_entity_property_date"),
 				'filter' => 'text',
 				'filter_value' => isset($this->filter_values['date']) ? $this->filter_values['date'] : '',
-				"sortable" => "DESC"
+				"sortable" => "DESC",
 			),
 			'street_type' => array(
 				'id' => 'street_type',
@@ -74,7 +74,7 @@ class ExpenseListController extends ControllerList {
 				'filter_value' => isset($this->filter_values['expense_type']) ? $this->filter_values['expense_type'] : '',
 				'filter_id' => 'expense_type_id', // задается, если отличается от id
 				'style' => 'id',
-				"sortable" => "DESC"
+				"sortable" => "DESC",
 			),
 			'expense_status' => array(
 				'id' => 'expense_status',
@@ -83,8 +83,16 @@ class ExpenseListController extends ControllerList {
 				'filter_value' => isset($this->filter_values['expense_status']) ? $this->filter_values['expense_status'] : '',
 				'filter_id' => 'expense_status_id', // задается, если отличается от id
 				'style' => 'id',
-				"sortable" => "DESC"
+				"sortable" => "DESC",
 			),
+			/*'target_date' => array(
+				'id' => 'target_date',
+				'name' => $this->controller->t->_("text_entity_property_date"),
+				'filter' => 'text',
+				'filter_value' => isset($this->filter_values['target_date']) ? $this->filter_values['target_date'] : '',
+				//"sortable" => "DESC",
+			),
+			*/
 			'executor' => array(
 				'id' => 'executor',
 				'name' => $this->controller->t->_("text_entity_property_executor"),
@@ -224,6 +232,11 @@ class ExpenseListController extends ControllerList {
 					'value_id' => $row->expense_status_id ? $row->expense_status_id : '',
 					'value' => $row->expense_status_name ? $row->expense_status_name : '',
 				),
+				/*"target_date" => array(
+					'id' => 'target_date',
+					'value1' => $row->target_date_from ? $row->target_date_from : '',
+					'value2' => $row->target_date_to ? $row->target_date_to : '',
+				),*/
 			)
 		);
 	}

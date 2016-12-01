@@ -81,13 +81,12 @@ class StreetTypeController extends ControllerEntity {
 		if(!isset($entity)) $entity = $this->entity;
 		// ссылки из муниципалитета - блокирующая связь
 		$orgs = false;
-		$orgs = Organization::findFirst([
-			"conditions" => "expense_type_id = ?1",
+		$orgs = Expense::findFirst([
+			"conditions" => "street_type_id = ?1",
 			"bind" => array(1 => $entity->id)
 		]);
 		if($orgs) {
-			if($this->acl->isAllowed($this->userData['role_id'], 'organizationlist', 'index')) $msg = 'Тип улицы назначен одному или более муниципалитетов. Перейти к <a class="" href="/expenselist?filter_street_type_id=' . $entity->id . '">списку муничипалитетов</a>';
-			else $msg = 'Тип улицы назначен одному или более муниципалитету';
+			$msg = 'Тип улицы назначен одному или более муниципалитету';
 			$this->error['messages'][] = [
 				'title' => "Ошибка удаления",
 				'msg' => $msg,

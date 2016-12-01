@@ -65,14 +65,15 @@ class ExpenseController extends ControllerEntity {
 				'type' => 'select',
 				'style' => 'id', //name
 				'linkEntityName' => 'streettype',
-				'required' => 1,
+				//'required' => 1,
+				'nullable' => '-',
 				'newEntityValue' => null,
 			),
 			'street' =>	array(
 				'id' => 'street',
 				'name' => $this->t->_("text_entity_property_street"),
 				'type' => 'text',
-				'required' => 1,
+				//'required' => 1,
 				'newEntityValue' => null,
 			),
 			'house' =>	array(
@@ -87,6 +88,12 @@ class ExpenseController extends ControllerEntity {
 				'type' => 'text',
 				'newEntityValue' => null,
 			),
+			/*'target_date' =>	array(
+				'id' => 'target_date',
+				'name' => $this->t->_("text_expense_target_date"),
+				'type' => 'period',
+				'newEntityValue' => null,
+			),*/
 		];
 		// наполняем поля данными
 		parent::initFields();
@@ -107,6 +114,8 @@ class ExpenseController extends ControllerEntity {
 		$this->entity->street = $this->fields['street']['value'];
 		$this->entity->house = $this->fields['house']['value'];
 		$this->entity->executor = $this->fields['executor']['value'];
+		//$this->entity->target_date_from = $this->fields['target_date']['value1'];
+		//$this->entity->target_date_to = $this->fields['target_date']['value2'];
 	}
 	
 	/* 
@@ -137,6 +146,8 @@ class ExpenseController extends ControllerEntity {
 		$this->fields["street"]["value"] = $row->expense->street;
 		$this->fields["house"]["value"] = $row->expense->house;
 		$this->fields["executor"]["value"] = $row->expense->executor;
+		//$this->fields["target_date"]["value1"] = $row->expense->target_date_from;
+		//$this->fields["target_date"]["value2"] = $row->expense->target_date_to;
 	}
 		
 	/* 
@@ -153,7 +164,7 @@ class ExpenseController extends ControllerEntity {
 			else {
 				$this->error['messages'][] = [
 					'title' => "Ошибка",
-					'msg' => 'Поле "'. $this->fields['name']['name'] .'" обязательно для указания'
+					'msg' => 'Поле "'. $this->fields['name']['name'] .'" обязательно для указания',
 				];
 				return false;
 			}
@@ -166,7 +177,7 @@ class ExpenseController extends ControllerEntity {
 			else {
 				$this->error['messages'][] = [
 					'title' => "Ошибка",
-					'msg' => 'Поле "'. $this->fields['date']['name'] .'" обязательно для указания'
+					'msg' => 'Поле "'. $this->fields['date']['name'] .'" обязательно для указания',
 				];
 				return false;
 			}
@@ -182,25 +193,19 @@ class ExpenseController extends ControllerEntity {
 			else {
 				$this->error['messages'][] = [
 					'title' => "Ошибка",
-					'msg' => 'Поле "'. $this->fields['amount']['name'] .'" обязательно для указания'
+					'msg' => 'Поле "'. $this->fields['amount']['name'] .'" обязательно для указания',
 				];
 				return false;
 			}
-			$this->logger->log('val = ' . $this->fields['amount']['value']);
+			//$this->logger->log('val = ' . $this->fields['amount']['value']);
 		}
 		else return false;
 		//street
 		if(isset($rq->fields->street) && isset($rq->fields->street->value)) {
 			$val = $this->filter->sanitize(urldecode($rq->fields->street->value), ["trim", "string"]);
 			if($val != '') $this->fields['street']['value'] = $val;
-			else {
-				$this->error['messages'][] = [
-					'title' => "Ошибка",
-					'msg' => 'Поле "'. $this->fields['street']['name'] .'" обязательно для указания'
-				];
-				return false;
-			}
-			$this->logger->log('val = ' . $this->fields['street']['value']);
+			else $this->fields['street']['value'] = null;
+			//$this->logger->log('val = ' . $this->fields['street']['value']);
 		}
 		else return false;
 		//house
@@ -208,7 +213,7 @@ class ExpenseController extends ControllerEntity {
 			$val = $this->filter->sanitize(urldecode($rq->fields->house->value), ["trim", "string"]);
 			if($val == '') $this->fields['house']['value'] = null;
 			else $this->fields['house']['value'] = $val;
-			$this->logger->log('val = ' . $this->fields['house']['value']);
+			//$this->logger->log('val = ' . $this->fields['house']['value']);
 		}
 		else return false;
 		
@@ -217,9 +222,32 @@ class ExpenseController extends ControllerEntity {
 			$val = $this->filter->sanitize(urldecode($rq->fields->executor->value), ["trim", "string"]);
 			if($val == '') $this->fields['executor']['value'] = null;
 			else $this->fields['executor']['value'] = $val;
-			$this->logger->log('val = ' . $this->fields['executor']['value']);
+			//$this->logger->log('val = ' . $this->fields['executor']['value']);
 		}
 		else return false;
+		
+		//target_date
+		/*if(isset($rq->fields->target_date) && isset($rq->fields->target_date->value1) && isset($rq->fields->target_date->value2)) {
+			$val1 = $this->filter->sanitize(urldecode($rq->fields->target_date->value1), ["trim", "string"]);
+			$val2 = $this->filter->sanitize(urldecode($rq->fields->target_date->value2), ["trim", "string"]);
+			if($val1 == '') $this->fields['target_date']['value1'] = null;
+			if($val2 == '') $this->fields['target_date']['value2'] = null;
+			if($val1 != '' && $val2 != '') {
+				$d1 = dateTime ($val1); //(new DateTime('now'))->format("Y-m-d")
+				$d2 = dateTime ($val2);
+				if($d1 > $d2) {
+					$this->error['messages'][] = [
+						'title' => "Ошибка",
+						'msg' => 'В поле "'. $this->fields['target_date']['name'] .'" дата окончания периода не может быть меньше даты начала периода',
+					];
+					return false;
+				}
+			}
+			$this->fields['target_date']['value1'] = $val1;
+			$this->fields['target_date']['value2'] = $val2;
+			//$this->logger->log('val = ' . $this->fields['target_date']['value']);
+		}
+		else return false;*/
 		
 		return true;
 	}

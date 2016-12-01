@@ -50,7 +50,7 @@
 		</div><!-- /.form-horizontal -->
 		{{if descriptor.scrollers ~scrollers=~utilities.objectToArray(descriptor.scrollers)}}
 			{{for ~scrollers }}
-				<div class="row">
+				<div class="row-fluid">
 					<div id="placeholder_{{:#data.local_data.container_id}}"></div>
 				</div><!-- /.row -->
 				<!--<p>placeholder_{{:type}}_{{:controllerName}}_{{:udid}}</p>-->
@@ -190,6 +190,7 @@ function entityDelete(container_id, id) {
 							
 							// перерисовываем скроллер
 							//renderScroller(container.data);
+							def.resolve();
 						}
 						// если удаляем сущность
 						else {
@@ -266,13 +267,16 @@ function entitySaveToLocalFromHTML(container_id) {
 						}
 					}
 					else if(field.type=='link') {
-						field_jqobj = jqobj.find("#field_"+field.id+"_value");
+						//значение сохраняется в сущность при закрытии моделки со скроллером
+						val = field.value;
+						val_id = field.value_id;
+						/*field_jqobj = jqobj.find("#field_"+field.id+"_value");
 						if(field_jqobj.length>0) val = field_jqobj.val();
-						else val = "";
+						else val = "";*/
 					}
 					
 					// проверка на обязательность не зависимо от типа
-					if(field.required && field.required == 1 && (val == null || val == '' || val == 'undefined')) {
+					if(field.required && field.required == 1 && (val == null || val == '' || val == 'undefined') && val_id != "*") {
 						error.messages.push({
 							title: "Ошибка",
 							msg: 'Поле "' +  field.name + '" обязательно для указания',
@@ -294,7 +298,7 @@ function entitySaveToLocalFromHTML(container_id) {
 								});
 							}
 						}
-						if(field.type == 'email') {
+						else if(field.type == 'email') {
 							if(val == null || !(val.indexOf('@') > -1) ) {
 								error.messages.push({
 									title: "Ошибка",
@@ -302,14 +306,14 @@ function entitySaveToLocalFromHTML(container_id) {
 								});
 							}
 						}
-						if(field.type == 'text' || val == 'textarea') {
-							if(field.min && val < field.min) {
+						else if(field.type == 'text' || val == 'textarea') {
+							if(field.min && val.length < field.min) {
 								error.messages.push({
 									title: "Ошибка",
 									msg: 'Поле "' + field.name + '" содержит слишком короткое значение (должно быть не менее ' + field.min + ' символов)',
 								});
 							}
-							if(field.max && val > field.max) {
+							if(field.max && val.length > field.max) {
 								error.messages.push({
 									title: "Ошибка",
 									msg: 'Поле "' + field.name + '" содержит слишком длинное значение (должно быть не более ' + field.max + ' символов)',
@@ -318,8 +322,8 @@ function entitySaveToLocalFromHTML(container_id) {
 						}
 					}
 					if(error.messages.length==0) { 
-						tmpFields[field.id] = {value: val};
-						if(val_id != "undefined") tmpFields[field.id].value_id = val_id;
+						if(val != null && val != "undefined") tmpFields[field.id] = {value: val};
+						if(val_id != null && val_id != "undefined") tmpFields[field.id].value_id = val_id;
 					}
 				}
 			}
@@ -329,8 +333,8 @@ function entitySaveToLocalFromHTML(container_id) {
 			// переносим значения в локальную сущность
 			for(tmpID in tmpFields) {
 				tmpField = tmpFields[tmpID];
-				descriptor.fields[tmpID].value = encodeURIComponent(tmpField.value);
-				descriptor.fields[tmpID].value_id = encodeURIComponent(tmpField.value_id);
+				descriptor.fields[tmpID].value = tmpField.value;//encodeURIComponent(tmpField.value);
+				descriptor.fields[tmpID].value_id = tmpField.value_id;//encodeURIComponent(tmpField.value_id);
 				//field.value = val;
 				//if(val_id != "undefined") field.value_id = val_id;
 			}

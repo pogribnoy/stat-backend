@@ -22,9 +22,10 @@ class ControllerBase extends Controller {
 		// лист доступа
 		$this->acl = $this->security->getAcl();
 		
-		// передаем данные, не зависящие от пути, в представление
-		$this->view->setVar("controller", $this);
-		//$this->view->setVar("acl", $this->acl);
+		if(!$this->request->isAjax()) {
+			// передаем данные, не зависящие от пути, в представление
+			$this->view->setVar("controller", $this);
+		}
 		
 		// устанавливаем макет по умолчанию
 		//$this->view->cleanTemplateAfter();
@@ -45,13 +46,15 @@ class ControllerBase extends Controller {
 		$this->translator = DI::getDefault()->getTranslator();
 		$this->t = $this->translator->getTranslation($this->language, $this->controllerName);
 		
-		// передаем данные, зависящие от пути, в представление
-		// перевод
-		$this->view->setVar("t", $this->t);
-		// контроллер и действие
-		$this->view->setVar("controllerName", $this->controllerName);
-		$this->view->setVar("actionName", $this->actionName);
-		//$this->view->setVar("descriptor", $this->descriptor);
+		if(!$this->request->isAjax()) {
+			// передаем данные, зависящие от пути, в представление
+			// перевод
+			$this->view->setVar("t", $this->t);
+			// контроллер и действие
+			$this->view->setVar("controllerName", $this->controllerName);
+			$this->view->setVar("actionName", $this->actionName);
+			$this->view->setVar('page_header', $this->t->_('text_' . $this->controllerName . '_title'));
+		}
 	}
 
 	/*protected function forward($uri) {

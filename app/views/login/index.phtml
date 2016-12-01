@@ -1,13 +1,11 @@
 <div class="row-fluid text-center">
-	<div class="col-lg-3"></div>
-		<div class="col-lg-6">
+	<div class="row">
+		<div class="col-lg-offset-3 col-lg-6">
 			<h1 class="page-header"><?php if(isset($page_header)) echo $page_header; ?></h1>
 		</div>
-	</div>
-</div><!-- /.row-fluid -->
+	</div><!-- /.row-fluid -->
 <div class="row">
-	<div class="col-lg-4"></div>
-	<div class="col-lg-4">
+	<div class="col-lg-offset-4 col-lg-4">
 		<div class="form-signin">
 			<h2 class="form-signin-heading text-center">Авторизация</h2>
 			<div class="input-group">
@@ -29,7 +27,7 @@
 					<input type="checkbox" value="remember-me"> Запомнить меня
 				</label>
 			</div>
-			<button class="btn btn-lg btn-primary btn-block" onclick="backendLogin();">Войти</button>
+			<button type="button" class="btn btn-lg btn-primary btn-block" onclick="backendLogin();">Войти</button>
 		</div>
 	</div>
 </div><!-- /.row -->

@@ -144,7 +144,7 @@ function linkSelectedRows(source_container_id){
 		
 		tData.local_data.status = "edited";
 		// перерисовываем поле
-		var tmpl = $.templates["entity_field_" + tField.type];
+		var tmpl = $.templates[tData.actionName + "_entity_field_" + tField.type];
 		
 		//tField.container_id = tData.local_data.container_id;
 		var html = tmpl.render(tField);

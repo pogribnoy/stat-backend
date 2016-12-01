@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Хост: 127.0.0.1
--- Время создания: Ноя 21 2016 г., 21:17
+-- Время создания: Дек 01 2016 г., 21:39
 -- Версия сервера: 5.7.9
 -- Версия PHP: 5.6.16
 
@@ -33,36 +33,70 @@ CREATE TABLE IF NOT EXISTS `expense` (
   `amount` bigint(20) NOT NULL,
   `date` date NOT NULL,
   `expense_type_id` int(10) NOT NULL COMMENT 'Идентификатор типа расхода',
+  `expense_status_id` int(11) NOT NULL,
   `organization_id` int(10) UNSIGNED DEFAULT NULL COMMENT 'Идентификатор организации, к которой относится расход',
+  `street_type_id` int(10) UNSIGNED DEFAULT NULL,
+  `street` varchar(255) DEFAULT NULL,
+  `house` varchar(20) DEFAULT NULL,
+  `executor` varchar(255) DEFAULT NULL,
+  `target_date_from` date DEFAULT NULL,
+  `target_date_to` date DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=69 DEFAULT CHARSET=utf16;
+) ENGINE=InnoDB AUTO_INCREMENT=100 DEFAULT CHARSET=utf16;
 
 --
 -- Дамп данных таблицы `expense`
 --
 
-INSERT INTO `expense` (`id`, `name`, `amount`, `date`, `expense_type_id`, `organization_id`) VALUES
-(32, 'asd', 10000, '2016-11-01', 1, NULL),
-(34, 'qqq', 10000, '2016-11-01', 1, NULL),
-(35, 'фыв', 10000, '2016-11-01', 1, NULL),
-(36, 'фыв', 10000, '2016-11-01', 1, NULL),
-(38, 'йцйц', 10000, '2016-11-01', 1, NULL),
-(39, 'фыв', 10000, '2016-11-01', 1, NULL),
-(40, 'фывв', 10000, '2016-09-12', 1, NULL),
-(41, 'фыв', 10000, '2016-11-01', 1, NULL),
-(42, 'йцу', 10000, '2016-11-01', 1, NULL),
-(43, 'asd', 10000, '2016-11-01', 1, 22),
-(44, 'йцу', 10000, '2016-11-01', 2, 22),
-(46, 'test2', 10000, '2016-11-01', 1, NULL),
-(47, 'test123', 10000, '2016-08-16', 1, NULL),
-(48, 'test321', 10000, '2016-11-01', 1, 22),
-(49, 'test09', 10000, '2016-09-07', 1, 22),
-(50, 'testasd', 10000, '2016-11-01', 1, 22),
-(64, 'test23', 2200, '2016-11-01', 1, 22),
-(65, 'ываывавы', 3400, '2016-11-13', 2, NULL),
-(66, 'ываывавы', 123256, '2016-11-13', 2, 22),
-(67, 'asdsadas', 0, '2016-11-13', 1, 22),
-(68, 'Ножницы', 1000000, '2016-11-20', 3, 38);
+INSERT INTO `expense` (`id`, `name`, `amount`, `date`, `expense_type_id`, `expense_status_id`, `organization_id`, `street_type_id`, `street`, `house`, `executor`, `target_date_from`, `target_date_to`) VALUES
+(72, 'Капитальный ремонт', 50000, '2016-12-12', 3, 2, 38, 2, 'Ануфриева', '10', 'ООО «Стройдом»', NULL, NULL),
+(73, 'Капитальный ремонт', 55000, '2016-11-29', 3, 2, 38, 2, 'Вокзальная', '3', 'ООО «Стройдом»', NULL, NULL),
+(74, 'Капальный ремонт', 60000, '2016-12-28', 3, 2, 38, 2, 'Геологов', '5', 'ООО «Стройдом»', NULL, NULL),
+(75, 'Капитальный ремонт', 32000, '2016-12-20', 3, 2, 38, 2, 'Институтская', '4', 'ООО «Стройдом»', NULL, NULL),
+(76, 'Капитальный ремонт', 45000, '2016-12-22', 3, 1, 38, 2, 'Институтская', '26', 'ООО «Стройдом»', NULL, NULL),
+(77, 'Капитальный ремонт', 60000, '2017-01-17', 3, 1, 38, 2, 'Коссович', '12', 'ООО «Стройдом»', NULL, NULL),
+(78, 'Ремонт канализации', 25000, '2017-01-24', 3, 1, 38, 2, 'Лермонтова', '2', 'ООО &#34;АВАНС&#34;', NULL, NULL),
+(79, 'Ремонт канализации', 30000, '2017-01-17', 3, 1, 38, 2, 'Лермонтова', '55', 'ООО &#34;АВАНАС&#34;', NULL, NULL),
+(80, 'Ремонт крыши', 15000, '2016-11-30', 3, 1, 38, 2, 'Лермонтова', '64', 'ООО&#34;ТРЕСТ&#34;', NULL, NULL),
+(81, 'Ремонт крыши', 20000, '2016-11-30', 3, 1, 38, 2, 'Октябрьская', '23', 'ООО &#34;ТРЕСТ&#34;', NULL, NULL),
+(82, 'Строительство детской площадки', 75000, '2016-11-29', 3, 2, 38, 2, 'Свердлова', '4', 'ЗАО &#34;ИНЖТЕХ&#34;', NULL, NULL),
+(83, 'Ремонт школы №17', 600000, '2016-11-29', 3, 2, 38, 2, 'Терешковой', '5', 'ООО &#34;РЕМОНТ-СЕРВИС&#34;', NULL, NULL),
+(84, 'Ремонт фасада здания', 70000, '2016-11-29', 3, 1, 38, 2, 'Энтузиастов', '56', 'ЗАО &#34;СТРОЙИНВЕСТ&#34;', NULL, NULL),
+(85, 'Кладка тротуарной плитки', 1500000, '2016-12-13', 4, 3, 38, 2, 'Ануфриева', '8-54', 'ООО &#34;ГАРАНТ&#34;', NULL, NULL),
+(86, 'Организация фестиваля красок', 30000, '2016-11-30', 6, 3, 38, 2, '-', '-', 'ООО &#34;ПРАЗДНИК&#34;', NULL, NULL),
+(87, 'Ремонт дороги', 60000, '2016-11-30', 4, 2, 38, 2, 'Волкова', '10-34', 'МУП &#34;РЕМОНТ&#34;', NULL, NULL),
+(88, 'Закупка канцтоваров', 40000, '2016-11-30', 7, 3, 38, 2, '-', '-', '-', NULL, NULL),
+(89, 'Ремонт городской больницы №3', 700000, '2016-11-30', 5, 3, 38, 2, 'Маркова', '16', 'ООО &#34;ГАРАНТ&#34;', NULL, NULL),
+(90, 'Закупка учебной литературы для школы №2', 200000, '2016-11-30', 1, 3, 38, 2, 'Волкова', '4', '-', NULL, NULL),
+(91, 'Содержание столовой для малоимущих', 150000, '2016-12-06', 8, 3, 38, 2, 'Космонавтов', '5', 'ООО &#34;ОБЕД&#34;', NULL, NULL),
+(92, 'Закупка оргтехники', 400000, '2016-11-30', 7, 3, 38, 2, 'Ленина', '69', 'ООО &#34;КОМПСЕРВИС&#34;', NULL, NULL),
+(93, 'Организация лыжной дорожки', 120000, '2016-12-14', 6, 2, 38, 2, 'Лесная', '-', 'ООО &#34;Снег&#34;', NULL, NULL),
+(94, 'Организация футбольного турнира &#34;Кубок&#34;', 300000, '2016-11-30', 6, 3, 38, 2, 'Владимирская', '41', 'ООО &#34;ФУТЗАЛ&#34;', NULL, NULL),
+(95, 'Выплата ветеранам ВОВ', 250000, '2016-11-30', 8, 3, 38, 2, '-', '-', '-', NULL, NULL),
+(96, 'Закупка камер видеонаблюдения для города', 300000, '2016-12-01', 10, 3, 38, NULL, '-', '-', 'ИП &#34;ГАРАНТЗАЩИТА&#34;', NULL, NULL),
+(99, 'Поддержка предпринимателей в 4 кв.', 400000, '2016-12-01', 9, 3, 38, NULL, NULL, NULL, NULL, NULL, NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Структура таблицы `expense_status`
+--
+
+DROP TABLE IF EXISTS `expense_status`;
+CREATE TABLE IF NOT EXISTS `expense_status` (
+  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` varchar(200) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf16;
+
+--
+-- Дамп данных таблицы `expense_status`
+--
+
+INSERT INTO `expense_status` (`id`, `name`) VALUES
+(1, 'Не начато'),
+(2, 'Начато'),
+(3, 'Выполнено');
 
 -- --------------------------------------------------------
 
@@ -75,16 +109,23 @@ CREATE TABLE IF NOT EXISTS `expense_type` (
   `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(200) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf16;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf16;
 
 --
 -- Дамп данных таблицы `expense_type`
 --
 
 INSERT INTO `expense_type` (`id`, `name`) VALUES
-(1, 'Ремонт'),
+(1, 'Образование'),
 (2, 'Прочие расходы'),
-(3, 'Канцелярия');
+(3, 'Жилищно-коммунальный фонд'),
+(4, 'Дорожно-транспортная система'),
+(5, 'Здравоохранение'),
+(6, 'Культура, спорт, отдых'),
+(7, 'Собственные расходы'),
+(8, 'Социальная поддержка'),
+(9, 'Экономика'),
+(10, 'Безопасность');
 
 -- --------------------------------------------------------
 
@@ -98,17 +139,36 @@ CREATE TABLE IF NOT EXISTS `file` (
   `name` varchar(255) NOT NULL,
   `directory` varchar(255) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf16;
+) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf16;
 
 --
 -- Дамп данных таблицы `file`
 --
 
 INSERT INTO `file` (`id`, `name`, `directory`) VALUES
-(1, 'organization_22_27644.JPG', 'upload/files/default/22/'),
-(2, 'organization_34_2591.jpg', 'upload/files/default/34/'),
-(5, 'organization_35_1968.jpg', 'upload/files/default/35/'),
-(6, 'organization_26_5673.jpg', 'upload/files/default/26/');
+(8, 'organization_46_30623.png', 'upload/files/default/46/'),
+(9, 'organization_45_7990.png', 'upload/files/default/45/'),
+(10, 'organization_44_28215.png', 'upload/files/default/44/'),
+(11, 'organization_42_3591.png', 'upload/files/default/42/'),
+(12, 'organization_43_19252.png', 'upload/files/default/43/'),
+(13, 'organization_41_3421.png', 'upload/files/default/41/'),
+(14, 'organization_40_14034.png', 'upload/files/default/40/'),
+(15, 'organization_36_931.png', 'upload/files/default/36/'),
+(16, 'organization_35_26272.png', 'upload/files/default/35/'),
+(17, 'organization_34_8793.png', 'upload/files/default/34/'),
+(18, 'organization_33_28190.png', 'upload/files/default/33/'),
+(19, 'organization_30_14079.png', 'upload/files/default/30/'),
+(20, 'organization_28_19660.png', 'upload/files/default/28/'),
+(21, 'organization_27_2837.png', 'upload/files/default/27/'),
+(22, 'organization_26_20010.png', 'upload/files/default/26/'),
+(23, 'organization_1_17435.png', 'upload/files/default/1/'),
+(24, 'organization_25_27064.png', 'upload/files/default/25/'),
+(25, 'organization_24_17297.png', 'upload/files/default/24/'),
+(26, 'organization_23_8950.png', 'upload/files/default/23/'),
+(27, 'organization_22_1783.png', 'upload/files/default/22/'),
+(28, 'organization_21_26980.png', 'upload/files/default/21/'),
+(29, 'organization_2_1997.png', 'upload/files/default/2/'),
+(31, 'organization_38_30914.png', 'upload/files/default/38/');
 
 -- --------------------------------------------------------
 
@@ -122,7 +182,7 @@ CREATE TABLE IF NOT EXISTS `file_collection` (
   `collection_id` int(10) UNSIGNED NOT NULL,
   `file_id` int(10) UNSIGNED NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf16;
+) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf16;
 
 --
 -- Дамп данных таблицы `file_collection`
@@ -134,7 +194,32 @@ INSERT INTO `file_collection` (`id`, `collection_id`, `file_id`) VALUES
 (3, 3, 3),
 (4, 3, 4),
 (5, 3, 5),
-(6, 4, 6);
+(6, 4, 6),
+(7, 5, 7),
+(8, 6, 8),
+(9, 7, 9),
+(10, 8, 10),
+(11, 9, 11),
+(12, 10, 12),
+(13, 11, 13),
+(14, 12, 14),
+(15, 13, 15),
+(16, 3, 16),
+(17, 2, 17),
+(18, 14, 18),
+(19, 15, 19),
+(20, 16, 20),
+(21, 17, 21),
+(22, 4, 22),
+(23, 18, 23),
+(24, 19, 24),
+(25, 20, 25),
+(26, 21, 26),
+(27, 1, 27),
+(28, 22, 28),
+(29, 23, 29),
+(30, 5, 30),
+(31, 5, 31);
 
 -- --------------------------------------------------------
 
@@ -152,20 +237,16 @@ CREATE TABLE IF NOT EXISTS `news` (
   `created_by` int(10) UNSIGNED NOT NULL COMMENT 'user_id',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8;
 
 --
 -- Дамп данных таблицы `news`
 --
 
 INSERT INTO `news` (`id`, `name`, `description`, `publication_date`, `active`, `created_by`, `created_at`) VALUES
-(12, 'Программа 13', 'Московские улицы начнут преображаться уж', '2016-11-01', 1, 1, '2014-12-22 19:09:43'),
-(14, 'фывфывs', 'фывфывsssss', '2016-11-02', 0, 1, '2015-02-12 13:25:11'),
-(17, 'фывфывs', '<ol>\n	<li>&quot; OR 1=1 asss</li>\n</ol>\n', '2016-11-03', 1, 1, '2015-02-12 14:08:23'),
-(19, 'asdsdsdasd', '<p>q<strong>weqwe </strong></p>\n\n<p>as</p>\n', '2016-11-04', 1, 1, '2015-02-12 14:56:40'),
-(20, 'asdasdasd', '<p>qqq<s>qqq</s>1</p>\n', '2016-11-05', 1, 23, '2015-02-17 17:25:43'),
-(21, 'qwqweqwe', '<p>qwe</p>\n\n<p>qwe</p>\n\n<ol>\n	<li>qwe</li>\n	<li>qwe</li>\n	<li>qwe</li>\n</ol>\n\n<p>qw</p>\n', '2016-11-04', 1, 23, '2015-02-19 10:45:02'),
-(23, 'Новость дня!', '<h2 style="font-style:italic">фываыаыафывафыва</h2>\n\n<h1><big>уыаыаываываыва</big></h1>\n', '2016-11-03', 1, 23, '2015-02-19 19:44:40');
+(21, 'Интернет портал общедоступной информации о расходах муниципальных образований «Расходы города».', 'Проект реализуется Автономной некоммерческой организации\n«Центр мониторинга и организации взаимодействия населения и органов государственной власти в сфере предоставления общедоступной информации о финансовых ресурсах муниципальных образований».', '2016-11-27', 1, 20, '2015-02-19 10:45:02'),
+(24, 'О проекте', 'В настоящее время остро стоит проблема о недостаточной информированности населения о деятельности органов местного самоуправления в плане  распределения финансовых ресурсов, которая  вносит недоверие во взаимоотношения между государством и обществом. Наш проект  предполагает  разработку, внедрение, продвижение и техническое сопровождение удобной интернет платформы, где представители органов местного самоуправления будут выкладывать информацию о расходах своего города по различным направлениям.', '2016-11-27', 1, 20, '2016-11-27 14:40:02'),
+(25, 'Цели проекта', 'Цели проекта:\n- создание условий для всестороннего и доверительного взаимодействия между гражданами и органами государственной власти в лице местного самоуправления муниципальных образований Российской Федерации; \n  - повышение социальной активности населения РФ.', '2016-11-27', 1, 20, '2016-11-27 14:42:14');
 
 -- --------------------------------------------------------
 
@@ -182,29 +263,36 @@ CREATE TABLE IF NOT EXISTS `organization` (
   `email` varchar(255) CHARACTER SET utf16 DEFAULT NULL,
   `img` varchar(255) CHARACTER SET utf16 DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=39 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=47 DEFAULT CHARSET=utf8;
 
 --
 -- Дамп данных таблицы `organization`
 --
 
 INSERT INTO `organization` (`id`, `name`, `contacts`, `region_id`, `email`, `img`) VALUES
-(1, 'Объект 1', 'фывфыв', 20, NULL, NULL),
-(2, 'Объект 21', 'фывфыв2', 22, NULL, NULL),
-(21, 'q', 'q', 20, NULL, NULL),
-(22, 'www', 'г. Подльск, ул. Победы, д.3, подъезд 4. Телефон:  7(4967)65-45-54', 20, '', '1'),
-(23, 'з', 'з', 20, NULL, NULL),
-(24, '1', '1', 20, '1', NULL),
-(25, '2', '2', 20, NULL, NULL),
-(26, '38', '3', 20, '', '4'),
-(27, '1', '1', 20, NULL, NULL),
-(28, '1', '1', 20, NULL, NULL),
-(30, '2', '2', 20, NULL, NULL),
-(33, '5', '5', 20, NULL, NULL),
-(34, '6', '6', 21, '', '2'),
-(35, '7', '7', 20, '', '3'),
-(36, '8', '8', 20, NULL, NULL),
-(38, '44234', '44', 20, '', NULL);
+(1, 'Петушки', '601143, Владимирская область, город Петушки, улица Новая, дом 8, телефон: (49243) 2-11-98', 20, 'office.petush@mail.ru', '18'),
+(2, 'Муром', '602256 , Владимирская обл.,г.Муром,пл.1100-летия, д.1, телефон:  7(49234) 3-11-02', 20, 'post@murom.info', '23'),
+(21, 'Меленки', '602102, Владимирская область, Меленковский район, г. Меленки, ул. Красноармейская, д. 102, телефон: 8 (49247) 2-25-39', 20, 'city@melenky.ru', '22'),
+(22, 'Лакинск', '601240, Владимирская область, Собинский район, город Лакинск, улица Горького, дом 20, телефон: 4-13-48', 20, 'lakinsk@lakinskmo.ru', '1'),
+(23, 'Курлово', '601570, Владимирская область, Гусь-Хрустальный район, г. Курлово, ул. Советская, д. 8, телефон:  7 (492 41) 5-53-43', 20, 'glavakurlovo@yandex.ru', '21'),
+(24, 'Костерёво', '601111, Владимирская область, Петушинский район, г. Костерево, ул. Горького, д. 2, телефон: 8 (49243) 4-24-49', 20, 'kosterevo_adm@mail.ru', '20'),
+(25, 'Кольчугино', '601785, Владимирская область, Кольчугино, ул. Ульяновская, 38, телефон: (49245) 4-07-77', 20, 'kolch@avo.ru', '19'),
+(26, 'Ковров', '601900, Владимирская область, г.Ковров, ул.Краснознаменная, д.6, телефон: (49232) 3-11-35', 20, 'kovrov@kovrov.ru', '4'),
+(27, 'Киржач', '601021, Владимирская обл., г. Киржач, микрорайон Красный Октябрь, ул. Пушкина, 8 Б, телефон:  7 (49237) 6-12-26', 20, 'adm@gorodkirzhach.ru', '17'),
+(28, 'Карабаново', '601642, Владимирская область, Алекандровский район, город Карабаново, пл. Лермонтова, д.1а, телефон:	 (49244) 5-12-73', 20, 'adminkar@mail.ru', '16'),
+(30, 'Камешково', '601300, Владимирская обл., г. Камешково,  ул. Свердлова, д. 10, телефон: (49248) 2–12–07', 20, 'kamesr@avo.ru', '15'),
+(33, 'Гусь-Хрустальный', '601501, Владимирская область, г. Гусь-Хрустальный, ул. Калинина, 28. Телефон: (49241)2-68-11', 20, 'gus@avo.ru', '14'),
+(34, 'Гороховец', '601481, Владимирская  область, г. Гороховец, Ленина ул.,  д. 93, телефон : (49238) 2-15-65', 20, 'goroxr@avo.ru', '2'),
+(35, 'Вязники', '601440, Владимирская область, ул. Комсомольская, дом 3, телефон: 8 (492) 333-05-66', 20, 'vyazn@avo.ru', '3'),
+(36, 'Владимир', '600000, г. Владимир ул. Горького, 36  Тел. (4922) 53-28-17', 20, 'info@vladimir-city.ru', '13'),
+(38, 'Александров', '601657, Владимирская область, г. Александров ул. Ленина, дом 69,телефон: 8 (49244) 2-20-05', 20, 'aleksandrov@trytek.ru', '5'),
+(40, 'Покров', '601120, Владимирская область, Петушинский район, город Покров, ул. Cоветская,  42 тел.:  7 (49243) 6-21-11', 20, 'info@pokrovcity.ru', '12'),
+(41, 'Радужный', '600910, Владимирская область, г. Радужный, квартал, дом 55  тел.:  7 (49254) 3-29-20', 20, 'radugn@avo.ru', '11'),
+(42, 'Собинка', '601204, Владимирская область, Собинский район, г. Собинка, ул. Димитрова, д. 1', 20, 'sobin@avo.ru', '9'),
+(43, 'Струнино', '601671, Владимирская область, Александровский район, г. Струнино, ул. Воронина, д.1.', 20, 'adm331601@mail.ru', '10'),
+(44, 'Судогда', '601352, Владимирская область, г. Судогда ул.Ленина д.65  (49235) 2-26-62, 2-19-15', 20, 'admsudogda@mail.ru', '8'),
+(45, 'Суздаль', '601293, Владимирская область, Суздаль, Красная площадь, д.1 тел. (49231) 2-07-15', 20, 'info@suzdalregion.ru', '7'),
+(46, 'Юрьев-Польский', '601800, Владимирская обл., г. Юрьев-Польский, ул. Шибанкова, д. 33., телефон:  7 (49246) 2-24-35', 20, 'yurier@avo.ru', '6');
 
 -- --------------------------------------------------------
 
@@ -257,16 +345,38 @@ CREATE TABLE IF NOT EXISTS `region` (
   `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf16;
+) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf16;
 
 --
 -- Дамп данных таблицы `region`
 --
 
 INSERT INTO `region` (`id`, `name`) VALUES
-(20, 'Москва'),
-(21, 'Питер'),
-(22, 'Московска область');
+(20, 'Владимирская область'),
+(21, 'Астраханская область');
+
+-- --------------------------------------------------------
+
+--
+-- Структура таблицы `request_status`
+--
+
+DROP TABLE IF EXISTS `request_status`;
+CREATE TABLE IF NOT EXISTS `request_status` (
+  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name_code` varchar(200) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf16;
+
+--
+-- Дамп данных таблицы `request_status`
+--
+
+INSERT INTO `request_status` (`id`, `name_code`) VALUES
+(1, 'status_new'),
+(2, 'status_processed'),
+(3, 'status_in_progress'),
+(4, 'status_declined');
 
 -- --------------------------------------------------------
 
@@ -285,7 +395,7 @@ CREATE TABLE IF NOT EXISTS `resource` (
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `controller_3` (`controller`,`action`,`module`)
-) ENGINE=InnoDB AUTO_INCREMENT=123 DEFAULT CHARSET=utf16;
+) ENGINE=InnoDB AUTO_INCREMENT=139 DEFAULT CHARSET=utf16;
 
 --
 -- Дамп данных таблицы `resource`
@@ -385,54 +495,23 @@ INSERT INTO `resource` (`id`, `group`, `controller`, `action`, `module`, `descri
 (119, 'base', 'organization', 'index', 'frontend', '', '2016-11-13 16:30:13'),
 (120, 'base', 'organizationrequest', 'getdata', 'frontend', '', '2016-11-19 23:56:00'),
 (121, 'acl', 'expensetype', 'save', 'backend', '', '2016-11-20 17:39:33'),
-(122, 'base', 'organizationrequest', 'save', 'frontend', '', '2016-11-20 17:56:30');
-
--- --------------------------------------------------------
-
---
--- Структура таблицы `result`
---
-
-DROP TABLE IF EXISTS `result`;
-CREATE TABLE IF NOT EXISTS `result` (
-  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `name` varchar(200) CHARACTER SET utf16 NOT NULL COMMENT 'Название попроса',
-  `description` varchar(500) CHARACTER SET utf16 NOT NULL,
-  `active` int(1) NOT NULL DEFAULT '1',
-  `created_by` int(10) UNSIGNED NOT NULL COMMENT 'user_id',
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `published_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
-
---
--- Дамп данных таблицы `result`
---
-
-INSERT INTO `result` (`id`, `name`, `description`, `active`, `created_by`, `created_at`, `published_at`) VALUES
-(2, 'фывф2', '<p>фывфыkas</p>\n', 1, 22, '2015-05-26 17:10:17', '2015-06-02 00:00:00');
-
--- --------------------------------------------------------
-
---
--- Структура таблицы `result_file`
---
-
-DROP TABLE IF EXISTS `result_file`;
-CREATE TABLE IF NOT EXISTS `result_file` (
-  `result_id` int(11) UNSIGNED NOT NULL,
-  `file_id` int(10) UNSIGNED NOT NULL,
-  PRIMARY KEY (`result_id`,`file_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf16;
-
---
--- Дамп данных таблицы `result_file`
---
-
-INSERT INTO `result_file` (`result_id`, `file_id`) VALUES
-(2, 20),
-(2, 21),
-(2, 22);
+(122, 'base', 'organizationrequest', 'save', 'frontend', '', '2016-11-20 17:56:30'),
+(123, 'acl', 'regionlist', 'index', 'backend', '', '2016-11-23 23:24:11'),
+(124, 'acl', 'region', 'edit', 'backend', '', '2016-11-23 23:27:59'),
+(125, 'acl', 'region', 'save', 'backend', '', '2016-11-23 23:28:12'),
+(126, 'acl', 'region', 'getdata', 'backend', '', '2016-11-23 23:36:44'),
+(127, 'acl', 'region', 'add', 'backend', '', '2016-11-23 23:41:47'),
+(128, 'acl', 'region', 'delete', 'backend', '', '2016-11-23 23:42:42'),
+(129, 'acl', 'news', 'getdata', 'backend', '', '2016-11-24 00:25:39'),
+(130, 'acl', 'streettypelist', 'index', 'backend', '', '2016-11-25 19:45:35'),
+(131, 'acl', 'streettype', 'edit', 'backend', '', '2016-11-25 19:45:59'),
+(132, 'acl', 'streettype', 'save', 'backend', '', '2016-11-25 19:46:27'),
+(133, 'acl', 'streettype', 'delete', 'backend', '', '2016-11-25 19:46:45'),
+(134, 'acl', 'streettype', 'add', 'backend', '', '2016-11-25 19:46:55'),
+(135, 'acl', 'streettypelist', 'filter', 'backend', '', '2016-11-25 19:48:27'),
+(136, 'base', 'organizationrequest', 'edit', 'frontend', '', '2016-11-27 01:11:44'),
+(137, 'acl', 'expensestatuslist', 'index', 'backend', '', '2016-11-27 21:41:23'),
+(138, 'acl', 'expensestatuslist', 'filter', 'backend', '', '2016-11-27 21:41:34');
 
 -- --------------------------------------------------------
 
@@ -455,38 +534,41 @@ CREATE TABLE IF NOT EXISTS `setting` (
 --
 
 INSERT INTO `setting` (`id`, `code`, `value`, `description`) VALUES
-(2, 'logo_img', 'img/index-logo.png', NULL),
-(3, 'use_points_img', 'img/obmen_polls_in_main.png', NULL),
-(4, 'poll_img', 'img/proyti_opros_in_main.png', NULL),
-(5, 'register_img', 'img/reg_in_main.png', NULL),
 (6, 'admin_table_limit', '100', 'Ограничение количества строк для таблиц в служебной части'),
 (11, 'files_upload_directory', 'upload/files/', 'Каталог, в который должны загружаться файлы сущностей: опросов, вопросов, результатов и т.д. В конце обязательно указание символа &#34;/&#34;'),
-(12, 'result_upload_directory', 'results/', 'Каталог, в который должны загружаться файлы, привязанные к результатам. В конце обязательно указание символа &#34;/&#34;'),
-(13, 'acl_routes_enable', '1', 'Контролировать ли доступ к страницам'),
 (14, 'admin_table_page_sizes', '[30,50,100]', 'Ограничение количества строк для таблиц в служебной части');
 
 -- --------------------------------------------------------
 
 --
--- Структура таблицы `status`
+-- Структура таблицы `street_type`
 --
 
-DROP TABLE IF EXISTS `status`;
-CREATE TABLE IF NOT EXISTS `status` (
+DROP TABLE IF EXISTS `street_type`;
+CREATE TABLE IF NOT EXISTS `street_type` (
   `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  `name_code` varchar(200) NOT NULL,
+  `name` varchar(200) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf16;
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf16;
 
 --
--- Дамп данных таблицы `status`
+-- Дамп данных таблицы `street_type`
 --
 
-INSERT INTO `status` (`id`, `name_code`) VALUES
-(1, 'status_new'),
-(2, 'status_processed'),
-(3, 'status_in_progress'),
-(4, 'status_declined');
+INSERT INTO `street_type` (`id`, `name`) VALUES
+(1, 'Пр-кт'),
+(2, 'Ул.'),
+(3, 'Пер-д'),
+(4, 'Пр-д'),
+(5, 'Пер-к'),
+(6, 'Ш.'),
+(7, 'Наб.'),
+(8, 'Бул.'),
+(9, 'Ал.'),
+(10, 'Пл.'),
+(11, 'Туп.'),
+(12, 'Дор.'),
+(13, 'Маг.');
 
 -- --------------------------------------------------------
 
@@ -513,10 +595,10 @@ CREATE TABLE IF NOT EXISTS `user` (
 --
 
 INSERT INTO `user` (`id`, `password`, `phone`, `email`, `name`, `points`, `user_role_id`, `active`, `created_at`) VALUES
-(20, '40bd001563085fc35165329ea1ff5c5ecbdbbeef', '1111111111', 'admin@admin.ru', 'Его величество', 0, 1, 1, '2015-02-06 18:40:36'),
+(20, '40bd001563085fc35165329ea1ff5c5ecbdbbeef', '1111111111', 'admin@admin.ru', 'Суперпользователь', 0, 1, 1, '2015-02-06 18:40:36'),
 (22, 'f4542db9ba30f7958ae42c113dd87ad21fb2eddb', '3333333333', 'guest', 'Гость', 0, 2, 1, '2015-02-10 14:34:30'),
-(25, 'da39a3ee5e6b4b0d3255bfef95601890afd80709', '1111111122', 'asd@asd1.ru', 'asdasd', 0, 1, 1, '2015-02-10 23:07:09'),
-(32, 'f4542db9ba30f7958ae42c113dd87ad21fb2eddb', '12312312345', 'oper@oper.ru', 'sdfsdad', 0, 5, 1, '2015-02-12 14:36:29'),
+(25, '40bd001563085fc35165329ea1ff5c5ecbdbbeef', '1111111122', 'asd@asd1.ru', 'asdasd', 0, 1, 1, '2015-02-10 23:07:09'),
+(32, 'da39a3ee5e6b4b0d3255bfef95601890afd80709', '12312312345', 'oper@oper.ru', 'sdfsdad', 0, 5, 1, '2015-02-12 14:36:29'),
 (34, '40bd001563085fc35165329ea1ff5c5ecbdbbeef', 'q123123', 'asd@asd.ru', '123123123', 0, 4, 1, '2016-10-25 20:17:10');
 
 -- --------------------------------------------------------

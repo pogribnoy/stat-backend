@@ -214,7 +214,7 @@ class FileController extends ControllerBase {
 			}
 			else {
 				// читаем настройки из БД
-				$this->settings = Setting::find(array(
+				/*$this->settings = Setting::find(array(
 					"code IN ({codes:array})",
 					"bind" => ["codes" => ["files_upload_directory",  mb_strtolower($pe_name) . "_upload_directory"]],
 					"limit" => 2
@@ -223,7 +223,9 @@ class FileController extends ControllerBase {
 				foreach ($this->settings as $set) {
 					if($set->code == 'files_upload_directory') $this->files_upload_directory = $set->value;
 					else if($set->code == (mb_strtolower($pe_name) . '_upload_directory')) $this->entity_upload_directory = $set->value;
-				}
+				}*/
+				$this->files_upload_directory = $this->config->application->filesUploadDirectory;
+				$this->entity_upload_directory = mb_strtolower($pe_name) . '/';
 				
 				//$this->logger->log(json_encode($this->settings));
 		

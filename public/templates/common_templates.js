@@ -33,7 +33,9 @@ edit_entity_field_textarea: '<textarea rows="3" class="form-control" id="field_{
 show_entity_field_textarea: '<p id="field_{{:id}}_value" class="form-control-static">{{:value}}</p>',
 edit_entity_field_password: '<p id="field_{{:id}}_value" class="form-control-static">**********</p>',
 edit_entity_field_bool: '<input type="checkbox" id="field_{{:id}}_value" {{if value == 1}}checked="checked"{{/if}} value="" disabled>',
-edit_entity_field_select: '<select id="field_{{:id}}_value" class="form-control" style="width:auto;">{{if (nullable && nullable==1) }}<option value="*" {{if value_id==\'\'}}selected="selected"{{/if}}></option>{{:value_id}}{{else required && required==1 && (value==\'\' || value == null)}}<option disabled selected value> --- Выберите --- </option>{{/if}}\
+edit_entity_field_select: '<select id="field_{{:id}}_value" class="form-control" style="width:auto;">\
+{{if (nullable && nullable != 1) }}<option value="*" {{if value == null || value_id==\'\'}}selected="selected"{{/if}}>{{:nullable}}</option>{{:value_id}}\
+{{else required && required==1 && (value == null || value==\'\')}}<option disabled selected value> --- Выберите --- </option>{{/if}}\
 {{if style == "id" tmpl="edit_entity_field_select_id_style_options"}}\
 {{else tmpl="edit_entity_field_select_text_style_options"}}{{/if}}</select>',
 show_entity_field_select: '<p id="field_{{:id}}_value" class="form-control-static">{{:value}}</p>',
@@ -54,7 +56,7 @@ show_entity_field_img: '<input id="field_{{:id}}" class="file" type="file" {{if 
 <input hidden="" id="min_count" value="{{:min_count}}"> \
 <input hidden="" id="max_count" value="{{:max_count}}">',
 
-edit_entity_field_link: '<div class="input-group"><input type="text" class="form-control" id="field_{{:id}}_value" placeholder="" value="{{:value}}" readonly><span class="input-group-btn"><button class="btn btn-default" type="button"  aria-label="{{:name}}"  name="{{:id}}" onclick="link_entity(\'{{:(~descriptor ? ~descriptor.local_data.container_id : container_id)}}\', \'{{:controllerName}}\', \'{{:id}}\', \'radio\');"><span class="glyphicon glyphicon-link" aria-hidden="true"></span></button></span></div>',
+edit_entity_field_link: '<div class="input-group"><input type="text" class="form-control" id="field_{{:id}}_value" placeholder="" value="{{:value}}" readonly><span class="input-group-btn"><button class="btn btn-default" type="button"  aria-label="{{:name}}"  name="{{:id}}" onclick="link_entity(\'{{:(~descriptor ? ~descriptor.local_data.container_id : entity.local_data.container_id)}}\', \'{{:controllerName}}\', \'{{:id}}\', \'radio\');"><span class="glyphicon glyphicon-link" aria-hidden="true"></span></button></span></div>',
 show_entity_field_link: '<p id="field_{{:id}}_value" class="form-control-static">{{:value}}</p>',
 
 edit_entity_field_amount: '<input type="text" class="form-control" id="field_{{:id}}_value" placeholder="{{:name}}" value="{{:value}}" pattern="^\d*(\.\d{1,2}$)?" size="18">',

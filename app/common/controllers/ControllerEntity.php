@@ -38,9 +38,16 @@ class ControllerEntity extends ControllerBase {
 	public function indexAction() {
 		$this->createDescriptor();
 		
-		// передаем в представление имеющиеся данные
-		$this->view->setVar('page_header', $this->t->_('text_' . $this->controllerName . '_title'));
-		$this->view->setVar("descriptor", $this->descriptor);
+		if($this->request->isAjax()) {
+			$this->view->disable();
+			$this->response->setContentType('application/json', 'UTF-8');
+			return json_encode($this->descriptor);
+		}
+		else {
+			// передаем в представление имеющиеся данные
+			//$this->view->setVar('page_header', $this->t->_('text_' . $this->controllerName . '_title'));
+			$this->view->setVar("descriptor", $this->descriptor);
+		}
 	}
 	
 	/* 
@@ -56,7 +63,7 @@ class ControllerEntity extends ControllerBase {
 		}
 		else {
 			// передаем в представление имеющиеся данные
-			$this->view->setVar('page_header', $this->t->_('text_' . $this->controllerName . '_title'));
+			//$this->view->setVar('page_header', $this->t->_('text_' . $this->controllerName . '_title'));
 			$this->view->setVar("descriptor", $this->descriptor);
 		}
 	}
@@ -73,7 +80,7 @@ class ControllerEntity extends ControllerBase {
 		}
 		else {
 			// передаем в представление имеющиеся данные
-			$this->view->setVar('page_header', $this->t->_('text_' . $this->controllerName . '_title'));
+			//$this->view->setVar('page_header', $this->t->_('text_' . $this->controllerName . '_title'));
 			$this->view->setVar("descriptor", $this->descriptor);
 		}
 	}
@@ -105,12 +112,13 @@ class ControllerEntity extends ControllerBase {
 			$this->initFields();
 			
 			if($this->sanitizeSaveRqData($rq)) {
-				$this->logger->log("saveAction. sanitizeSaveRqData: " . json_encode($this->fields));
+				//$this->logger->log("saveAction. sanitizeSaveRqData: " . json_encode($this->fields));
 				$id = $this->fields['id']['value'];
 				
 				// открываем транзакцию
 				$this->db->begin();
 				
+				$this->entity = false;
 				// ищем сущность
 				$this->entity = $this->createOrFindEntity($id);
 				
@@ -124,7 +132,7 @@ class ControllerEntity extends ControllerBase {
 				}
 				// нашли или создали
 				else {
-					$this->logger->log("saveAction. entity found: " . json_encode($this->entity));
+					//$this->logger->log(__FUNCTION__ . ". Entity found: " . json_encode($this->entity));
 					// наполняем поля
 					$this->fillModelFieldsFromSaveRq();
 					if($id<0){
@@ -418,10 +426,12 @@ class ControllerEntity extends ControllerBase {
 						}
 						if($this->scrollers[$scrollerName]['relationType'] == 'n') {
 							// проверяем, чтобы ВСЕ привязываемые сущности существовали
-							$entities = $linkEntityName::find(["conditions" => "id IN (?1)", "bind" => [
-								1 => implode(',', $this->scrollers[$scrollerName]['added_items']),
+							$entities = $linkEntityName::find(["conditions" => "id IN ({added_items:array})", "bind" => [
+								//1 => implode(',', $this->scrollers[$scrollerName]['added_items']),
+								"added_items" => $this->scrollers[$scrollerName]['added_items'],
 							], "for_update" => true]);
 							if(!$entities || count($entities) < count($this->scrollers[$scrollerName]['added_items'])) {
+								//$this->logger->log("entities = " . json_encode($entities));
 								$this->error['messages'][] = [
 									'title' => "Ошибка",
 									'msg' => $scrollerName . ". Запись не найдена в БД"
@@ -470,10 +480,6 @@ class ControllerEntity extends ControllerBase {
 						$this->scrollers[$scrollerName]['deleted_items'] = [];
 						foreach($rq->scrollers->$scrollerName->deleted_items as $id) {
 							$id = $this->filter->sanitize(urldecode($id), ['trim', "int"]);
-							/*$this->success['messages'][] = [
-								'title' => "Ошибка",
-								'msg' => "id = " . $id
-							];*/
 							if($id != '') $this->scrollers[$scrollerName]['deleted_items'][] = $id;
 							else {
 								$this->error['messages'][] = [
@@ -483,10 +489,6 @@ class ControllerEntity extends ControllerBase {
 								return false;
 							}
 						}
-						/*$this->success['messages'][] = [
-							'title' => "Ошибка",
-							'msg' => "del = " . implode(',', $this->scrollers[$scrollerName]['deleted_items'])
-						];*/
 					}
 				}
 				else {
@@ -628,7 +630,7 @@ class ControllerEntity extends ControllerBase {
 		// доп параметры фильтрации, которые могут использоваться для заполнения полей сущности
 		if(isset($_REQUEST["filter_organization_id"])) $this->filter_values["organization_id"] = $this->filter->sanitize(urldecode($_REQUEST["filter_organization_id"]), ["trim", "int"]); 
 		
-		$this->logger->log("sanitizeGetDataRqFilters: " . json_encode($this->filter_values));
+		//$this->logger->log("sanitizeGetDataRqFilters: " . json_encode($this->filter_values));
 	}
 	
 	/* 
@@ -671,7 +673,7 @@ class ControllerEntity extends ControllerBase {
 	* Переопределяемый метод. Переопределяется при необходимости
 	*/
 	protected function fillNewEntityFields() {
-		$this->logger->log("fillNewEntityFields: " . json_encode($this->filter_values));
+		//$this->logger->log("fillNewEntityFields: " . json_encode($this->filter_values));
 		foreach($this->fields as $fieldID => &$field) {
 			// если поля связывает по id
 			if($field['type'] == 'link' || ($field['type'] == 'select' && $field['style'] == 'id')) {
@@ -792,8 +794,9 @@ class ControllerEntity extends ControllerBase {
 	* Переопределяемый метод.
 	*/
 	protected function createOrFindEntity($id) {
+		$entity = false;
 		$entity = $this->findEntity($id);
-		if(!$entity) {
+		if($entity == false) {
 			$entityName = $this->entityName;
 			// создается новая сущность
 			return new $entityName();
@@ -875,6 +878,10 @@ class ControllerEntity extends ControllerBase {
 									return false;
 								}
 								$this->fields[$fieldID]['value_id'] = $id;
+							}
+							else if($field['nullable']) {
+								$this->fields[$fieldID]['value'] = ($field['nullable'] == 1 ? null : $field['nullable']);
+								$this->fields[$fieldID]['value_id'] = null;
 							}
 							else {
 								$this->error['messages'][] = [

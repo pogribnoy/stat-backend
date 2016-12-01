@@ -31,7 +31,11 @@ $.templates({
 	scroller_data_cell_operations: '<td{{if hideble}} class="hidden-xs hidden-sm hidden-md"{{/if}}>{{for ~descriptor.item_operations tmpl="item_operation" /}}</td>',
 	//scroller_data_cellr: '<td>{{:~utilities.toJSON(~entity.fields[id])}}</td>',
 	//scroller_data_cell1: '<td{{if hideble}} class="hidden-xs hidden-sm hidden-md"{{/if}} name="{{:id}}" id="{{:id}}">{{:~entity.fields[id].value}}</td>',
-	scroller_data_cell: '<td{{if hideble}} class="hidden-xs hidden-sm hidden-md"{{/if}} name="{{:id}}" id="{{:id}}">{{if ~entity.fields[id].url}}<a href="{{:~entity.fields[id].url}}">{{/if}}{{:~entity.fields[id].value}}{{if ~entity.fields[id].url}}</a>{{/if}}</td>',
+	scroller_data_cell: '<td{{if hideble}} class="hidden-xs hidden-sm hidden-md"{{/if}} name="{{:id}}" id="{{:id}}">\
+	{{if ~entity.fields[id].url}}<a href="{{:~entity.fields[id].url}}">{{/if}}\
+		{{if nullable != "1" && ~entity.fields[id].value == \'\'}}{{:nullable}}\
+		{{else}}{{:~entity.fields[id].value}}{{/if}}\
+	{{if ~entity.fields[id].url}}</a>{{/if}}</td>',
 	
 });
 
@@ -65,10 +69,10 @@ $.views.helpers({
 	getContainerByID: function(container_id) {
 		return containers[container_id];
     },
-	getOjectKeysCount(array) {
+	getOjectKeysCount: function(array) {
 		return Object.keys(array).length;
 	},
-	toJSON(obj) {
+	toJSON: function(obj) {
 		return JSON.stringify(obj);
 	},
   }

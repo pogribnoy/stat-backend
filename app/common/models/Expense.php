@@ -13,6 +13,8 @@ class Expense extends Model{
 	public $street;
 	public $house;
 	public $executor;
+	public $target_date_from;
+	public $target_date_to;
 		
 	public function initialize() {
 		$this->belongsTo("expense_type_id", "ExpenseType", "id");

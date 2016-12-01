@@ -33,12 +33,18 @@ class ControllerList extends ControllerBase {
 	}
 	
 	public function indexAction() {
-		
 		$this->createDescriptor();
 		
-		// передаем в представление имеющиеся данные
-		$this->view->setVar("page_header", $this->t->_('text_'.$this->controllerName.'_title'));
-		$this->view->setVar("descriptor", $this->descriptor);
+		if($this->request->isAjax()) {
+			$this->view->disable();
+			$this->response->setContentType('application/json', 'UTF-8');
+			return json_encode($this->descriptor);
+		}
+		else {
+			// передаем в представление имеющиеся данные
+			//$this->view->setVar("page_header", $this->t->_('text_'.$this->controllerName.'_title'));
+			$this->view->setVar("descriptor", $this->descriptor);
+		}
 	}
 	
 	public function filterAction() {
@@ -114,7 +120,7 @@ class ControllerList extends ControllerBase {
 	* Расширяемый метод.
 	*/
 	public function getSettings() {
-		$this->settings = Setting::find([
+		/*$this->settings = Setting::find([
 			"code IN ({codes:array})",
 			"bind" => ["codes" => ["admin_table_limit", "admin_table_page_sizes"]],
 			"limit" => 2
@@ -125,8 +131,9 @@ class ControllerList extends ControllerBase {
 		foreach ($this->settings as $set) {
 			if($set->code == 'admin_table_limit') $this->max_page_size = $set->value;
 			else if($set->code == 'admin_table_page_sizes') $this->pager['page_sizes'] = json_decode($set->value);
-		}
-		
+		}*/
+		$this->max_page_size = $this->config->application->tableMaxPageSize;
+		$this->pager['page_sizes'] = json_decode($this->config->application->tablePageSizes);
 		// если для админа настроено отдельно максимальное значение, то используем его
 		if($this->max_page_size > 0) {
 			if(!in_array($this->max_page_size, $this->pager['page_sizes'])) $this->pager['page_sizes'][] = $this->max_page_size;
@@ -198,8 +205,9 @@ class ControllerList extends ControllerBase {
 			"title" => $this->controller->t->_("text_".$this->controllerName."_title"),
 			"add_style" => "entity", //scroller
 			"edit_style" => 'modal', //url
-			"template" => $this->getTmpl()
+			"template" => $this->getTmpl(),
 		);
+		if(isset($this->notCollapsible)) $this->descriptor["notCollapsible"] = $this->notCollapsible;
 		//$this->logger->log(json_encode($this->descriptor));
 	}
 	
@@ -302,10 +310,6 @@ class ControllerList extends ControllerBase {
 			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_date"]), "string");
 			if($val != '') $this->filter_values["date"] =  $val;
 		}
-		if(isset($_REQUEST["filter_street_type_id"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_street_type_id"]), ['trim',"int"]);
-			if($val != '') $this->filter_values["street_type_id"] =  $val;
-		}
 		if(isset($_REQUEST["filter_street"])) {
 			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_street"]), "string");
 			if($val != '') $this->filter_values["street"] =  $val;
@@ -313,6 +317,10 @@ class ControllerList extends ControllerBase {
 		if(isset($_REQUEST["filter_house"])) {
 			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_house"]), "string");
 			if($val != '') $this->filter_values["house"] =  $val;
+		}
+		if(isset($_REQUEST["filter_executor"])) {
+			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_executor"]), "string");
+			if($val != '') $this->filter_values["executor"] =  $val;
 		}
 		
 		// фильтры по справочникам
@@ -331,6 +339,14 @@ class ControllerList extends ControllerBase {
 		if(isset($_REQUEST["filter_organization_id"])) {
 			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_organization_id"]), ['trim',"int"]);
 			if($val != '') $this->filter_values["organization_id"] =  $val;
+		}
+		if(isset($_REQUEST["filter_street_type_id"])) {
+			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_street_type_id"]), ['trim',"int"]);
+			if($val != '') $this->filter_values["street_type_id"] =  $val;
+			else {
+				$val = $this->filter->sanitize(urldecode($_REQUEST["filter_street_type_id"]), ['trim',"string"]);
+				if($val == '**') $this->filter_values["street_type_id"] = "**";
+			}
 		}
 		if(isset($_REQUEST["filter_organization_name"])) {
 			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_organization_name"]), "string");
@@ -356,6 +372,7 @@ class ControllerList extends ControllerBase {
 	* Расширяемый метод
 	*/
 	public function addFilterValuesToPhql($phql) {
+		//$this->logger->log(json_encode($this->filter_values));
 		// параметры фильтрации
 		if(isset($this->filter_values["id"])) $phql .= " AND <TableName>.id LIKE '%" . $this->filter_values["id"] . "%'";
 		// исключаем записи, которые не нужны
@@ -371,13 +388,33 @@ class ControllerList extends ControllerBase {
 		if(isset($this->filter_values["controller"]) && isset($this->columns['controller'])) $phql .= " AND <TableName>.controller LIKE '%" . $this->filter_values["controller"] . "%'";
 		if(isset($this->filter_values["action"]) && isset($this->columns['action'])) $phql .= " AND <TableName>.action LIKE '%" . $this->filter_values["action"] . "%'";
 		if(isset($this->filter_values["module"]) && isset($this->columns['module'])) $phql .= " AND <TableName>.module LIKE '%" . $this->filter_values["module"] . "%'";
-		if(isset($this->filter_values["amount"]) && isset($this->columns['amount'])) $phql .= " AND <TableName>.amount LIKE '%" . $this->filter_values["amount"] . "%'";
+		if(isset($this->filter_values["amount"]) && isset($this->columns['amount'])) {
+			if($this->filter_values["amount"] == $this->columns['amount']["nullable"]) $phql .= " AND (<TableName>.amount IS NULL OR <TableName>.amount = '' OR <TableName>.amount = '" . $this->columns['amount']["nullable"] . "')";
+			else $phql .= " AND <TableName>.amount LIKE '%" . $this->filter_values["amount"] . "%'";
+		}
 		if(isset($this->filter_values["date"]) && isset($this->columns['date'])) $phql .= " AND <TableName>.date LIKE '%" . $this->filter_values["date"] . "%'";
 		// TODO. Победить то, что MySQL ругается на служебное слово "group"
 		if(isset($this->filter_values["group"]) && isset($this->columns['group'])) $phql .= " AND <TableName>.[group] LIKE '%" . $this->filter_values["group"] . "%'";
-		if(isset($this->filter_values["street"]) && isset($this->columns['street'])) $phql .= " AND <TableName>.street LIKE '%" . $this->filter_values["street"] . "%'";
-		if(isset($this->filter_values["house"]) && isset($this->columns['house'])) $phql .= " AND <TableName>.house LIKE '%" . $this->filter_values["house"] . "%'";
-		if(isset($this->filter_values["street_type_id"]) && isset($this->columns['street_type'])) $phql .= " AND <TableName>.street_type_id = '" . $this->filter_values["street_type_id"] . "'";
+		if(isset($this->filter_values["street"]) && isset($this->columns['street'])) {
+			if($this->filter_values["street"] == $this->columns['street']["nullable"]) $phql .= " AND (<TableName>.street IS NULL OR <TableName>.street = '' OR <TableName>.street = '" . $this->columns['street']["nullable"] . "')";
+			else $phql .= " AND <TableName>.street LIKE '%" . $this->filter_values["street"] . "%'";
+		}
+		if(isset($this->filter_values["house"]) && isset($this->columns['house'])) {
+			if($this->filter_values["house"] == $this->columns['house']["nullable"]) $phql .= " AND (<TableName>.house IS NULL OR <TableName>.house = '' OR <TableName>.house = '" . $this->columns['house']["nullable"] . "')";
+			else $phql .= " AND <TableName>.house LIKE '%" . $this->filter_values["house"] . "%'";
+		}
+		if(isset($this->filter_values["executor"]) && isset($this->columns['executor'])) {
+			if($this->filter_values["executor"] == $this->columns['street_type']["nullable"]) $phql .= " AND (<TableName>.executor IS NULL OR <TableName>.executor = '' OR <TableName>.executor = '" . $this->columns['executor']["nullable"] . "')";
+			else $phql .= " AND <TableName>.executor LIKE '%" . $this->filter_values["executor"] . "%'";
+		}
+		if(isset($this->filter_values["street_type_id"])) {
+			if($this->filter_values["street_type_id"] == "**") {
+				$phql .= " AND (<TableName>.street_type_id IS NULL OR <TableName>.street_type_id = '')";
+				if(isset($this->columns['street_type']["nullable"])) $this->filter_values["street_type_id"] = $this->columns['street_type']["nullable"];
+			}
+			else $phql .= " AND <TableName>.street_type_id = '" . $this->filter_values["street_type_id"] . "'";
+		}
+		//else $this->logger->log($this->filter_values["street_type_id"]);
 		
 		// фильтры по справочникам
 		if(isset($this->filter_values["region"])) $phql .= " AND Region.id = '" . $this->filter_values["region"] . "'";
@@ -389,6 +426,7 @@ class ControllerList extends ControllerBase {
 		if(isset($this->filter_values["user_role"])) $phql .= " AND UserRole.id = '" . $this->filter_values["user_role"] . "'";
 		if(isset($this->filter_values["created_by_id"])) $phql .= " AND User.id = '" . $this->filter_values["created_by_id"] . "'";
 		
+		//$this->logger->log(json_encode($phql));
 		return $phql;
 	}
 	
