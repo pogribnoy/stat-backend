@@ -3,7 +3,8 @@
 $messages["text_expense_title"] = "Расход";
 $messages["text_expense_new_entity_title"] = "Новый расход";
 
-$messages["text_expense_expensetype"] = "Тип расхода";
+$messages["text_expense_expense_type"] = "Тип расхода";
+$messages["text_expense_target_date"] = "Срок выполнения";
 
 // Закладка "Основные сведения"
 //$messages["related_data_expenses"] = "Расходы";

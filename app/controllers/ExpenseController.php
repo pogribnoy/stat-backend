@@ -20,7 +20,7 @@ class ExpenseController extends ControllerEntity {
 			), 
 			'expense_type' => array(
 				'id' => 'expense_type',
-				'name' => $this->t->_("text_expense_expensetype"),
+				'name' => $this->t->_("text_expense_expense_type"),
 				'type' => 'select',
 				'style' => 'id', //name
 				//'values' => $expense_types
@@ -50,7 +50,9 @@ class ExpenseController extends ControllerEntity {
 				'name' => $this->t->_("text_entity_property_amount"),
 				'type' => 'amount',
 				'required' => 1,
-				'newEntityValue' => '0.00',
+				'min' => 200,
+				'max' => 9900,
+				'newEntityValue' => null,
 			), 
 			'date' => array(
 				'id' => 'date',
@@ -66,7 +68,7 @@ class ExpenseController extends ControllerEntity {
 				'style' => 'id', //name
 				'linkEntityName' => 'streettype',
 				//'required' => 1,
-				'nullable' => '-',
+				'nullSubstitute' => '-',
 				'newEntityValue' => null,
 			),
 			'street' =>	array(
@@ -88,12 +90,15 @@ class ExpenseController extends ControllerEntity {
 				'type' => 'text',
 				'newEntityValue' => null,
 			),
-			/*'target_date' =>	array(
+			'target_date' =>	array(
 				'id' => 'target_date',
 				'name' => $this->t->_("text_expense_target_date"),
+				'name1' => $this->t->_("text_entity_property_period_from"),
+				'name2' => $this->t->_("text_entity_property_period_to"),
 				'type' => 'period',
-				'newEntityValue' => null,
-			),*/
+				'newEntityValue1' => null,
+				'newEntityValue2' => (new DateTime('now'))->format("Y-m-d"),
+			),
 		];
 		// наполняем поля данными
 		parent::initFields();
@@ -114,8 +119,8 @@ class ExpenseController extends ControllerEntity {
 		$this->entity->street = $this->fields['street']['value'];
 		$this->entity->house = $this->fields['house']['value'];
 		$this->entity->executor = $this->fields['executor']['value'];
-		//$this->entity->target_date_from = $this->fields['target_date']['value1'];
-		//$this->entity->target_date_to = $this->fields['target_date']['value2'];
+		$this->entity->target_date_from = $this->fields['target_date']['value1'];
+		$this->entity->target_date_to = $this->fields['target_date']['value2'];
 	}
 	
 	/* 
@@ -140,14 +145,14 @@ class ExpenseController extends ControllerEntity {
 		$this->fields["id"]["value"] = $row->expense->id;
 		$this->fields["name"]["value"] = $row->expense->name;
 		$this->fields["date"]["value"] = $row->expense->date;
-		$this->fields["amount"]["value"] = $row->expense->amount ? number_format($row->expense->amount / 100, 2, '.', '') : '';
+		$this->fields["amount"]["value"] = $row->expense->amount!=null ? number_format($row->expense->amount / 100, 2, '.', '') : '';
 		$this->fields["street_type"]["value"] = $row->street_type_name;
 		$this->fields["street_type"]["value_id"] = $row->street_type_id;
 		$this->fields["street"]["value"] = $row->expense->street;
 		$this->fields["house"]["value"] = $row->expense->house;
 		$this->fields["executor"]["value"] = $row->expense->executor;
-		//$this->fields["target_date"]["value1"] = $row->expense->target_date_from;
-		//$this->fields["target_date"]["value2"] = $row->expense->target_date_to;
+		$this->fields["target_date"]["value1"] = $row->expense->target_date_from;
+		$this->fields["target_date"]["value2"] = $row->expense->target_date_to;
 	}
 		
 	/* 
@@ -187,19 +192,47 @@ class ExpenseController extends ControllerEntity {
 		//amount
 		if(isset($rq->fields->amount) && isset($rq->fields->amount->value)) {
 			$val = $this->filter->sanitize(urldecode($rq->fields->amount->value), ["trim", "string"]);
+			//$this->logger->log('1val = ' . $val);
 			$val = str_replace([",", "-"], ".", $val);
-			$val = 100 * $val;
-			if($val != '') $this->fields['amount']['value'] = $val;
-			else {
+			//$this->logger->log('2val = ' . $val);
+			if($val != '') {
+				$val = 100 * $val;
+				if(isset($this->fields['amount']['min']) && $val < (int)$this->fields['amount']['min']) {
+					$this->error['messages'][] = [
+						'title' => "Ошибка",
+						'msg' => 'Поле "'. $this->fields['amount']['name'] .'" содержит значение меньше допустимого',
+					];
+					return false;
+				}
+				if(isset($this->fields['amount']['max']) && $val > (int)$this->fields['amount']['max']) {
+					$this->error['messages'][] = [
+						'title' => "Ошибка",
+						'msg' => 'Поле "'. $this->fields['amount']['name'] .'" содержит значение больше допустимого',
+					];
+					return false;
+				}
+				//$this->logger->log('3val = ' . $val);
+				$this->fields['amount']['value'] = $val;
+			}
+			else if($val == '' && isset($this->fields['amount']['required'])) {
 				$this->error['messages'][] = [
 					'title' => "Ошибка",
 					'msg' => 'Поле "'. $this->fields['amount']['name'] .'" обязательно для указания',
 				];
 				return false;
 			}
-			//$this->logger->log('val = ' . $this->fields['amount']['value']);
+			else {
+				$this->fields['amount']['value'] = null;
+			}
 		}
-		else return false;
+		else {
+			$this->error['messages'][] = [
+				'title' => "Ошибка",
+				'msg' => 'В поле "'. $this->fields['amount']['name'] .'" обязательно для указания',
+			];
+			return false;
+		}
+		
 		//street
 		if(isset($rq->fields->street) && isset($rq->fields->street->value)) {
 			$val = $this->filter->sanitize(urldecode($rq->fields->street->value), ["trim", "string"]);
@@ -207,7 +240,8 @@ class ExpenseController extends ControllerEntity {
 			else $this->fields['street']['value'] = null;
 			//$this->logger->log('val = ' . $this->fields['street']['value']);
 		}
-		else return false;
+		else $this->fields['street']['value'] = null;
+		
 		//house
 		if(isset($rq->fields->house) && isset($rq->fields->house->value)) {
 			$val = $this->filter->sanitize(urldecode($rq->fields->house->value), ["trim", "string"]);
@@ -215,7 +249,7 @@ class ExpenseController extends ControllerEntity {
 			else $this->fields['house']['value'] = $val;
 			//$this->logger->log('val = ' . $this->fields['house']['value']);
 		}
-		else return false;
+		else $this->fields['house']['value'] = null;
 		
 		//executor
 		if(isset($rq->fields->executor) && isset($rq->fields->executor->value)) {
@@ -224,17 +258,17 @@ class ExpenseController extends ControllerEntity {
 			else $this->fields['executor']['value'] = $val;
 			//$this->logger->log('val = ' . $this->fields['executor']['value']);
 		}
-		else return false;
+		else $this->fields['executor']['value'] = null;
 		
 		//target_date
-		/*if(isset($rq->fields->target_date) && isset($rq->fields->target_date->value1) && isset($rq->fields->target_date->value2)) {
+		if(isset($rq->fields->target_date) && isset($rq->fields->target_date->value1) && isset($rq->fields->target_date->value2)) {
 			$val1 = $this->filter->sanitize(urldecode($rq->fields->target_date->value1), ["trim", "string"]);
 			$val2 = $this->filter->sanitize(urldecode($rq->fields->target_date->value2), ["trim", "string"]);
 			if($val1 == '') $this->fields['target_date']['value1'] = null;
 			if($val2 == '') $this->fields['target_date']['value2'] = null;
 			if($val1 != '' && $val2 != '') {
-				$d1 = dateTime ($val1); //(new DateTime('now'))->format("Y-m-d")
-				$d2 = dateTime ($val2);
+				$d1 = new dateTime ($val1); //(new DateTime('now'))->format("Y-m-d")
+				$d2 = new dateTime ($val2);
 				if($d1 > $d2) {
 					$this->error['messages'][] = [
 						'title' => "Ошибка",
@@ -245,9 +279,15 @@ class ExpenseController extends ControllerEntity {
 			}
 			$this->fields['target_date']['value1'] = $val1;
 			$this->fields['target_date']['value2'] = $val2;
-			//$this->logger->log('val = ' . $this->fields['target_date']['value']);
+			
+			//$this->logger->log('val1 = ' . $this->fields['target_date']['value1']);
+			//$this->logger->log('val2 = ' . $this->fields['target_date']['value2']);
 		}
-		else return false;*/
+		else {
+			//$this->logger->log('target_date = ' . json_encode($rq->fields->target_date));
+			$this->fields['target_date']['value1'] = null;
+			$this->fields['target_date']['value2'] = null;
+		}
 		
 		return true;
 	}

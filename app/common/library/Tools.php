@@ -22,26 +22,26 @@ class Tools extends Component {
 			if($acl->isAllowed($role_id, $entity, 'save') && !in_array('save', $exludeOps)) {
 				$operations[] = array(
 					'id' => 'save',
-					'name' => $t->_('button_save')
+					'name' => $t->_('button_save'),
 				);
 			}
 		}
 		if($acl->isAllowed($role_id, $entity, 'delete') && !in_array('delete', $exludeOps)) {
 			$operations[] = array(
 				'id' => 'delete',
-				'name' => $t->_('button_delete')
+				'name' => $t->_('button_delete'),
 			);
 		}
 		if($acl->isAllowed($role_id, $entity, 'back') && !in_array('back', $exludeOps)) {
 			$operations[] = array(
 				'id' => 'back',
-				'name' => $t->_('button_back')
+				'name' => $t->_('button_back'),
 			);
 		}
 		if($acl->isAllowed($role_id, $entity, 'scroller') && !in_array('scroller', $exludeOps)) {
 			$operations[] = array(
 				'id' => 'scroller',
-				'name' => $t->_('button_scroller')
+				'name' => $t->_('button_scroller'),
 			);
 		}
 		
@@ -56,21 +56,21 @@ class Tools extends Component {
 		if($acl->isAllowed($role_id, $entity, 'show')) {
 			$operations["item_operations"][] = array(
 				'id' => 'show',
-				'name' => $t->_('button_show')
+				'name' => $t->_('button_show'),
 			);
 		}
 		if($actionName != "show") {
 			if($acl->isAllowed($role_id, $entity, 'edit')) {
 				$operations["item_operations"][] = array(
 					'id' => 'edit',
-					'name' => $t->_('button_edit')
+					'name' => $t->_('button_edit'),
 				);
 			}
 		
 			if($acl->isAllowed($role_id, $entity, 'delete')) {
 				$operations["item_operations"][] = array(
 					'id' => 'delete',
-					'name' => $t->_('button_delete')
+					'name' => $t->_('button_delete'),
 				);
 			}
 		}
@@ -81,14 +81,24 @@ class Tools extends Component {
 			// для скроллера
 			$operations["common_operations"][] = array(
 				'id' => 'add',
-				'name' => $t->_('button_add')
+				'name' => $t->_('button_add'),
 			);
 			// для грида
 			$operations["common_operations"][] = array(
 				'id' => 'select',
-				'name' => $t->_('button_select')
+				'name' => $t->_('button_select'),
 			);
 		}
+		
+		// массив групповых операций
+		$operations["group_operations"] = array();
+		if($acl->isAllowed($role_id, $entity, 'delete') && $actionName != "show") {
+			$operations["group_operations"][] = array(
+				'id' => 'delete',
+				'name' => $t->_('button_delete'),
+			);
+		}
+
 		
 		// массив операций для фильтра
 		$operations["filter_operations"] = array();

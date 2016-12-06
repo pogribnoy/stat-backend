@@ -710,6 +710,12 @@ class ControllerEntity extends ControllerBase {
 			else if($field['type'] == 'img') {
 				// для изображениq значение по умолчанию пока не предусмотрено
 			}
+			else if($field["type"] == 'period') {
+				if(isset($field["newEntityValue1"]) && $field["newEntityValue1"] != '' && $field["newEntityValue1"] != null) $field["value1"] = $field["newEntityValue1"];
+				else $field["value1"] = null;
+				if(isset($field["newEntityValue1"]) && $field["newEntityValue2"] != '' && $field["newEntityValue2"] != null) $field["value2"] = $field["newEntityValue2"];
+				else $field["value2"] = null;
+			}
 			else if(isset($field["newEntityValue"]) && $field["newEntityValue"] != '' && $field["newEntityValue"] != null) $field["value"] = $field["newEntityValue"];
 			// если предусмотрена выборка по ID, то надо запросить значение в связанной таблице
 			else if(isset($field["newEntityID"]) && $field["newEntityID"] != '' && $field["newEntityID"] != null && 
@@ -857,7 +863,7 @@ class ControllerEntity extends ControllerBase {
 		}
 		
 		// ссылочные поля (select, link)
-		foreach($this->fields as $fieldID => $field) {
+		foreach($this->fields as $fieldID => &$field) {
 			if($field['type'] == 'select' || $field['type'] == 'link') {
 				// ожидается поле типа 'id'
 				if((isset($field['style']) && $field['style'] == 'id') || $field['type'] == 'link') {
@@ -865,37 +871,52 @@ class ControllerEntity extends ControllerBase {
 					if(isset($rq->fields->$fieldID)) {
 						// поле содержит id значения
 						if(isset($rq->fields->$fieldID->value_id)) {
-							$id = $this->filter->sanitize(urldecode($rq->fields->$fieldID->value_id), ['trim', "int"]);
-							if($id != '') {
-								$linkEntityName = $field['linkEntityName'];
-								$entity = false;
-								$entity = $linkEntityName::findFirst(["conditions" => "id = ?1", "bind" => [1 => $id]]);
-								if(!$entity) {
+							$id = $this->filter->sanitize(urldecode($rq->fields->$fieldID->value_id), ['trim', "string"]);
+							//$this->logger->log(__METHOD__ . ". fieldID = " . $fieldID . ". id = " . $id);
+							// выбрано пустое значение и поле необязательное
+							if(($id == '*' || $id == '' || $id == null) && !isset($field['required'])) {
+								$field['value_id'] = null;
+								$field['value'] = null;
+							}
+							else {
+								$id = $this->filter->sanitize(urldecode($rq->fields->$fieldID->value_id), ['trim', "int"]);
+								if($id != '') {
+									$linkEntityName = $field['linkEntityName'];
+									$entity = false;
+									$entity = $linkEntityName::findFirst(["conditions" => "id = ?1", "bind" => [1 => $id]]);
+									if(!$entity) {
+										$this->error['messages'][] = [
+											'title' => "Ошибка",
+											'msg' => $fieldID . ". Передан некорректный идентификатор (не найден  БД)"
+										];
+										return false;
+									}
+									$field['value_id'] = $id;
+								}
+								else if(!isset($field['required'])) {
+									$field['value_id'] = null;
+									$field['value'] = null;
+								}
+								else {
 									$this->error['messages'][] = [
 										'title' => "Ошибка",
-										'msg' => $fieldID . ". Передан некорректный идентификатор (не найден  БД)"
+										'msg' => 'Поле "' . $field['name'] . '" обязательно для указания'
 									];
 									return false;
 								}
-								$this->fields[$fieldID]['value_id'] = $id;
+								
 							}
-							else if($field['nullable']) {
-								$this->fields[$fieldID]['value'] = ($field['nullable'] == 1 ? null : $field['nullable']);
-								$this->fields[$fieldID]['value_id'] = null;
-							}
-							else {
-								$this->error['messages'][] = [
-									'title' => "Ошибка",
-									'msg' => 'Поле "' . $this->fields[$fieldID]['name'] . '" обязательно для указания'
-								];
-								return false;
-							}
+						}
+						// поле не содержит id значения, и оно не обязательное
+						else if(!isset($field['required'])) {
+							$field['value_id'] = null;
+							$field['value'] = null;
 						}
 						// поле не содержит id значения
 						else {
 							$this->error['messages'][] = [
 								'title' => "Ошибка",
-								'msg' => 'Поле "' . $this->fields[$fieldID]['name'] . '" обязательно для указания'
+								'msg' => 'Поле "' . $field['name'] . '" обязательно для указания'
 							];
 							return false;
 						}
@@ -903,10 +924,10 @@ class ControllerEntity extends ControllerBase {
 					// поля нет в запросе
 					else {
 						// но оно обязательное
-						if(isset($field['required']) && $field['required'] == 1) {
+						if(isset($field['required'])) {
 							$this->error['messages'][] = [
 								'title' => "Ошибка",
-								'msg' => 'Поле "' . $this->fields[$fieldID]['name'] . '" обязательно для указания'
+								'msg' => 'Поле "' . $field['name'] . '" обязательно для указания'
 							];
 							return false;
 						}
@@ -915,25 +936,33 @@ class ControllerEntity extends ControllerBase {
 				else if(isset($field['style']) && $field['style'] == 'name') {
 					// поле есть в запросе
 					if(isset($rq->fields->$fieldID)) {
-						// поле содержит значение
-						if(isset($rq->fields->$fieldID->value)) {
-							$val = $this->filter->sanitize(urldecode($rq->fields->$fieldID->value_id), ['trim', "int"]);
-							// значение не пустое или пустое, но поле не обязательное
-							if(($val != '') || ($val == '' && !isset($field['required'])) || ($val == '' && isset($field['required']) && $field['required'] == 0)) {
-								$this->fields[$fieldID]['value'] = $this->fields[$fieldID]['values'][$val];
+						// поле содержит id значения
+						if(isset($rq->fields->$fieldID->value_id)) {
+							$id = $this->filter->sanitize(urldecode($rq->fields->$fieldID->value_id), ['trim', "string"]);
+							// выбрано пустое значение и поле необязательное
+							if($id == '*' && !isset($field['required'])) {
+								$field['value_id'] = null;
+								$field['value'] = null;
 							}
 							else {
-								$this->error['messages'][] = [
-									'title' => "Ошибка",
-									'msg' => 'Поле "' . $this->fields[$fieldID]['name'] . '" обязательно для указания'
-								];
-								return false;
+								$val = $this->filter->sanitize(urldecode($rq->fields->$fieldID->value_id), ['trim', "int"]);
+								// значение не пустое или пустое, но поле не обязательное
+								if(($val != '') || ($val == '' && !isset($field['required'])) || ($val == '' && isset($field['required']) && $field['required'] == 0)) {
+									$field['value'] = $field['values'][$val];
+								}
+								else {
+									$this->error['messages'][] = [
+										'title' => "Ошибка",
+										'msg' => 'Поле "' . $field['name'] . '" обязательно для указания'
+									];
+									return false;
+								}
 							}
 						}
 						else {
 							$this->error['messages'][] = [
 								'title' => "Ошибка",
-								'msg' => 'Поле "' . $this->fields[$fieldID]['name'] . '" обязательно для указания'
+								'msg' => 'Поле "' . $field['name'] . '" обязательно для указания'
 							];
 							return false;
 						}
@@ -944,7 +973,7 @@ class ControllerEntity extends ControllerBase {
 						if(isset($field['required']) && $field['required'] == 1) {
 							$this->error['messages'][] = [
 								'title' => "Ошибка",
-								'msg' => 'Поле "' . $this->fields[$fieldID]['name'] . '" обязательно для указания'
+								'msg' => 'Поле "' . $field['name'] . '" обязательно для указания'
 							];
 							return false;
 						}

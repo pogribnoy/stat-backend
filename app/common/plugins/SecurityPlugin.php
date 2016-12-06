@@ -31,7 +31,8 @@ class SecurityPlugin extends Plugin {
 		//var_dump($this->loader);
 		
 		// Создание регистратора с поддержкой записи
-
+		$aclName = "acl_" . $this->config->application->module;
+		if (!isset($this->persistent->$aclName)) {
 		//if (!isset($this->persistent->acl)) {
 			$roles = array();
 			$resources = array();
@@ -104,10 +105,12 @@ class SecurityPlugin extends Plugin {
 				}
 
 				//The acl is stored in session, APC would be useful here too
-				$this->persistent->acl = $acl;
+				$this->persistent->$aclName = $acl;
+				//$this->persistent->acl = $acl;
 			}
-		//}
-		return $this->persistent->acl;
+		}
+		return $this->persistent->$aclName;
+		//return $this->persistent->acl;
 	}
 	
 
@@ -217,7 +220,6 @@ class SecurityPlugin extends Plugin {
 					$dispatcher->forward(array(
 						'controller' => 'errors',
 						'action'     => 'show401',
-						//'sourceURL' => array($controller . '-' . $action)
 					));
 				}
 			}

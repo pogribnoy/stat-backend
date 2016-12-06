@@ -13,7 +13,7 @@ class ControllerBase extends Controller {
 		$this->namespace = __NAMESPACE__;
 		$this->dir = __DIR__;
 		// отключаем кеширование представлений
-		$this->view->cache(false);
+		//$this->view->cache(false);
 		// инициализируем лог
 		$this->logger = new FileAdapter(APP_PATH . '/app/logs/' . $this->controllerName /*. "_" . $this->actionName*/ . ".log", array('mode' => 'a'));
 		//$this->logger->log("asd".$this->logger);
@@ -32,6 +32,7 @@ class ControllerBase extends Controller {
 		$this->view->setTemplateAfter('index');
 		
 		$this->filter = new Filter();
+		$this->viewCacheKey = $this->controllerName . "_" . $this->actionName . ".html";
 	}
 	
 	public function beforeExecuteRoute($dispatcher){

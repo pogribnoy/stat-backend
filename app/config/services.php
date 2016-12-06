@@ -93,13 +93,15 @@ $di->setShared('db', function() use ($config) {
 });
 
 $di->setShared('modelsManager', function() {
-      return new \Phalcon\Mvc\Model\Manager();
+      return new Phalcon\Mvc\Model\Manager();
  });
 
 // Если настройки предписывают использование metadata-адаптера, то необходимо его использовать, иначе следует использовать memory
-$di->set('modelsMetadata', function() {
-	return new MetaData();
-});
+/*$di->set('modelsMetadata', function() {
+	return new Phalcon\Mvc\Model\Metadata\Files(array(
+		'metaDataDir' => APP_PATH . 'app/cache/metadata/',
+	));
+});*/
 
 // Создать сессию при первом обращении какого-либо компонента к сервису сессий
 $di->set('session', function() {

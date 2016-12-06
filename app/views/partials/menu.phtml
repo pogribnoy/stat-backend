@@ -37,7 +37,7 @@
 						<?php if($controller->acl->isAllowed($controller->userData['role_id'], 'expensestatuslist', 'index')) { ?><li><a href="/expensestatuslist">Статусы расходов</a></li><?php } ?>
 					</ul>
 				</li>
-				
+				<li><a href="/profile/edit?id=<?php echo $controller->userData['id']; ?>">Профиль пользователя</a></li>
 			</ul>
 		</div><!-- /.navbar-collapse -->
 		<ul class="nav navbar-nav navbar-right">

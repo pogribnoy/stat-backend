@@ -251,4 +251,49 @@ class UserController extends ControllerEntity{
 		
 		return true;
 	}
+	
+	public function sendPasswordAction() {
+		if($this->request->isAjax()) {
+			$this->view->disable();
+			$this->response->setContentType('application/json', 'UTF-8');
+			
+			if(isset($_REQUEST["email"])) {
+				$email = $this->filter->sanitize(urldecode($_REQUEST["email"]), ["trim", "email"]); 
+				
+				if($email != '') {
+					$user = false;
+					$user = User::findFirst(['conditions' =>'email = ?1', 'bind' => [1 => $email],]);
+					if($user) {
+						// отправляем письмо
+						$this->success['messages'][] = [
+							'title' => "Успех",
+							'msg' => $this->t->_("text_password_recover_success"),
+						];
+					}
+					else {
+						$this->error['messages'][] = [
+						'title' => "Ошибка",
+						'msg' => "Пользователь с таким email не найден",
+					];
+					}
+				}
+				else {
+					$this->error['messages'][] = [
+						'title' => "Ошибка",
+						'msg' => "Адрес электронной почты передан в неверном формате",
+					];
+				}
+			}
+			else {
+				$this->error['messages'][] = [
+					'title' => "Ошибка",
+					'msg' => "Адрес электронной почты передан в неверном формате",
+				];
+			}
+			
+			if(isset($this->error['messages']) && count($this->error['messages'])>0) $this->data['error'] = $this->error;
+			if(isset($this->success['messages']) && count($this->success['messages'])>0) $this->data['success'] = $this->success;
+			return json_encode($this->data);
+		}
+	}
 }

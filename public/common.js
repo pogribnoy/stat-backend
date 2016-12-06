@@ -271,7 +271,7 @@ function copyServerEntityDataToEntities(descriptor, entityName) {
 		if(!entities[entityName][eid].local_data) {
 			entities[entityName][eid].type = 'entity';
 			entities[entityName][eid].entity = entityName;
-			entities[entityName][eid].controllerName = entityName;
+			entities[entityName][eid].controllerName = descriptor.controllerName;
 			entities[entityName][eid].local_data = {
 				status: 'actual',
 				udid: createID(),
@@ -850,12 +850,18 @@ function initEntityScripts(container_id) {
 		if(!entity.local_data.fields[entityField]) entity.local_data.fields[entityField] = {};
 		entity.local_data.fields[entityField].inputJQ = $(this);
 		
+		entity.local_data.fields[entityField].settings = settings;
+		
 		entity.local_data.fields[entityField].inputJQ.fileinput(settings).on('filezoomshow', function(event, params) {
 			// устанавливаем контейнер модалок в качестве родительского контейнера модалки
 			m = $(params.modal[0]);
 			m.detach();
 			m.appendTo('#container_modals');
-		}).on('filebatchuploadsuccess', function(event, data, previewId, index) {
+		})/*.on('filebatchpreupload', function(event, data, previewId, index) {
+			var form = data.form, files = data.files, extra = data.extra, response = data.response, reader = data.reader;
+			console.log('File batch pre upload');
+			//extra.parent_entity_id = entity.local_data.eid;
+		})*/.on('filebatchuploadsuccess', function(event, data, previewId, index) {
 			var form = data.form, files = data.files, extra = data.extra, response = data.response, reader = data.reader;
 			console.log('File batch upload success');
 			
@@ -892,7 +898,7 @@ function initEntityScripts(container_id) {
 			// хоть фалы и не загрузили, но надо подать сигнал, что загрузка завершена
 			entity.local_data.fields[entityField].deferredUpload.resolve();
 		   // get message
-		   //console.log(msg);
+		   console.log(msg);
 		   //handleAjaxSuccess(response.success);
 		   //handleAjaxError(response.error);
 		}).on('fileloaded', function(event, file, previewId, index, reader) {
@@ -945,17 +951,31 @@ function initEntityScripts(container_id) {
 	for (var key in container.data.fields) {
 		if(container.data.fields[key].type == 'amount') {
 			var jqField = container.jqobj.find('#field_'+key+'_value');
-			jqField.keyup(function(e){
-				if (e.which === 32) {
-					//alert('No space are allowed in amount');
-					var str = $(this).val();
-					str = str.replace(/\s/g,'');
-					$(this).val(str);            
+			jqField.keypress(function(e) {
+				var val = $(this).val();
+				var pos = val.indexOf('.');
+				
+				if (e.which !== 0 && ((e.which < 48 && e.which !== 46) || e.which > 57)) {
+					//alert("Charcter was typed. It was: " + String.fromCharCode(e.which) + " code: "+ e.which);
+					e.preventDefault();
+				}
+				// если точка уже есть в значении, то еще одну не надо давать вводить
+				else if(e.which === 46) {
+					if(val.indexOf('.') > -1) e.preventDefault();
+				}
+				if(pos != -1 && (val.length-pos)>2){ // проверяем, сколько знаков после запятой, если больше 1го то
+					val = val.slice(0, -1); // удаляем лишнее
 				}
 			}).blur(function() {
-				var str = $(this).val();
-				str = str.replace(/\s/g,'');
-				$(this).val(str);            
+				var val = $(this).val();
+				var pos = val.indexOf('.');
+				if(pos != -1 && (val.length-pos)>3){ // проверяем, сколько знаков после запятой, если больше 1го то
+					val = val.slice(0, -(val.length-pos-3)); // удаляем лишнее
+				}
+				//str = str.replace(/\s/g,'');
+				val = val.replace(/\s/g,'');
+				$(this).val(val);
+				//if(/^\d{1,15}.?\d{0,2}$/.test(val)==null) {};
 			});
 		}
 	}

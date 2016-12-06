@@ -7,8 +7,8 @@ class FileController extends ControllerBase {
 	public $error = array('messages' => array());
 	public $success = array('messages' => array());
 	
-	public $entity_upload_directory = 'default/';
-	public $files_upload_directory = 'upload/files/';
+	//public $entity_upload_directory = 'default/';
+	public $files_upload_directory = 'upload/files/default/';
 	
 	public function initialize() {
 		parent::initialize();
@@ -224,8 +224,8 @@ class FileController extends ControllerBase {
 					if($set->code == 'files_upload_directory') $this->files_upload_directory = $set->value;
 					else if($set->code == (mb_strtolower($pe_name) . '_upload_directory')) $this->entity_upload_directory = $set->value;
 				}*/
-				$this->files_upload_directory = $this->config->application->filesUploadDirectory;
-				$this->entity_upload_directory = mb_strtolower($pe_name) . '/';
+				$this->files_upload_directory = $this->config->application->filesUploadDirectory . mb_strtolower($pe_name) . '/';
+				//$this->entity_upload_directory = ;
 				
 				//$this->logger->log(json_encode($this->settings));
 		
@@ -248,7 +248,7 @@ class FileController extends ControllerBase {
 							$this->data['files'] = array();
 							try {
 								// готовим дирректорию
-								$output_dir = $this->files_upload_directory . $this->entity_upload_directory . $pe_id . "/";
+								$output_dir = $this->files_upload_directory . $pe_id . "/";
 								// если папки нет, то создаем
 								$dir = './' . mb_substr($output_dir, 0, -1);
 								if(!is_dir($dir)) mkdir($dir, 0700, true);

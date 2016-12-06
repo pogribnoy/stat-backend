@@ -12,26 +12,109 @@
 				<span class="input-group-addon"><i class="glyphicon glyphicon-envelope"></i></span>
 				<input type="email" id="email" class="form-control" placeholder="Email" autofocus="">
 			</div>
-			<div class="row"><div class="col-lg-12 text-center">ИЛИ</div></div>
+			<!--<div class="row"><div class="col-lg-12 text-center">ИЛИ</div></div>
 			<div class="input-group">
 					<span class="input-group-addon"><i class="glyphicon glyphicon-phone-alt"></i></span>
 					<input id="phone" type="tel" class="form-control" name="phone" value="" placeholder="Телефон" pattern="[0-9]+" maxlength="12">                                        
-			</div>
+			</div>-->
 			<div class="row"><div class="col-lg-12 text-center">&nbsp;</div></div>
 			<div class="input-group">
 					<span class="input-group-addon"><i class="glyphicon glyphicon-lock"></i></span>
 					<input id="password" type="password" class="form-control" name="password" value="" required="" placeholder="Пароль">                                        
 			</div>
-			<div class="checkbox">
+			<div class="row"><div class="col-lg-12 text-center">&nbsp;</div></div>
+			<div class="row"><div class="col-lg-12 text-right"><a href="#" data-toggle="modal" data-target="#recoverModal"><?php echo $t->_("button_password_recover"); ?></a></div></div>
+			<div class="row"><div class="col-lg-12 text-center">&nbsp;</div></div>
+			<!--<div class="checkbox">
 				<label>
 					<input type="checkbox" value="remember-me"> Запомнить меня
 				</label>
-			</div>
-			<button type="button" class="btn btn-lg btn-primary btn-block" onclick="backendLogin();">Войти</button>
+			</div>-->
+			<button type="button" class="btn btn-lg btn-primary btn-block" onclick="backendLogin();"><?php echo $t->_("button_enter"); ?></button>
 		</div>
 	</div>
 </div><!-- /.row -->
+
+<!-- Модальные окна -->
+<div class="modal fade" id="recoverModal" tabindex="-1" role="dialog" aria-labelledby="recoverModalHeader">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title" id="recoverModalHeader"><?php echo $t->_("text_password_recover_title"); ?></h4>
+			</div>
+			<div class="modal-body">
+				<p><?php echo $t->_("text_password_recover_annotation"); ?></p>
+				<div class="input-group">
+					<span class="input-group-addon"><i class="glyphicon glyphicon-envelope"></i></span>
+					<input type="email" id="email" class="form-control" placeholder="Email" required>
+				</div>
+				<div><p id="emailError" class="text-danger"></p></div>
+				<div><p id="emailSuccess" class="text-success"></p></div>
+				<div>&nbsp;</div>
+				<!--<button class="btn btn-lg btn-primary btn-block" type="submit" formmethod="get" formaction="/session/start">Войти</button>-->
+				<button type="button" class="btn btn-primary btn-block" onclick="sendPassword();" autofocus><?php echo $t->_("button_send"); ?></button>
+			</div>
+			<div class="modal-footer">
+				<!--<button type="button" class="btn btn-default" data-dismiss="modal">Отмена</button>-->
+			</div>
+		</div><!-- /.modal-content -->
+	</div><!-- /.modal-dialog -->
+</div>
+
 <script type="text/javascript"><!--
+
+function sendPassword() {
+	var modal = $("#recoverModal");
+	var emailJQ = modal.find('#email');
+	var email = emailJQ.val();
+	$('#emailSuccess').text('');
+	$('#emailError').text('');
+	emailJQ.parent().removeClass("has-error");
+	
+	if(!email) {
+		emailJQ.parent().addClass("has-error");
+		$('#emailError').text('Вы не указали адрес электронной почты');
+		return;
+	}
+	if(email.indexOf('@') == -1) {
+		emailJQ.parent().addClass("has-error");
+		$('#emailError').text('Неверный адрес электронной почты');
+		return;
+	}
+	
+	$('#emailError').text('');
+	emailJQ.parent().removeClass("has-error");
+	
+	$.ajax({
+		url: '/user/sendpassword?email=' + encodeURIComponent(email),
+		dataType: 'json',
+		method: 'get',
+		beforeSend: function() {
+				// показываем прогрессбар
+		},
+		complete: function() {
+			// скрываем прогрессбар
+		},			
+		success: function(json) {
+			console.log(json);
+			handleAjaxSuccess(json.success)
+			if(!handleAjaxError(json.error)) {
+				if(json.success.redirect) document.location = json.success.redirect;
+				//if(json.success && json.success.messages.length>0) $('#emailSuccess').text(json.success.messages[0].msg);
+			}
+		},
+		error: function(xhr, ajaxOptions, thrownError) {
+			console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+			handleAjaxError({
+				messages: [{
+					title: 'Ошибка обмена данными',
+					msg: 'Ошибка обработки запроса на стороне сервера. Обратитесь в службу поддержки',
+				}],
+			});
+		}
+	});
+}
 
 function backendLogin() {
 	var url = '/session/start?';

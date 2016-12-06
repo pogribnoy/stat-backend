@@ -37,13 +37,13 @@ class ExpenseListController extends ControllerList {
 				'filter_value' => isset($this->filter_values['amount']) ? $this->filter_values['amount'] : '',
 				"sortable" => "DESC",
 			),
-			'date' => array(
+			/*'date' => array(
 				'id' => 'date',
 				'name' => $this->controller->t->_("text_entity_property_date"),
 				'filter' => 'text',
 				'filter_value' => isset($this->filter_values['date']) ? $this->filter_values['date'] : '',
 				"sortable" => "DESC",
-			),
+			),*/
 			'street_type' => array(
 				'id' => 'street_type',
 				'name' => $this->controller->t->_("text_entity_property_street_type"),
@@ -69,7 +69,7 @@ class ExpenseListController extends ControllerList {
 			),
 			'expense_type' => array(
 				'id' => 'expense_type',
-				'name' => $this->controller->t->_("text_expenselist_expensetype"),
+				'name' => $this->controller->t->_("text_expenselist_expense_type"),
 				'filter' => 'select',
 				'filter_value' => isset($this->filter_values['expense_type']) ? $this->filter_values['expense_type'] : '',
 				'filter_id' => 'expense_type_id', // задается, если отличается от id
@@ -99,6 +99,11 @@ class ExpenseListController extends ControllerList {
 				'filter' => 'text',
 				'filter_value' => isset($this->filter_values['executor']) ? $this->filter_values['executor'] : '',
 				"sortable" => "DESC",
+			),
+			'target_date' => array(
+				'id' => 'target_date',
+				'name' => $this->controller->t->_("text_expenselist_target_date"),
+				'hideble' => 1,
 			),
 			'operations' => array(
 				'id' => 'operations',
@@ -199,12 +204,12 @@ class ExpenseListController extends ControllerList {
 				),
 				"amount" => array(
 					'id' => 'amount',
-					'value' => $row->expense->amount ? number_format($row->expense->amount / 100, 2, '.', ' ') : '',
+					'value' => $row->expense->amount != null ? number_format($row->expense->amount / 100, 2, '.', ' ') : '',
 				),
-				"date" => array(
+				/*"date" => array(
 					'id' => 'date',
 					'value' =>  $row->expense->date,
-				),
+				),*/
 				"street_type" => array(
 					'id' => 'street_type',
 					'value_id' => $row->street_type_id ? $row->street_type_id : '',
@@ -232,11 +237,11 @@ class ExpenseListController extends ControllerList {
 					'value_id' => $row->expense_status_id ? $row->expense_status_id : '',
 					'value' => $row->expense_status_name ? $row->expense_status_name : '',
 				),
-				/*"target_date" => array(
+				"target_date" => array(
 					'id' => 'target_date',
-					'value1' => $row->target_date_from ? $row->target_date_from : '',
-					'value2' => $row->target_date_to ? $row->target_date_to : '',
-				),*/
+					'value1' => $row->expense->target_date_from ? $row->expense->target_date_from : '',
+					'value2' => $row->expense->target_date_to ? $row->expense->target_date_to : '',
+				),
 			)
 		);
 	}

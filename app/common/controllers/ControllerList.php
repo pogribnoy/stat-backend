@@ -69,7 +69,7 @@ class ControllerList extends ControllerBase {
 			// инициализируем лог
 			$this->logger = new FileAdapter(APP_PATH . '/app/logs/' . $this->controllerName /*. "_" . $this->actionName*/ . ".log", array('mode' => 'a'));
 			// пример: $this->logger->log("add_filters['page_size']=" . $add_filters["page_size"]);
-			
+			$this->viewCacheKey = $this->controllerName . (isset($this->actionName) ? "_" . $this->actionName : "") . ".html";
 		}
 		
 		// читаем настройки
@@ -107,8 +107,8 @@ class ControllerList extends ControllerBase {
 		$this->fillItemsFromRows($rows);
 		
 		// TODO. Возвращать реальное количество страниц
-		//$descriptor["pager"]["total_pages"] = $count/$descriptor["filter_values"]["page_size"]+1;
-		$this->descriptor["pager"]["total_pages"] = 4;
+		$this->descriptor["pager"]["total_pages"] = $count/$this->descriptor["filter_values"]["page_size"]+1;
+		//$this->descriptor["pager"]["total_pages"] = 4;
 		$this->descriptor["items"] = $this->items;
 		$this->descriptor["count"] = $count;
 		
@@ -196,6 +196,7 @@ class ControllerList extends ControllerBase {
 			"type" => "scroller",
 			"columns" => $this->columns,
 			"item_operations" => $this->operations["item_operations"], // действия над строками
+			"group_operations" => $this->operations["group_operations"], // групповые действия над строками
 			"common_operations" => $this->operations["common_operations"], // действия, не связанные с конкретными строками таблицы (общие для всей таблицы)
 			"filter_operations" => $this->operations["filter_operations"], // действия для фильтра
 			"filter_values" => $this->filter_values,
@@ -303,8 +304,9 @@ class ControllerList extends ControllerBase {
 			if($val != '') $this->filter_values["module"] =  $val;
 		}
 		if(isset($_REQUEST["filter_amount"])) {
-			$val = str_replace([".", ",", "-"], "", $this->filter->sanitize(urldecode($_REQUEST["filter_amount"]), "string"));
+			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_amount"]), "string");
 			if($val != '') $this->filter_values["amount"] =  $val;
+			//$this->logger->log(__METHOD__ . ". val = " . json_encode($val));
 		}
 		if(isset($_REQUEST["filter_date"])) {
 			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_date"]), "string");
@@ -389,28 +391,28 @@ class ControllerList extends ControllerBase {
 		if(isset($this->filter_values["action"]) && isset($this->columns['action'])) $phql .= " AND <TableName>.action LIKE '%" . $this->filter_values["action"] . "%'";
 		if(isset($this->filter_values["module"]) && isset($this->columns['module'])) $phql .= " AND <TableName>.module LIKE '%" . $this->filter_values["module"] . "%'";
 		if(isset($this->filter_values["amount"]) && isset($this->columns['amount'])) {
-			if($this->filter_values["amount"] == $this->columns['amount']["nullable"]) $phql .= " AND (<TableName>.amount IS NULL OR <TableName>.amount = '' OR <TableName>.amount = '" . $this->columns['amount']["nullable"] . "')";
-			else $phql .= " AND <TableName>.amount LIKE '%" . $this->filter_values["amount"] . "%'";
+			if(isset($this->columns['amount']["nullSubstitute"]) && $this->filter_values["amount"] == $this->columns['amount']["nullSubstitute"]) $phql .= " AND (<TableName>.amount IS NULL OR <TableName>.amount = '' OR <TableName>.amount = '" . $this->columns['amount']["nullSubstitute"] . "')";
+			else $phql .= " AND <TableName>.amount LIKE '%" . str_replace([".", ",", "-"], "", $this->filter_values["amount"]) . "%'";
 		}
 		if(isset($this->filter_values["date"]) && isset($this->columns['date'])) $phql .= " AND <TableName>.date LIKE '%" . $this->filter_values["date"] . "%'";
 		// TODO. Победить то, что MySQL ругается на служебное слово "group"
 		if(isset($this->filter_values["group"]) && isset($this->columns['group'])) $phql .= " AND <TableName>.[group] LIKE '%" . $this->filter_values["group"] . "%'";
 		if(isset($this->filter_values["street"]) && isset($this->columns['street'])) {
-			if($this->filter_values["street"] == $this->columns['street']["nullable"]) $phql .= " AND (<TableName>.street IS NULL OR <TableName>.street = '' OR <TableName>.street = '" . $this->columns['street']["nullable"] . "')";
+			if($this->filter_values["street"] == $this->columns['street']["nullSubstitute"]) $phql .= " AND (<TableName>.street IS NULL OR <TableName>.street = '' OR <TableName>.street = '" . $this->columns['street']["nullSubstitute"] . "')";
 			else $phql .= " AND <TableName>.street LIKE '%" . $this->filter_values["street"] . "%'";
 		}
 		if(isset($this->filter_values["house"]) && isset($this->columns['house'])) {
-			if($this->filter_values["house"] == $this->columns['house']["nullable"]) $phql .= " AND (<TableName>.house IS NULL OR <TableName>.house = '' OR <TableName>.house = '" . $this->columns['house']["nullable"] . "')";
+			if($this->filter_values["house"] == $this->columns['house']["nullSubstitute"]) $phql .= " AND (<TableName>.house IS NULL OR <TableName>.house = '' OR <TableName>.house = '" . $this->columns['house']["nullSubstitute"] . "')";
 			else $phql .= " AND <TableName>.house LIKE '%" . $this->filter_values["house"] . "%'";
 		}
 		if(isset($this->filter_values["executor"]) && isset($this->columns['executor'])) {
-			if($this->filter_values["executor"] == $this->columns['street_type']["nullable"]) $phql .= " AND (<TableName>.executor IS NULL OR <TableName>.executor = '' OR <TableName>.executor = '" . $this->columns['executor']["nullable"] . "')";
+			if($this->filter_values["executor"] == $this->columns['street_type']["nullSubstitute"]) $phql .= " AND (<TableName>.executor IS NULL OR <TableName>.executor = '' OR <TableName>.executor = '" . $this->columns['executor']["nullSubstitute"] . "')";
 			else $phql .= " AND <TableName>.executor LIKE '%" . $this->filter_values["executor"] . "%'";
 		}
 		if(isset($this->filter_values["street_type_id"])) {
 			if($this->filter_values["street_type_id"] == "**") {
 				$phql .= " AND (<TableName>.street_type_id IS NULL OR <TableName>.street_type_id = '')";
-				if(isset($this->columns['street_type']["nullable"])) $this->filter_values["street_type_id"] = $this->columns['street_type']["nullable"];
+				//if(isset($this->columns['street_type']["nullSubstitute"])) $this->filter_values["street_type_id"] = $this->columns['street_type']["nullSubstitute"];
 			}
 			else $phql .= " AND <TableName>.street_type_id = '" . $this->filter_values["street_type_id"] . "'";
 		}
