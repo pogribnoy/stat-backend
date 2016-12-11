@@ -20,6 +20,7 @@ $config_array = array(
 		"commonModelsDir" => "app/common/models/",
 		"commonTemplatesDir" => "app/views/templates/",
 		"noImage" => "no_image.jpg",
+		"cacheACL" => 0,
 		"filesUploadDirectory" => "upload/files/", //Каталог, в который должны загружаться файлы сущностей. В конце обязательно указание символа "/";
 		"tablePageSizes" => "[30,50,100]", // Ограничение количества строк для таблиц
 		"tableMaxPageSize" => "100", // Максимальное количество строк для таблиц

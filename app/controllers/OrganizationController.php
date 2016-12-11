@@ -124,15 +124,18 @@ class OrganizationController extends ControllerEntity {
 		$scroller_expense_list["add_style"] = "entity";
 		$scroller_expense_list["edit_style"]  = "modal";
 		
-		// грид пользователей
-		$controller_user_list = new UserListController();
-		$scroller_user_list = $controller_user_list->createDescriptor($this, array("organization_id" => $this->fields["id"]["value"]));
-		$scroller_expense_list['relationType'] = $this->scrollers[$controller_expense_list->controllerName]['relationType'];
-		$scroller_user_list["add_style"] = "scroller";
-		$scroller_user_list['edit_style']  = "modal";
-		
-		$this->scrollers[$controller_expense_list->controllerName] = $scroller_expense_list;
-		$this->scrollers[$controller_user_list->controllerName] = $scroller_user_list;
+		// cкроллер пользователей
+		//if($this->tools->isHasAnyAccess($this->userData['role_id'], "userlist", $this->acl)) {
+			$controller_user_list = new UserListController();
+			$scroller_user_list = $controller_user_list->createDescriptor($this, array("organization_id" => $this->fields["id"]["value"]));
+			$scroller_expense_list['relationType'] = $this->scrollers[$controller_expense_list->controllerName]['relationType'];
+			$scroller_user_list["add_style"] = "scroller";
+			$scroller_user_list['edit_style']  = "modal";
+			
+			$this->scrollers[$controller_expense_list->controllerName] = $scroller_expense_list;
+			$this->scrollers[$controller_user_list->controllerName] = $scroller_user_list;
+		//}
+		//else unset($this->scrollers["userlist"]);
 	}
 	
 	/* 

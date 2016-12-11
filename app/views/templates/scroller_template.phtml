@@ -489,7 +489,8 @@ function apply_filter(container_id) {
 	if (page_size) rq.page_size = encodeURIComponent(page_size);
 	
 	// пробегаемся по столбцам, чтобы собрать данные фильтров в столбцах данных
-	var columns = jqobj.find("table tr:eq(2) td");
+	var tr_offs = descriptor.group_operations.length > 0 ? 2 : 1;
+	var columns = jqobj.find("table tr:eq("+tr_offs+") td");
 	var columns_length = columns.length;
 	for(var i=0; i<columns_length; i++){
 		var field = columns.eq(i).find("input[name^='filter_']").filter("[type='text'], [type='number'], [type='email']");
@@ -508,10 +509,15 @@ function apply_filter(container_id) {
 			}
 		}
 	}
+	// TODO. Доп. фильтры не используются с клиента. Надо удалить
 	// доп. фильтры
 	if(data.add_filter) {
 		rq.add_filter = {};
 		for (var key in data.add_filter) rq.add_filter[key] = data.add_filter[key];
+	}
+	// статичные фильтры
+	if (typeof static_filter_values !== "undefined") {
+		for (var key in static_filter_values) rq[key] = static_filter_values[key];
 	}
 	
 	console.log(url);
@@ -617,7 +623,8 @@ function change_page_size(container_id){
 // Очистка бизнес-полей фильтра, запрашивает и выводит отфильтрованные данные
 function clear_filter(container_id) {
 	var data = containers[container_id].data;
-	var columns = containers[container_id].jqobj.find("#" + createUDID(data) + " table tr:eq(2) td");
+	var tr_offs = descriptor.group_operations.length > 0 ? 2 : 1;
+	var columns = containers[container_id].jqobj.find("#" + createUDID(data) + " table tr:eq("+tr_offs+") td");
 	for(var i=0;i<columns.length;i++){
 		columns.eq(i).find("input[name^='filter_'], select[name^='filter_']").each(function(){
 			$(this).val("");

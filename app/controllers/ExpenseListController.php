@@ -44,6 +44,13 @@ class ExpenseListController extends ControllerList {
 				'filter_value' => isset($this->filter_values['date']) ? $this->filter_values['date'] : '',
 				"sortable" => "DESC",
 			),*/
+			'settlement' => array(
+				'id' => 'settlement',
+				'name' => $this->controller->t->_("text_expenselist_settlement"),
+				'filter' => 'text',
+				'filter_value' => isset($this->filter_values['settlement']) ? $this->filter_values['settlement'] : '',
+				"sortable" => "DESC",
+			),
 			'street_type' => array(
 				'id' => 'street_type',
 				'name' => $this->controller->t->_("text_entity_property_street_type"),
@@ -162,8 +169,8 @@ class ExpenseListController extends ControllerList {
 		$userRoleID = $this->controller->userData['role_id'];
 		
 		// строим запрос к БД на выборку данных
-		$phql = "SELECT <TableName>.*, ExpenseType.id AS expense_type_id, ExpenseType.name AS expense_type_name, ExpenseStatus.id AS expense_status_id, ExpenseStatus.name AS expense_status_name, StreetType.id AS street_type_id, StreetType.name AS street_type_name FROM <TableName> JOIN ExpenseType on ExpenseType.id=<TableName>.expense_type_id LEFT JOIN ExpenseStatus ON ExpenseStatus.id = <TableName>.expense_status_id LEFT JOIN StreetType ON StreetType.id = <TableName>.street_type_id";
-		if($userRoleID != 1) $phql .= ' JOIN Organization ON Organization.id = <TableName>.organization_id INNER JOIN UserOrganization ON UserOrganization.organization_id = <TableName>.organization_id AND UserOrganization.user_id = ' . $userRoleID;
+		$phql = "SELECT <TableName>.*, ExpenseType.id AS expense_type_id, ExpenseType.name AS expense_type_name, ExpenseStatus.id AS expense_status_id, ExpenseStatus.name AS expense_status_name, StreetType.id AS street_type_id, StreetType.name AS street_type_name FROM <TableName> LEFT JOIN ExpenseType on ExpenseType.id=<TableName>.expense_type_id LEFT JOIN ExpenseStatus ON ExpenseStatus.id = <TableName>.expense_status_id LEFT JOIN StreetType ON StreetType.id = <TableName>.street_type_id";
+		if($userRoleID != 1) $phql .= ' JOIN Organization ON Organization.id = <TableName>.organization_id INNER JOIN UserOrganization ON UserOrganization.organization_id = <TableName>.organization_id AND UserOrganization.user_id = ' . $this->controller->userData['id'];
 		
 		$phql .= " WHERE 1=1";
 		
@@ -204,12 +211,17 @@ class ExpenseListController extends ControllerList {
 				),
 				"amount" => array(
 					'id' => 'amount',
-					'value' => $row->expense->amount != null ? number_format($row->expense->amount / 100, 2, '.', ' ') : '',
+					//'value' => $row->expense->amount != null ? number_format($row->expense->amount / 100, 2, '.', ' ') : '',
+					'value' => $row->expense->amount ? $row->expense->amount : '',
 				),
 				/*"date" => array(
 					'id' => 'date',
 					'value' =>  $row->expense->date,
 				),*/
+				"settlement" => array(
+					'id' => 'settlement',
+					'value' =>  $row->expense->settlement ? $row->expense->settlement : '',
+				),
 				"street_type" => array(
 					'id' => 'street_type',
 					'value_id' => $row->street_type_id ? $row->street_type_id : '',

@@ -101,18 +101,19 @@ class OrganizationListController extends ControllerList {
 		
 		// строим запрос к БД на выборку данных
 		//$phql = "SELECT <TableName>.*, Region.id AS region_id, Region.name AS region_name FROM <TableName> JOIN Region on Region.id=<TableName>.region_id";
-		$phql = "SELECT <TableName>.*, Region.id AS region_id, Region.name AS region_name FROM <TableName> JOIN Region on Region.id=<TableName>.region_id";
+		$phql = "SELECT <TableName>.*, Region.id AS region_id, Region.name AS region_name FROM <TableName> LEFT JOIN Region on Region.id=<TableName>.region_id";
 		
 		// проверяем, чтобы пользователь имел доступ к организации, если он не админ и добавляем доп фильтр на идентификатор пользвателя
 		if($userRoleID != 1 || isset($this->add_filter["user_id"])) {
 			$phql .= ' INNER JOIN UserOrganization ON UserOrganization.organization_id = <TableName>.id AND';
 			if($userRoleID != 1) {
-				$phql .= ' (UserOrganization.user_id = ' . $userRoleID;
+				$phql .= ' (UserOrganization.user_id = ' . $this->controller->userData['id'];
 				if(isset($this->add_filter["user_id"])) $phql .= ' OR UserOrganization.user_id=' . $this->add_filter["user_id"];
 				else $phql .= ')';
 			}
 			else $phql .= ' UserOrganization.user_id=' . $this->add_filter["user_id"];
 		}
+		
 		
 		return $phql;
 	}

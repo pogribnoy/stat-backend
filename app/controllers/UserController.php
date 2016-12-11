@@ -36,7 +36,7 @@ class UserController extends ControllerEntity{
 			), 
 			'name' => array(
 				'id' => 'name',
-				'name' => $this->t->_("text_entity_property_login"),
+				'name' => $this->t->_("text_entity_property_fio"),
 				'type' => 'text',
 				'required' => 1,
 				'newEntityValue' => null,
@@ -191,7 +191,13 @@ class UserController extends ControllerEntity{
 				return false;
 			}
 		}
-		else return false;
+		else{
+			$this->error['messages'][] = [
+				'title' => "Ошибка",
+				'msg' => 'Поле "' . $this->fields['name']['name'] . '" обязательно для указания'
+			];
+			return false;
+		}
 		// password
 		if(isset($rq->fields->password) && isset($rq->fields->password->value)) {
 			$val = $this->filter->sanitize(urldecode($rq->fields->password->value), ["trim", "string"]);
@@ -207,7 +213,7 @@ class UserController extends ControllerEntity{
 				}
 			}*/
 		}
-		else return false;		
+		//else return false;		
 		// phone
 		if(isset($rq->fields->phone) && isset($rq->fields->phone->value)) {
 			$val = $this->filter->sanitize(urldecode($rq->fields->phone->value), ["trim", "string"]);

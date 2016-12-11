@@ -45,7 +45,7 @@ class ProfileController extends ControllerEntity{
 			),
 			'name' => array(
 				'id' => 'name',
-				'name' => $this->t->_("text_entity_property_login"),
+				'name' => $this->t->_("text_entity_property_fio"),
 				'type' => 'text',
 				'required' => 1,
 				'newEntityValue' => null,

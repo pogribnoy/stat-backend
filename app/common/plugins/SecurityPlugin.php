@@ -32,7 +32,7 @@ class SecurityPlugin extends Plugin {
 		
 		// Создание регистратора с поддержкой записи
 		$aclName = "acl_" . $this->config->application->module;
-		if (!isset($this->persistent->$aclName)) {
+		//if (!isset($this->persistent->$aclName) && $this->config->application->cacheACL == 1) {
 		//if (!isset($this->persistent->acl)) {
 			$roles = array();
 			$resources = array();
@@ -84,6 +84,11 @@ class SecurityPlugin extends Plugin {
 						// ДОСТУП ВСЕМ КО ВСЕМУ (раскомментировать, для отключения контроля)
 						//foreach($resources as $r) $acl->allow($ur->id, $r['controller'], $r['action']);
 						
+						// добавляем общие ресурсы
+						foreach($resources as $r) {
+							if ($r['module'] === $this->config->application->module && $r['group'] == 'base') $acl->allow($ur->id, $r['controller'], $r['action']);
+						}
+						
 						// Назначение допусков
 						//$this->logger->log(json_encode($ur));
 						$urrss = $ur->getUserRoleResource();//getResource();
@@ -108,7 +113,7 @@ class SecurityPlugin extends Plugin {
 				$this->persistent->$aclName = $acl;
 				//$this->persistent->acl = $acl;
 			}
-		}
+		//}
 		return $this->persistent->$aclName;
 		//return $this->persistent->acl;
 	}

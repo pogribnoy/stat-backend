@@ -164,7 +164,7 @@ class ControllerEntity extends ControllerBase {
 				}
 				if(count($this->error['messages'])==0) {
 					// если сущность сохранена в БД, то создаем ее связи
-					if($this->saveEntityLinksFromSaveRq($rq)) {
+					if($this->saveEntityLinksFromSaveRq()) {
 						$this->data['scrollers'] = $this->scrollers;
 						$this->db->commit();
 						$this->updateEntityFieldsFromModelAfterSave();
@@ -541,10 +541,15 @@ class ControllerEntity extends ControllerBase {
 				foreach($this->scrollers[$scrollerName]['added_items'] as $itemID) {
 					$link = new $linkTableName();
 					$eID = $this->tableName . '_id';
-					$link->$eID = $this->fields['id']['value'];
+					//$link->$eID = $this->fields['id']['value'];
+					$link->$eID = $this->entity->id;
 					$link->$linkTableLinkEntityFieldName = $itemID;
 					$this->data['ai'] = $linkTableLinkEntityFieldName;
 					$this->data['ai2'] = $eID;
+					//$this->logger->log(__METHOD__ . " link = " . json_encode($link));
+					//$this->logger->log(__METHOD__ . " linkTableName = " . json_encode($linkTableName));
+					//$this->logger->log(__METHOD__ . " linkTableLinkEntityFieldName = " . json_encode($linkTableLinkEntityFieldName));
+					//$this->logger->log(__METHOD__ . " this->data = " . json_encode($this->data));
 					if($link->create() == false) {
 						$dbMessages = '';
 						foreach ($link->getMessages() as $message) {

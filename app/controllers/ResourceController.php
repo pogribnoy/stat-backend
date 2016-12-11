@@ -57,7 +57,7 @@ class ResourceController extends ControllerEntity {
 				'id' => 'description',
 				'name' => $this->t->_("text_entity_property_description"),
 				'type' => 'text',
-				'newEntityValue' => null,
+				'newEntityValue' => '',
 			)
 		];
 		// наполняем поля данными
@@ -109,7 +109,14 @@ class ResourceController extends ControllerEntity {
 				return false;
 			}
 		}
-		else return false;
+		else {
+			$this->error['messages'][] = [
+				'title' => "Ошибка",
+				'msg' => 'Поле "' . $this->fields['action']['name'] . '" обязательно для указания'
+			];
+			return false;
+		}
+		
 		// action
 		if(isset($rq->fields->action) && isset($rq->fields->action->value)) {
 			$val = $this->filter->sanitize(urldecode($rq->fields->action->value), ["trim", "string"]);
@@ -122,13 +129,20 @@ class ResourceController extends ControllerEntity {
 				return false;
 			}
 		}
-		else return false;
+		else {
+			$this->error['messages'][] = [
+				'title' => "Ошибка",
+				'msg' => 'Поле "' . $this->fields['action']['name'] . '" обязательно для указания'
+			];
+			return false;
+		}
 		
 		// description
 		if(isset($rq->fields->description) && isset($rq->fields->description->value)) {
 			$val = $this->filter->sanitize(urldecode($rq->fields->description->value), ["trim", "string"]);
 			$this->fields['description']['value'] = $val;
 		}
+		else $this->fields['description']['value'] = $this->fields['description']['newEntityValue'];
 		
 		return true;
 	}

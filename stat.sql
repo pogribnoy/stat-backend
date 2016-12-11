@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Хост: 127.0.0.1
--- Время создания: Дек 01 2016 г., 21:39
+-- Время создания: Дек 11 2016 г., 20:08
 -- Версия сервера: 5.7.9
 -- Версия PHP: 5.6.16
 
@@ -31,10 +31,10 @@ CREATE TABLE IF NOT EXISTS `expense` (
   `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(200) NOT NULL,
   `amount` bigint(20) NOT NULL,
-  `date` date NOT NULL,
   `expense_type_id` int(10) NOT NULL COMMENT 'Идентификатор типа расхода',
   `expense_status_id` int(11) NOT NULL,
   `organization_id` int(10) UNSIGNED DEFAULT NULL COMMENT 'Идентификатор организации, к которой относится расход',
+  `settlement` varchar(255) DEFAULT NULL,
   `street_type_id` int(10) UNSIGNED DEFAULT NULL,
   `street` varchar(255) DEFAULT NULL,
   `house` varchar(20) DEFAULT NULL,
@@ -42,39 +42,40 @@ CREATE TABLE IF NOT EXISTS `expense` (
   `target_date_from` date DEFAULT NULL,
   `target_date_to` date DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=100 DEFAULT CHARSET=utf16;
+) ENGINE=InnoDB AUTO_INCREMENT=101 DEFAULT CHARSET=utf16;
 
 --
 -- Дамп данных таблицы `expense`
 --
 
-INSERT INTO `expense` (`id`, `name`, `amount`, `date`, `expense_type_id`, `expense_status_id`, `organization_id`, `street_type_id`, `street`, `house`, `executor`, `target_date_from`, `target_date_to`) VALUES
-(72, 'Капитальный ремонт', 50000, '2016-12-12', 3, 2, 38, 2, 'Ануфриева', '10', 'ООО «Стройдом»', NULL, NULL),
-(73, 'Капитальный ремонт', 55000, '2016-11-29', 3, 2, 38, 2, 'Вокзальная', '3', 'ООО «Стройдом»', NULL, NULL),
-(74, 'Капальный ремонт', 60000, '2016-12-28', 3, 2, 38, 2, 'Геологов', '5', 'ООО «Стройдом»', NULL, NULL),
-(75, 'Капитальный ремонт', 32000, '2016-12-20', 3, 2, 38, 2, 'Институтская', '4', 'ООО «Стройдом»', NULL, NULL),
-(76, 'Капитальный ремонт', 45000, '2016-12-22', 3, 1, 38, 2, 'Институтская', '26', 'ООО «Стройдом»', NULL, NULL),
-(77, 'Капитальный ремонт', 60000, '2017-01-17', 3, 1, 38, 2, 'Коссович', '12', 'ООО «Стройдом»', NULL, NULL),
-(78, 'Ремонт канализации', 25000, '2017-01-24', 3, 1, 38, 2, 'Лермонтова', '2', 'ООО &#34;АВАНС&#34;', NULL, NULL),
-(79, 'Ремонт канализации', 30000, '2017-01-17', 3, 1, 38, 2, 'Лермонтова', '55', 'ООО &#34;АВАНАС&#34;', NULL, NULL),
-(80, 'Ремонт крыши', 15000, '2016-11-30', 3, 1, 38, 2, 'Лермонтова', '64', 'ООО&#34;ТРЕСТ&#34;', NULL, NULL),
-(81, 'Ремонт крыши', 20000, '2016-11-30', 3, 1, 38, 2, 'Октябрьская', '23', 'ООО &#34;ТРЕСТ&#34;', NULL, NULL),
-(82, 'Строительство детской площадки', 75000, '2016-11-29', 3, 2, 38, 2, 'Свердлова', '4', 'ЗАО &#34;ИНЖТЕХ&#34;', NULL, NULL),
-(83, 'Ремонт школы №17', 600000, '2016-11-29', 3, 2, 38, 2, 'Терешковой', '5', 'ООО &#34;РЕМОНТ-СЕРВИС&#34;', NULL, NULL),
-(84, 'Ремонт фасада здания', 70000, '2016-11-29', 3, 1, 38, 2, 'Энтузиастов', '56', 'ЗАО &#34;СТРОЙИНВЕСТ&#34;', NULL, NULL),
-(85, 'Кладка тротуарной плитки', 1500000, '2016-12-13', 4, 3, 38, 2, 'Ануфриева', '8-54', 'ООО &#34;ГАРАНТ&#34;', NULL, NULL),
-(86, 'Организация фестиваля красок', 30000, '2016-11-30', 6, 3, 38, 2, '-', '-', 'ООО &#34;ПРАЗДНИК&#34;', NULL, NULL),
-(87, 'Ремонт дороги', 60000, '2016-11-30', 4, 2, 38, 2, 'Волкова', '10-34', 'МУП &#34;РЕМОНТ&#34;', NULL, NULL),
-(88, 'Закупка канцтоваров', 40000, '2016-11-30', 7, 3, 38, 2, '-', '-', '-', NULL, NULL),
-(89, 'Ремонт городской больницы №3', 700000, '2016-11-30', 5, 3, 38, 2, 'Маркова', '16', 'ООО &#34;ГАРАНТ&#34;', NULL, NULL),
-(90, 'Закупка учебной литературы для школы №2', 200000, '2016-11-30', 1, 3, 38, 2, 'Волкова', '4', '-', NULL, NULL),
-(91, 'Содержание столовой для малоимущих', 150000, '2016-12-06', 8, 3, 38, 2, 'Космонавтов', '5', 'ООО &#34;ОБЕД&#34;', NULL, NULL),
-(92, 'Закупка оргтехники', 400000, '2016-11-30', 7, 3, 38, 2, 'Ленина', '69', 'ООО &#34;КОМПСЕРВИС&#34;', NULL, NULL),
-(93, 'Организация лыжной дорожки', 120000, '2016-12-14', 6, 2, 38, 2, 'Лесная', '-', 'ООО &#34;Снег&#34;', NULL, NULL),
-(94, 'Организация футбольного турнира &#34;Кубок&#34;', 300000, '2016-11-30', 6, 3, 38, 2, 'Владимирская', '41', 'ООО &#34;ФУТЗАЛ&#34;', NULL, NULL),
-(95, 'Выплата ветеранам ВОВ', 250000, '2016-11-30', 8, 3, 38, 2, '-', '-', '-', NULL, NULL),
-(96, 'Закупка камер видеонаблюдения для города', 300000, '2016-12-01', 10, 3, 38, NULL, '-', '-', 'ИП &#34;ГАРАНТЗАЩИТА&#34;', NULL, NULL),
-(99, 'Поддержка предпринимателей в 4 кв.', 400000, '2016-12-01', 9, 3, 38, NULL, NULL, NULL, NULL, NULL, NULL);
+INSERT INTO `expense` (`id`, `name`, `amount`, `expense_type_id`, `expense_status_id`, `organization_id`, `settlement`, `street_type_id`, `street`, `house`, `executor`, `target_date_from`, `target_date_to`) VALUES
+(72, 'Капитальный ремонт', 500, 3, 2, 38, NULL, 2, 'Ануфриева', '10', 'ООО «Стройдом»', NULL, '2016-12-12'),
+(73, 'Капитальный ремонт', 550, 3, 2, 38, NULL, 2, 'Вокзальная', '3', 'ООО «Стройдом»', NULL, '2016-11-29'),
+(74, 'Капальный ремонт', 600, 3, 2, 38, NULL, 2, 'Геологов', '5', 'ООО «Стройдом»', NULL, '2016-12-28'),
+(75, 'Капитальный ремонт', 320, 3, 2, 38, NULL, 2, 'Институтская', '4', 'ООО «Стройдом»', NULL, '2016-12-20'),
+(76, 'Капитальный ремонт', 450, 3, 1, 38, NULL, 2, 'Институтская', '26', 'ООО «Стройдом»', NULL, '2016-12-22'),
+(77, 'Капитальный ремонт', 600, 3, 1, 38, NULL, 2, 'Коссович', '12', 'ООО «Стройдом»', NULL, '2017-01-17'),
+(78, 'Ремонт канализации', 250, 3, 1, 38, NULL, 2, 'Лермонтова', '2', 'ООО &#34;АВАНС&#34;', NULL, '2017-01-24'),
+(79, 'Ремонт канализации', 300, 3, 1, 38, NULL, 2, 'Лермонтова', '55', 'ООО &#34;АВАНАС&#34;', NULL, '2017-01-17'),
+(80, 'Ремонт крыши', 150, 3, 1, 38, NULL, 2, 'Лермонтова', '64', 'ООО&#34;ТРЕСТ&#34;', NULL, '2016-11-30'),
+(81, 'Ремонт крыши', 200, 3, 1, 38, NULL, 2, 'Октябрьская', '23', 'ООО &#34;ТРЕСТ&#34;', NULL, '2016-11-30'),
+(82, 'Строительство детской площадки', 750, 3, 2, 38, NULL, 2, 'Свердлова', '4', 'ЗАО &#34;ИНЖТЕХ&#34;', NULL, '2016-11-29'),
+(83, 'Ремонт школы №17', 6000, 3, 2, 38, NULL, 2, 'Терешковой', '5', 'ООО &#34;РЕМОНТ-СЕРВИС&#34;', NULL, '2016-11-29'),
+(84, 'Ремонт фасада здания', 700, 3, 1, 38, NULL, 2, 'Энтузиастов', '56', 'ЗАО &#34;СТРОЙИНВЕСТ&#34;', NULL, '2016-11-29'),
+(85, 'Кладка тротуарной плитки', 15000, 4, 3, 38, NULL, 2, 'Ануфриева', '8-54', 'ООО &#34;ГАРАНТ&#34;', NULL, '2016-12-13'),
+(86, 'Организация фестиваля красок', 300, 6, 3, 38, NULL, 2, '-', '-', 'ООО &#34;ПРАЗДНИК&#34;', NULL, '2016-11-30'),
+(87, 'Ремонт дороги', 600, 4, 2, 38, NULL, 2, 'Волкова', '10-34', 'МУП &#34;РЕМОНТ&#34;', NULL, '2016-11-30'),
+(88, 'Закупка канцтоваров', 400, 7, 3, 38, NULL, 2, '-', '-', '-', NULL, '2016-11-30'),
+(89, 'Ремонт городской больницы №3', 7000, 5, 3, 38, NULL, 2, 'Маркова', '16', 'ООО &#34;ГАРАНТ&#34;', NULL, '2016-11-30'),
+(90, 'Закупка учебной литературы для школы №2', 2000, 1, 3, 38, NULL, 2, 'Волкова', '4', '-', NULL, '2016-11-30'),
+(91, 'Содержание столовой для малоимущих', 1500, 8, 3, 38, NULL, 2, 'Космонавтов', '5', 'ООО &#34;ОБЕД&#34;', NULL, '2016-12-06'),
+(92, 'Закупка оргтехники', 4000, 7, 3, 38, NULL, 2, 'Ленина', '69', 'ООО &#34;КОМПСЕРВИС&#34;', NULL, '2016-11-30'),
+(93, 'Организация лыжной дорожки', 1200, 6, 2, 38, NULL, 2, 'Лесная', '-', 'ООО &#34;Снег&#34;', NULL, '2016-12-14'),
+(94, 'Организация футбольного турнира &#34;Кубок&#34;', 3000, 6, 3, 38, NULL, 2, 'Владимирская', '41', 'ООО &#34;ФУТЗАЛ&#34;', NULL, '2016-11-30'),
+(95, 'Выплата ветеранам ВОВ', 2500, 8, 3, 38, NULL, 2, '-', '-', '-', NULL, '2016-11-30'),
+(96, 'Закупка камер видеонаблюдения для города', 3000, 10, 3, 38, NULL, NULL, '-', '-', 'ИП &#34;ГАРАНТЗАЩИТА&#34;', NULL, '2016-12-01'),
+(99, 'Поддержка предпринимателей в 4 кв.', 4000, 9, 3, 38, NULL, NULL, NULL, NULL, NULL, NULL, '2016-12-01'),
+(100, 'asd', 11001, 10, 3, 46, 'qwe', NULL, NULL, NULL, NULL, '2016-12-07', '2016-12-08');
 
 -- --------------------------------------------------------
 
@@ -139,36 +140,40 @@ CREATE TABLE IF NOT EXISTS `file` (
   `name` varchar(255) NOT NULL,
   `directory` varchar(255) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf16;
+) ENGINE=InnoDB AUTO_INCREMENT=38 DEFAULT CHARSET=utf16;
 
 --
 -- Дамп данных таблицы `file`
 --
 
 INSERT INTO `file` (`id`, `name`, `directory`) VALUES
-(8, 'organization_46_30623.png', 'upload/files/default/46/'),
-(9, 'organization_45_7990.png', 'upload/files/default/45/'),
-(10, 'organization_44_28215.png', 'upload/files/default/44/'),
-(11, 'organization_42_3591.png', 'upload/files/default/42/'),
-(12, 'organization_43_19252.png', 'upload/files/default/43/'),
-(13, 'organization_41_3421.png', 'upload/files/default/41/'),
-(14, 'organization_40_14034.png', 'upload/files/default/40/'),
-(15, 'organization_36_931.png', 'upload/files/default/36/'),
-(16, 'organization_35_26272.png', 'upload/files/default/35/'),
-(17, 'organization_34_8793.png', 'upload/files/default/34/'),
-(18, 'organization_33_28190.png', 'upload/files/default/33/'),
-(19, 'organization_30_14079.png', 'upload/files/default/30/'),
-(20, 'organization_28_19660.png', 'upload/files/default/28/'),
-(21, 'organization_27_2837.png', 'upload/files/default/27/'),
-(22, 'organization_26_20010.png', 'upload/files/default/26/'),
-(23, 'organization_1_17435.png', 'upload/files/default/1/'),
-(24, 'organization_25_27064.png', 'upload/files/default/25/'),
-(25, 'organization_24_17297.png', 'upload/files/default/24/'),
-(26, 'organization_23_8950.png', 'upload/files/default/23/'),
-(27, 'organization_22_1783.png', 'upload/files/default/22/'),
-(28, 'organization_21_26980.png', 'upload/files/default/21/'),
-(29, 'organization_2_1997.png', 'upload/files/default/2/'),
-(31, 'organization_38_30914.png', 'upload/files/default/38/');
+(8, 'organization_46_30623.png', 'upload/files/organization/46/'),
+(9, 'organization_45_7990.png', 'upload/files/organization/45/'),
+(10, 'organization_44_28215.png', 'upload/files/organization/44/'),
+(11, 'organization_42_3591.png', 'upload/files/organization/42/'),
+(12, 'organization_43_19252.png', 'upload/files/organization/43/'),
+(13, 'organization_41_3421.png', 'upload/files/organization/41/'),
+(14, 'organization_40_14034.png', 'upload/files/organization/40/'),
+(15, 'organization_36_931.png', 'upload/files/organization/36/'),
+(16, 'organization_35_26272.png', 'upload/files/organization/35/'),
+(17, 'organization_34_8793.png', 'upload/files/organization/34/'),
+(18, 'organization_33_28190.png', 'upload/files/organization/33/'),
+(19, 'organization_30_14079.png', 'upload/files/organization/30/'),
+(20, 'organization_28_19660.png', 'upload/files/organization/28/'),
+(21, 'organization_27_2837.png', 'upload/files/organization/27/'),
+(22, 'organization_26_20010.png', 'upload/files/organization/26/'),
+(23, 'organization_1_17435.png', 'upload/files/organization/1/'),
+(24, 'organization_25_27064.png', 'upload/files/organization/25/'),
+(25, 'organization_24_17297.png', 'upload/files/organization/24/'),
+(26, 'organization_23_8950.png', 'upload/files/organization/23/'),
+(27, 'organization_22_1783.png', 'upload/files/organization/22/'),
+(28, 'organization_21_26980.png', 'upload/files/organization/21/'),
+(29, 'organization_2_1997.png', 'upload/files/organization/2/'),
+(31, 'organization_38_30914.png', 'upload/files/organization/38/'),
+(32, 'organization_47_13491.jpg', 'upload/files/organization/47/'),
+(33, 'organization_47_12369.jpg', 'upload/files/organization/47/'),
+(36, 'organization_49_8500.jpg', 'upload/files/organization/49/'),
+(37, 'organization_55_11101.jpg', 'upload/files/organization/55/');
 
 -- --------------------------------------------------------
 
@@ -182,7 +187,7 @@ CREATE TABLE IF NOT EXISTS `file_collection` (
   `collection_id` int(10) UNSIGNED NOT NULL,
   `file_id` int(10) UNSIGNED NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=utf16;
+) ENGINE=InnoDB AUTO_INCREMENT=38 DEFAULT CHARSET=utf16;
 
 --
 -- Дамп данных таблицы `file_collection`
@@ -219,7 +224,13 @@ INSERT INTO `file_collection` (`id`, `collection_id`, `file_id`) VALUES
 (28, 22, 28),
 (29, 23, 29),
 (30, 5, 30),
-(31, 5, 31);
+(31, 5, 31),
+(32, 24, 32),
+(33, 25, 33),
+(34, 26, 34),
+(35, 27, 35),
+(36, 27, 36),
+(37, 28, 37);
 
 -- --------------------------------------------------------
 
@@ -258,7 +269,7 @@ DROP TABLE IF EXISTS `organization`;
 CREATE TABLE IF NOT EXISTS `organization` (
   `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(200) CHARACTER SET utf16 NOT NULL COMMENT 'Название организации',
-  `contacts` varchar(500) CHARACTER SET utf16 NOT NULL,
+  `contacts` varchar(500) CHARACTER SET utf16 DEFAULT NULL,
   `region_id` int(10) NOT NULL,
   `email` varchar(255) CHARACTER SET utf16 DEFAULT NULL,
   `img` varchar(255) CHARACTER SET utf16 DEFAULT NULL,
@@ -395,7 +406,7 @@ CREATE TABLE IF NOT EXISTS `resource` (
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `controller_3` (`controller`,`action`,`module`)
-) ENGINE=InnoDB AUTO_INCREMENT=139 DEFAULT CHARSET=utf16;
+) ENGINE=InnoDB AUTO_INCREMENT=144 DEFAULT CHARSET=utf16;
 
 --
 -- Дамп данных таблицы `resource`
@@ -426,19 +437,8 @@ INSERT INTO `resource` (`id`, `group`, `controller`, `action`, `module`, `descri
 (40, 'acl', 'file', 'upload', 'backend', 'Загрузка файла для какой-либо сущности', '2015-02-11 22:14:25'),
 (41, 'acl', 'settinglist', 'index', 'backend', 'Просмотр страницы со списком настроек', '2015-02-12 17:17:09'),
 (42, 'acl', 'setting', 'save', 'backend', 'Сохранение данных настройки', '2015-02-03 22:25:53'),
-(43, 'acl', 'objectcategorylist', 'index', 'backend', 'Просмотр страницы со списком категорий объектов', '2015-02-12 17:17:09'),
 (48, 'base', 'errors', 'show500', 'frontend', 'Страница 500', '2015-02-12 17:06:43'),
 (49, 'base', 'errors', 'show404', 'frontend', 'Страница 404', '2015-02-12 17:06:43'),
-(50, 'acl', 'objectlist', 'index', 'backend', 'Просмотр страницы со списком объектов', '2015-02-12 17:17:09'),
-(51, 'acl', 'object', 'edit', 'backend', 'Редактирование объекта', '2015-02-18 18:29:08'),
-(52, 'acl', 'object', 'add', 'backend', 'Добавление объекта', '2015-02-18 18:29:08'),
-(53, 'acl', 'object', 'save', 'backend', 'Сохранение (создание\\изменение) данных объекта', '2015-02-03 22:25:53'),
-(54, 'acl', 'object', 'delete', 'backend', 'Удаление объекта', '2015-02-12 17:17:43'),
-(55, 'acl', 'objectcategory', 'save', 'backend', 'Сохранение (изменение) категории объекта', '2015-02-12 17:25:14'),
-(56, 'acl', 'objectcategory', 'add', 'backend', 'Добавление категории объекта', '2015-02-18 18:29:08'),
-(57, 'acl', 'objectcategory', 'delete', 'backend', 'Удаление категории объекта', '2015-02-12 17:17:43'),
-(58, 'acl', 'objectcategory', 'edit', 'backend', 'Редактирование категории объекта', '2015-02-18 18:29:08'),
-(59, 'acl', 'objectcategory', 'active', 'backend', 'Изменение свойства активности у категории объекта', '2015-02-18 18:27:01'),
 (60, 'acl', 'organizationlist', 'index', 'backend', 'Просмотр страницы со списком организаций', '2015-02-12 18:06:32'),
 (61, 'acl', 'organization', 'edit', 'backend', 'Редактирование организации', '2015-02-18 18:29:08'),
 (62, 'acl', 'organization', 'delete', 'backend', 'Удаление организации', '2015-02-12 17:17:43'),
@@ -511,7 +511,11 @@ INSERT INTO `resource` (`id`, `group`, `controller`, `action`, `module`, `descri
 (135, 'acl', 'streettypelist', 'filter', 'backend', '', '2016-11-25 19:48:27'),
 (136, 'base', 'organizationrequest', 'edit', 'frontend', '', '2016-11-27 01:11:44'),
 (137, 'acl', 'expensestatuslist', 'index', 'backend', '', '2016-11-27 21:41:23'),
-(138, 'acl', 'expensestatuslist', 'filter', 'backend', '', '2016-11-27 21:41:34');
+(138, 'acl', 'expensestatuslist', 'filter', 'backend', '', '2016-11-27 21:41:34'),
+(139, 'base', 'user', 'sendpassword', 'backend', '', '2016-12-03 01:22:14'),
+(140, 'acl', 'profile', 'edit', 'backend', '', '2016-12-03 01:41:23'),
+(141, 'acl', 'organization', 'show', 'backend', '', '2016-12-10 20:30:17'),
+(143, 'acl', 'organization', 'index', 'backend', '', '2016-12-10 20:49:58');
 
 -- --------------------------------------------------------
 
@@ -527,16 +531,7 @@ CREATE TABLE IF NOT EXISTS `setting` (
   `description` varchar(200) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `code` (`code`)
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf16;
-
---
--- Дамп данных таблицы `setting`
---
-
-INSERT INTO `setting` (`id`, `code`, `value`, `description`) VALUES
-(6, 'admin_table_limit', '100', 'Ограничение количества строк для таблиц в служебной части'),
-(11, 'files_upload_directory', 'upload/files/', 'Каталог, в который должны загружаться файлы сущностей: опросов, вопросов, результатов и т.д. В конце обязательно указание символа &#34;/&#34;'),
-(14, 'admin_table_page_sizes', '[30,50,100]', 'Ограничение количества строк для таблиц в служебной части');
+) ENGINE=InnoDB DEFAULT CHARSET=utf16;
 
 -- --------------------------------------------------------
 
@@ -549,7 +544,7 @@ CREATE TABLE IF NOT EXISTS `street_type` (
   `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(200) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf16;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf16;
 
 --
 -- Дамп данных таблицы `street_type`
@@ -580,7 +575,7 @@ DROP TABLE IF EXISTS `user`;
 CREATE TABLE IF NOT EXISTS `user` (
   `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
   `password` char(50) CHARACTER SET utf8 NOT NULL,
-  `phone` char(15) CHARACTER SET utf8 NOT NULL,
+  `phone` varchar(15) DEFAULT NULL,
   `email` char(50) CHARACTER SET utf8 DEFAULT NULL,
   `name` char(50) CHARACTER SET utf8 DEFAULT NULL COMMENT 'ФИО',
   `points` int(10) UNSIGNED NOT NULL DEFAULT '0',
@@ -588,18 +583,19 @@ CREATE TABLE IF NOT EXISTS `user` (
   `active` int(1) NOT NULL DEFAULT '1',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf16;
+) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=utf16;
 
 --
 -- Дамп данных таблицы `user`
 --
 
 INSERT INTO `user` (`id`, `password`, `phone`, `email`, `name`, `points`, `user_role_id`, `active`, `created_at`) VALUES
-(20, '40bd001563085fc35165329ea1ff5c5ecbdbbeef', '1111111111', 'admin@admin.ru', 'Суперпользователь', 0, 1, 1, '2015-02-06 18:40:36'),
-(22, 'f4542db9ba30f7958ae42c113dd87ad21fb2eddb', '3333333333', 'guest', 'Гость', 0, 2, 1, '2015-02-10 14:34:30'),
-(25, '40bd001563085fc35165329ea1ff5c5ecbdbbeef', '1111111122', 'asd@asd1.ru', 'asdasd', 0, 1, 1, '2015-02-10 23:07:09'),
-(32, 'da39a3ee5e6b4b0d3255bfef95601890afd80709', '12312312345', 'oper@oper.ru', 'sdfsdad', 0, 5, 1, '2015-02-12 14:36:29'),
-(34, '40bd001563085fc35165329ea1ff5c5ecbdbbeef', 'q123123', 'asd@asd.ru', '123123123', 0, 4, 1, '2016-10-25 20:17:10');
+(20, '40bd001563085fc35165329ea1ff5c5ecbdbbeef', NULL, 'a@a', 'Суперпользователь', 0, 1, 1, '2015-02-06 18:40:36'),
+(22, 'f4542db9ba30f7958ae42c113dd87ad21fb2eddb', NULL, 'b', 'Гость', 0, 2, 1, '2015-02-10 14:34:30'),
+(25, '40bd001563085fc35165329ea1ff5c5ecbdbbeef', NULL, 'c', 'asdasd', 0, 1, 1, '2015-02-10 23:07:09'),
+(32, 'da39a3ee5e6b4b0d3255bfef95601890afd80709', NULL, 'd', 'sdfsdad', 0, 5, 1, '2015-02-12 14:36:29'),
+(34, '40bd001563085fc35165329ea1ff5c5ecbdbbeef', NULL, 'e', '123123123', 0, 4, 1, '2016-10-25 20:17:10'),
+(40, '40bd001563085fc35165329ea1ff5c5ecbdbbeef', '', 'refaliu@yandex.ru', 'Тестовый пользователь-операционист', 0, 5, 1, '2016-12-10 20:08:31');
 
 -- --------------------------------------------------------
 
@@ -621,7 +617,8 @@ CREATE TABLE IF NOT EXISTS `user_organization` (
 INSERT INTO `user_organization` (`user_id`, `organization_id`) VALUES
 (20, 22),
 (22, 2),
-(32, 22);
+(32, 22),
+(40, 38);
 
 -- --------------------------------------------------------
 
@@ -684,10 +681,16 @@ INSERT INTO `user_role_resource` (`user_role_id`, `resource_id`) VALUES
 (4, 26),
 (4, 29),
 (5, 1),
-(5, 9),
-(5, 22),
-(5, 23),
-(5, 24);
+(5, 60),
+(5, 61),
+(5, 64),
+(5, 67),
+(5, 68),
+(5, 69),
+(5, 70),
+(5, 81),
+(5, 104),
+(5, 141);
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;

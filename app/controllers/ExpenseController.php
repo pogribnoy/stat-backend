@@ -48,18 +48,25 @@ class ExpenseController extends ControllerEntity {
 			'amount' => array(
 				'id' => 'amount',
 				'name' => $this->t->_("text_entity_property_amount"),
-				'type' => 'amount',
+				'type' => 'number',
 				'required' => 1,
-				'min' => 200,
-				'max' => 9900,
+				'min' => 1,
+				'max' => 99999999,
 				'newEntityValue' => null,
 			), 
-			'date' => array(
+			/*'date' => array(
 				'id' => 'date',
 				'name' => $this->t->_("text_entity_property_date"),
 				'type' => 'date',
 				'required' => 1,
 				'newEntityValue' => (new DateTime('now'))->format("Y-m-d"),
+			),*/
+			'settlement' =>	array(
+				'id' => 'settlement',
+				'name' => $this->t->_("text_expense_settlement"),
+				'type' => 'text',
+				//'required' => 1,
+				'newEntityValue' => null,
 			),
 			'street_type' =>	array(
 				'id' => 'street_type',
@@ -113,8 +120,9 @@ class ExpenseController extends ControllerEntity {
 		$this->entity->expense_type_id = $this->fields['expense_type']['value_id'];
 		$this->entity->expense_status_id = $this->fields['expense_status']['value_id'];
 		$this->entity->name = $this->fields['name']['value'];
-		$this->entity->date = $this->fields['date']['value'];
+		/*$this->entity->date = $this->fields['date']['value'];*/
 		$this->entity->amount = $this->fields['amount']['value'];
+		$this->entity->settlement = $this->fields['settlement']['value'];
 		$this->entity->street_type_id = $this->fields['street_type']['value_id'];
 		$this->entity->street = $this->fields['street']['value'];
 		$this->entity->house = $this->fields['house']['value'];
@@ -144,8 +152,10 @@ class ExpenseController extends ControllerEntity {
 		$this->fields["expense_status"]["value_id"] = $row->expense_status_id;
 		$this->fields["id"]["value"] = $row->expense->id;
 		$this->fields["name"]["value"] = $row->expense->name;
-		$this->fields["date"]["value"] = $row->expense->date;
-		$this->fields["amount"]["value"] = $row->expense->amount!=null ? number_format($row->expense->amount / 100, 2, '.', '') : '';
+		/*$this->fields["date"]["value"] = $row->expense->date;*/
+		//$this->fields["amount"]["value"] = $row->expense->amount!=null ? number_format($row->expense->amount / 100, 2, '.', '') : '';
+		$this->fields["amount"]["value"] = $row->expense->amount;
+		$this->fields["settlement"]["value"] = $row->expense->settlement;
 		$this->fields["street_type"]["value"] = $row->street_type_name;
 		$this->fields["street_type"]["value_id"] = $row->street_type_id;
 		$this->fields["street"]["value"] = $row->expense->street;
@@ -176,7 +186,7 @@ class ExpenseController extends ControllerEntity {
 		}
 		else return false;
 		//date
-		if(isset($rq->fields->date) && isset($rq->fields->date->value)) {
+		/*if(isset($rq->fields->date) && isset($rq->fields->date->value)) {
 			$val = $this->filter->sanitize(urldecode($rq->fields->date->value), ["trim", "string"]);
 			if($val != '') $this->fields['date']['value'] = $val;
 			else {
@@ -188,15 +198,15 @@ class ExpenseController extends ControllerEntity {
 			}
 			//$this->logger->log('val = ' . $val);
 		}
-		else return false;
+		else return false;*/
 		//amount
 		if(isset($rq->fields->amount) && isset($rq->fields->amount->value)) {
 			$val = $this->filter->sanitize(urldecode($rq->fields->amount->value), ["trim", "string"]);
 			//$this->logger->log('1val = ' . $val);
-			$val = str_replace([",", "-"], ".", $val);
+			//$val = str_replace([",", "-"], ".", $val);
 			//$this->logger->log('2val = ' . $val);
 			if($val != '') {
-				$val = 100 * $val;
+				$val = 1 * $val;
 				if(isset($this->fields['amount']['min']) && $val < (int)$this->fields['amount']['min']) {
 					$this->error['messages'][] = [
 						'title' => "Ошибка",
@@ -232,6 +242,15 @@ class ExpenseController extends ControllerEntity {
 			];
 			return false;
 		}
+		
+		//settlement
+		if(isset($rq->fields->settlement) && isset($rq->fields->settlement->value)) {
+			$val = $this->filter->sanitize(urldecode($rq->fields->settlement->value), ["trim", "string"]);
+			if($val != '') $this->fields['settlement']['value'] = $val;
+			else $this->fields['settlement']['value'] = null;
+			//$this->logger->log('val = ' . $this->fields['settlement']['value']);
+		}
+		else $this->fields['settlement']['value'] = null;
 		
 		//street
 		if(isset($rq->fields->street) && isset($rq->fields->street->value)) {

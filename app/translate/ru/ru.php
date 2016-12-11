@@ -35,7 +35,7 @@ $messages = array(
 // Common entities properties labels
 "text_entity_property_actions" => "Действия",
 "text_entity_property_active" => "Активность",
-"text_entity_property_amount" => "Сумма, р.",
+"text_entity_property_amount" => "Сумма, тыс. р.",
 "text_entity_property_code" => "Код",
 "text_entity_property_contacts" => "Контакты",
 "text_entity_property_coordinates_x" => "X = ",

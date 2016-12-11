@@ -32,6 +32,8 @@
 								{{include tmpl = ~descriptor.actionName + "_entity_field_text" /}}
 							{{else type == "amount"}}
 								{{include tmpl = ~descriptor.actionName + "_entity_field_amount" /}}
+							{{else type == "number"}}
+								{{include tmpl = ~descriptor.actionName + "_entity_field_text" /}}
 							{{else type == "date"}}
 								{{include tmpl = ~descriptor.actionName + "_entity_field_text" /}}
 							{{else type == "period"}}
@@ -303,6 +305,22 @@ function entitySaveToLocalFromHTML(container_id) {
 									if(pos>=0) cents = val.replace(".", '');
 									else cents = val + "00";
 									realVal = parseInt(cents, 10);
+									if(realVal != null && field.min && realVal < field.min) {
+										errorMsg += '<li>Поле "' + field.name + '" содержит значение меньше допустимого</li>';
+									}
+									if(realVal != null && field.max && realVal > field.max) {
+										errorMsg += '<li>Поле "' + field.name + '" содержит значение больше допустимого</li>';
+									}
+								}
+							}
+						}
+						else if(field.type == 'number' && val != null && val != '' && val != 'undefined') {
+							if((val != null && val.length>0) || val == "") {
+								if(/^\d{0,18}$/.test(val)==null) {
+									errorMsg += '<li>Поле "' + field.name + '" содержит значение, не соответствующее формату десятичного числа</li>';
+								}
+								else {
+									realVal = parseInt(val, 10);
 									if(realVal != null && field.min && realVal < field.min) {
 										errorMsg += '<li>Поле "' + field.name + '" содержит значение меньше допустимого</li>';
 									}

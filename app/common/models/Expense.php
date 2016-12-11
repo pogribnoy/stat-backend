@@ -5,7 +5,7 @@ class Expense extends Model{
 	public $id;
 	public $name;
 	public $amount;
-	public $date;
+	//public $date;
 	public $expense_type_id;
 	public $expense_status_id;
 	public $organization_id;
@@ -13,6 +13,7 @@ class Expense extends Model{
 	public $street;
 	public $house;
 	public $executor;
+	public $settlement;
 	public $target_date_from;
 	public $target_date_to;
 		

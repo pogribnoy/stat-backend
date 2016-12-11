@@ -94,6 +94,38 @@
 			$this->partial(APP_PATH . $this->config->application->commonTemplatesDir . "scroller_template"); 
 		?>
 		
+		<?php if($controllerName == "login" && $actionName == "index") {?>
+			<script type="text/javascript"><!--
+				$(document).ready(function() {
+					formJQ = $("#loginForm");
+					
+					// делаем авторизацию на поле с паролем по нажатию Enter
+					var passJQ = formJQ.find("#password");
+					passJQ.focusin(function(){
+						$(this).bind('keypress', function(e) {
+							if(e.keyCode==13){
+								backendLogin();
+							}
+						});
+					}).focusout(function(){
+						$(this).unbind('keypress', false);
+					});
+					
+					// делаем переход из логина в поле с паролем по нажатию Enter
+					var emailJQ = formJQ.find("#email");
+					emailJQ.focusin(function(){
+						$(this).bind('keypress', function(e) {
+							if(e.keyCode==13){
+								passJQ.focus();
+							}
+						});
+					}).focusout(function(){
+						$(this).unbind('keypress', false);
+					});
+				});
+			//--></script>
+		<?php } ?>
+		
 		<!--<script src="../../js/jquery/ui/i18n/jquery.ui.datepicker-ru.js"></script>-->
 		<!--<script src="../../js/jquery/ui/i18n/jquery-ui-timepicker-addon-ru.js"></script>-->
 				

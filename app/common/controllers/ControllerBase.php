@@ -12,6 +12,7 @@ class ControllerBase extends Controller {
 	public function initialize() {
 		$this->namespace = __NAMESPACE__;
 		$this->dir = __DIR__;
+		$this->controller = $this;
 		// отключаем кеширование представлений
 		//$this->view->cache(false);
 		// инициализируем лог

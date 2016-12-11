@@ -28,25 +28,11 @@ class UserListController extends ControllerList {
 				'filter_value' => isset($this->filter_values['active']) ? $this->filter_values['active'] : '',
 				"sortable" => "DESC"
 			),
-			'phone' => array(
-				'id' => 'phone',
-				'name' => $this->controller->t->_("text_entity_property_phone"),
-				'filter' => 'text',
-				'filter_value' => isset($this->filter_values['phone']) ? $this->filter_values['phone'] : '',
-				"sortable" => "DESC"
-			),
 			'email' => array(
 				'id' => 'email',
 				'name' => $this->controller->t->_("text_entity_property_email"),
 				'filter' => 'text',
 				'filter_value' => isset($this->filter_values['email']) ? $this->filter_values['email'] : '',
-				"sortable" => "DESC"
-			),
-			'name' => array(
-				'id' => 'name',
-				'name' => $this->controller->t->_("text_entity_property_login"),
-				'filter' => 'text',
-				'filter_value' => isset($this->filter_values['name']) ? $this->filter_values['name'] : '',
 				"sortable" => "DESC"
 			),
 			'user_role' => array(
@@ -55,6 +41,20 @@ class UserListController extends ControllerList {
 				'filter' => 'select',
 				'filter_value' => isset($this->filter_values['user_role']) ? $this->filter_values['user_role'] : '',
 				'style' => 'id',
+				"sortable" => "DESC"
+			),
+			'name' => array(
+				'id' => 'name',
+				'name' => $this->controller->t->_("text_entity_property_fio"),
+				'filter' => 'text',
+				'filter_value' => isset($this->filter_values['name']) ? $this->filter_values['name'] : '',
+				"sortable" => "DESC"
+			),
+			'phone' => array(
+				'id' => 'phone',
+				'name' => $this->controller->t->_("text_entity_property_phone"),
+				'filter' => 'text',
+				'filter_value' => isset($this->filter_values['phone']) ? $this->filter_values['phone'] : '',
 				"sortable" => "DESC"
 			),
 			'operations' => array(

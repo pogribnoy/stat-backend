@@ -113,4 +113,13 @@ class Tools extends Component {
 		
 		return $operations;
 	}
+	
+	public function isHasAnyAccess($role_id, $controllerName, $acl){
+		if($acl->isAllowed($role_id, $controllerName, 'index') || $acl->isAllowed($role_id, $controllerName, 'show') || $acl->isAllowed($role_id, $controllerName, 'edit') || $acl->isAllowed($role_id, $controllerName, 'add') || $acl->isAllowed($role_id, $controllerName, 'save') || $acl->isAllowed($role_id, $controllerName, 'delete')) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
 }

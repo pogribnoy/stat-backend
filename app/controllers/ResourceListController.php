@@ -104,31 +104,32 @@ class ResourceListController extends ControllerList {
 	* Переопределяемый метод.
 	*/
 	public function fillFieldsFromRow($row) {
+		//$this->logger->log(__METHOD__ . 'row=' . json_encode($row));
 		$this->items[] = array(
 			"fields" => array(
 				"id" => array(
 					'id' => 'id',
-					'value' => isset($row->id) ? $row->id : $row->resource->id
+					'value' => isset($row->id) ? $row->id : $row->resource->id,
 				),
 				"group" => array(
 					'id' => 'group',
-					'value' =>  isset($row->group) ? $row->group : $row->resource->group
+					'value' => isset($row->group) ? $row->group : $row->resource->group,
 				),
 				"controller" => array(
 					'id' => 'controller',
-					'value' =>  isset($row->controller) ? $row->controller : $row->resource->controller
+					'value' => isset($row->controller) ? $row->controller : $row->resource->controller,
 				),
 				"action" => array(
 					'id' => 'action',
-					'value' =>  isset($row->action) ? $row->action : $row->resource->action
+					'value' => isset($row->action) ? $row->action : $row->resource->action,
 				),
 				"module" => array(
 					'id' => 'module',
-					'value' =>  isset($row->module) ? $row->module : $row->resource->module
+					'value' => isset($row->module) ? $row->module : $row->resource->module,
 				),
 				"description" => array(
 					'id' => 'description',
-					'value' =>  isset($row->description) ? $row->description : $row->resource->description
+					'value' => isset($row->description) ? $row->description : $row->resource->description,
 				)
 			)
 		);

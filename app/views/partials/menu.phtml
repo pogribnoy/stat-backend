@@ -11,32 +11,47 @@
 			</button>
 			<a class="navbar-brand" href="/"><?php echo $controller->t->_("text_site_short_name"); ?></a>
 		</div>
+		<?php
+		$access = [];
+		if($controller->acl->isAllowed($controller->userData['role_id'], 'organizationlist', 'index')) $access['organizationlist_index'] = 1;
+		if($controller->acl->isAllowed($controller->userData['role_id'], 'newslist', 'index')) $access['newslist_index'] = 1;
 		
+		if($controller->acl->isAllowed($controller->userData['role_id'], 'userlist', 'index')) $access['userlist_index'] = 1;
+		if($controller->acl->isAllowed($controller->userData['role_id'], 'userrolelist', 'index')) $access['userrolelist_index'] = 1;
+		if($controller->acl->isAllowed($controller->userData['role_id'], 'resourcelist', 'index')) $access['resourcelist_index'] = 1;
+		if($controller->acl->isAllowed($controller->userData['role_id'], 'streettypelist', 'index')) $access['streettypelist_index'] = 1;
+		if($controller->acl->isAllowed($controller->userData['role_id'], 'expensetypelist', 'index')) $access['expensetypelist_index'] = 1;
+		if($controller->acl->isAllowed($controller->userData['role_id'], 'regionlist', 'index')) $access['regionlist_index'] = 1;
+		if($controller->acl->isAllowed($controller->userData['role_id'], 'expensestatuslist', 'index')) $access['expensestatuslist_index'] = 1;
+		//var_dump($access);
+		?>
 		<!-- Collect the nav links, forms, and other content for toggling -->
 		<div class="collapse navbar-collapse navbar-left" id="bs-example-navbar-collapse-1">
 			<ul class="nav navbar-nav">
-				<li class="dropdown">
-					<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Содержимое <span class="caret"></span></a>
-					<ul class="dropdown-menu">
-						<?php if($controller->acl->isAllowed($controller->userData['role_id'], 'organizationlist', 'index')) { ?><li><a href="/organizationlist">Организации</a></li><?php } ?>
-						<!--<li role="separator" class="divider"></li>-->
-						
-						<?php if($controller->acl->isAllowed($controller->userData['role_id'], 'newslist', 'index')) { ?><li><a href="/newslist">Новости</a></li><?php } ?>
-					</ul>
-				</li>
-				<li>
-					<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Настройки сайта <span class="caret"></span></a>
-					<ul class="dropdown-menu">
-						<?php if($controller->acl->isAllowed($controller->userData['role_id'], 'userlist', 'index')) { ?><li><a href="/userlist">Пользователи</a></li><?php } ?>
-						<?php if($controller->acl->isAllowed($controller->userData['role_id'], 'userrolelist', 'index')) { ?><li><a href="/userrolelist">Роли пользователей</a></li><?php } ?>
-						<?php if($controller->acl->isAllowed($controller->userData['role_id'], 'resourcelist', 'index')) { ?><li><a href="/resourcelist">Ресурсы сайта</a></li><?php } ?>
-						<?php if($controller->acl->isAllowed($controller->userData['role_id'], 'settinglist', 'index')) { ?><li><a href="/settinglist">Настройки (параметры)</a></li><?php } ?>
-						<?php if($controller->acl->isAllowed($controller->userData['role_id'], 'streettypelist', 'index')) { ?><li><a href="/streettypelist">Типы улиц</a></li><?php } ?>
-						<?php if($controller->acl->isAllowed($controller->userData['role_id'], 'expensetypelist', 'index')) { ?><li><a href="/expensetypelist">Типы расходов</a></li><?php } ?>
-						<?php if($controller->acl->isAllowed($controller->userData['role_id'], 'regionlist', 'index')) { ?><li><a href="/regionlist">Регионы</a></li><?php } ?>
-						<?php if($controller->acl->isAllowed($controller->userData['role_id'], 'expensestatuslist', 'index')) { ?><li><a href="/expensestatuslist">Статусы расходов</a></li><?php } ?>
-					</ul>
-				</li>
+				<?php if(isset($access['organizationlist_index']) || isset($access['newslist_index'])) { ?>
+					<li class="dropdown">
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Содержимое <span class="caret"></span></a>
+						<ul class="dropdown-menu">
+							<?php if(isset($access['organizationlist_index'])) { ?><li><a href="/organizationlist">Организации</a></li><?php } ?>
+							<!--<li role="separator" class="divider"></li>-->
+							<?php if(isset($access['newslist_index'])) { ?><li><a href="/newslist">Новости</a></li><?php } ?>
+						</ul>
+					</li>
+				<?php } ?>
+				<?php if(isset($access['userlist_index']) || isset($access['userrolelist_index']) || isset($access['resourcelist_index']) || isset($access['streettypelist_index']) || isset($access['expensetypelist_index']) || isset($access['regionlist_index']) || isset($access['expensestatuslist_index'])) { ?>
+					<li>
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Настройки сайта <span class="caret"></span></a>
+						<ul class="dropdown-menu">
+							<?php if(isset($access['userlist_index'])) { ?><li><a href="/userlist">Пользователи</a></li><?php } ?>
+							<?php if(isset($access['userrolelist_index'])) { ?><li><a href="/userrolelist">Роли пользователей</a></li><?php } ?>
+							<?php if(isset($access['resourcelist_index'])) { ?><li><a href="/resourcelist">Ресурсы сайта</a></li><?php } ?>
+							<?php if(isset($access['streettypelist_index'])) { ?><li><a href="/streettypelist">Типы улиц</a></li><?php } ?>
+							<?php if(isset($access['expensetypelist_index'])) { ?><li><a href="/expensetypelist">Типы расходов</a></li><?php } ?>
+							<?php if(isset($access['regionlist_index'])) { ?><li><a href="/regionlist">Регионы</a></li><?php } ?>
+							<?php if(isset($access['expensestatuslist_index'])) { ?><li><a href="/expensestatuslist">Статусы расходов</a></li><?php } ?>
+						</ul>
+					</li>
+				<?php } ?>
 				<li><a href="/profile/edit?id=<?php echo $controller->userData['id']; ?>">Профиль пользователя</a></li>
 			</ul>
 		</div><!-- /.navbar-collapse -->

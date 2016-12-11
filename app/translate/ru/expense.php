@@ -5,6 +5,7 @@ $messages["text_expense_new_entity_title"] = "Новый расход";
 
 $messages["text_expense_expense_type"] = "Тип расхода";
 $messages["text_expense_target_date"] = "Срок выполнения";
+$messages["text_expense_settlement"] = "Наименование нас. пункта";
 
 // Закладка "Основные сведения"
 //$messages["related_data_expenses"] = "Расходы";

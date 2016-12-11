@@ -312,6 +312,10 @@ class ControllerList extends ControllerBase {
 			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_date"]), "string");
 			if($val != '') $this->filter_values["date"] =  $val;
 		}
+		if(isset($_REQUEST["filter_settlement"])) {
+			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_settlement"]), "string");
+			if($val != '') $this->filter_values["settlement"] =  $val;
+		}
 		if(isset($_REQUEST["filter_street"])) {
 			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_street"]), "string");
 			if($val != '') $this->filter_values["street"] =  $val;
@@ -397,6 +401,10 @@ class ControllerList extends ControllerBase {
 		if(isset($this->filter_values["date"]) && isset($this->columns['date'])) $phql .= " AND <TableName>.date LIKE '%" . $this->filter_values["date"] . "%'";
 		// TODO. Победить то, что MySQL ругается на служебное слово "group"
 		if(isset($this->filter_values["group"]) && isset($this->columns['group'])) $phql .= " AND <TableName>.[group] LIKE '%" . $this->filter_values["group"] . "%'";
+		if(isset($this->filter_values["settlement"]) && isset($this->columns['settlement'])) {
+			if($this->filter_values["settlement"] == $this->columns['settlement']["nullSubstitute"]) $phql .= " AND (<TableName>.settlement IS NULL OR <TableName>.settlement = '' OR <TableName>.settlement = '" . $this->columns['settlement']["nullSubstitute"] . "')";
+			else $phql .= " AND <TableName>.settlement LIKE '%" . $this->filter_values["settlement"] . "%'";
+		}
 		if(isset($this->filter_values["street"]) && isset($this->columns['street'])) {
 			if($this->filter_values["street"] == $this->columns['street']["nullSubstitute"]) $phql .= " AND (<TableName>.street IS NULL OR <TableName>.street = '' OR <TableName>.street = '" . $this->columns['street']["nullSubstitute"] . "')";
 			else $phql .= " AND <TableName>.street LIKE '%" . $this->filter_values["street"] . "%'";
