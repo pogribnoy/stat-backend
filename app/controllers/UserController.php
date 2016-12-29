@@ -167,6 +167,7 @@ class UserController extends ControllerEntity{
 	protected function sanitizeSaveRqData($rq) {
 		// id
 		if(!parent::sanitizeSaveRqData($rq)) return false;
+		
 		// active
 		if(isset($rq->fields->active) && isset($rq->fields->active->value)) {
 			$val = $this->filter->sanitize(urldecode($rq->fields->active->value), ["trim", "int"]);
@@ -179,6 +180,7 @@ class UserController extends ControllerEntity{
 				return false;
 			}
 		}
+		
 		// name
 		if(isset($rq->fields->name) && isset($rq->fields->name->value)) {
 			$val = $this->filter->sanitize(urldecode($rq->fields->name->value), ["trim", "string"]);
@@ -198,6 +200,7 @@ class UserController extends ControllerEntity{
 			];
 			return false;
 		}
+		
 		// password
 		if(isset($rq->fields->password) && isset($rq->fields->password->value)) {
 			$val = $this->filter->sanitize(urldecode($rq->fields->password->value), ["trim", "string"]);
@@ -213,17 +216,21 @@ class UserController extends ControllerEntity{
 				}
 			}*/
 		}
-		//else return false;		
+		//else return false;	
+		
 		// phone
 		if(isset($rq->fields->phone) && isset($rq->fields->phone->value)) {
 			$val = $this->filter->sanitize(urldecode($rq->fields->phone->value), ["trim", "string"]);
 			$this->fields['phone']['value'] = $val;
 		}
+		else $this->fields['phone']['value'] = null;
+		
 		// email
 		if(isset($rq->fields->email) && isset($rq->fields->email->value)) {
 			$val = $this->fields['email']['value'] = $this->filter->sanitize(urldecode($rq->fields->email->value), ["trim", "string"]);
 			$this->fields['email']['value'] = $val;
 		}
+		else $this->fields['email']['value'] = null;
 		
 		// organizationlist
 		return $this->sanitizeSaveRqDataCheckRelations($rq);

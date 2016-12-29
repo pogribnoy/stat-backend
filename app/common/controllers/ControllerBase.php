@@ -39,6 +39,7 @@ class ControllerBase extends Controller {
 	public function beforeExecuteRoute($dispatcher){
 		$this->controllerName = $dispatcher->getControllerName();
 		$this->actionName = $dispatcher->getActionName();
+		//var_dump(__METHOD__ . ". actionName: " . json_encode($this->actionName));
 		//$this->dispatcher = $dispatcher;
 		
 		// загружаем перевод
@@ -59,7 +60,7 @@ class ControllerBase extends Controller {
 		}
 	}
 
-	/*protected function forward($uri) {
+	protected function forward($uri) {
 		$uriParts = explode('/', $uri);
 		if(count($uriParts)>2) {
 			return $this->dispatcher->forward(
@@ -86,5 +87,5 @@ class ControllerBase extends Controller {
 				)
 			);
 		}
-	}*/
+	}
 }

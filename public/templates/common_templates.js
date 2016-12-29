@@ -33,7 +33,11 @@ edit_entity_field_period: '<div class="row"><div class="col-lg-1 text-right">{{:
 show_entity_field_period: '<p id="field_{{:id}}_value" class="form-control-static">{{:value1}}-{{:value2}}</p>',
 edit_entity_field_textarea: '<textarea rows="3" class="form-control" id="field_{{:id}}_value" placeholder="{{:name}}">{{:value}}</textarea>',
 show_entity_field_textarea: '<p id="field_{{:id}}_value" class="form-control-static">{{:value}}</p>',
-edit_entity_field_password: '<p id="field_{{:id}}_value" class="form-control-static">**********</p>',
+edit_entity_field_password: '<div class="row"><div class="col-lg-5"><div class="input-group">\
+<input id="field_{{:id}}_value" type="password" class="form-control" placeholder="Новый пароль" onkeyup="checkPasswordStrength(this, \'field_{{:id}}_value\');"/>\
+<span class="input-group-addon" title="Показать/скрыть пароль"  onclick="togglePasswordMask(this, \'field_{{:id}}_value\');"><span class="glyphicon glyphicon-eye-open"></span></span></div><label id="pass_strength_result"></label></div><div class="col-lg-1"></div><div class="col-lg-5"><div class="input-group">\
+<input id="password2" type="password" class="form-control" placeholder="Повторите новый пароль" onkeyup="checkPasswordEq(this, \'field_{{:id}}_value\');"/><span class="input-group-addon" title="Показать/скрыть пароль"><span class="glyphicon glyphicon-asterisk"></span></span></div><label id="pass_eq_result"></label></div></div>',
+show_entity_field_password: '<p id="field_{{:id}}_value" class="form-control-static">**********</p>',
 edit_entity_field_bool: '<input type="checkbox" id="field_{{:id}}_value" {{if value == 1}}checked="checked"{{/if}} value="">',
 show_entity_field_bool: '<input type="checkbox" id="field_{{:id}}_value" {{if value == 1}}checked="checked"{{/if}} value="" disabled>',
 edit_entity_field_select: '<select id="field_{{:id}}_value" class="form-control" style="width:auto;">\
@@ -53,12 +57,7 @@ edit_entity_field_img: '<input id="field_{{:id}}" class="file" type="file" {{if 
 <input hidden="" id="field" value="{{:id}}"> \
 <input hidden="" id="min_count" value="{{:min_count}}"> \
 <input hidden="" id="max_count" value="{{:max_count}}">',
-show_entity_field_img: '<input id="field_{{:id}}" class="file" type="file" {{if max_count && max_count > 1}} name="file[]" multiple="true"{{else}}name="file"{{/if}}{{if min_count && min_count > 0}} mandatory{{/if}}> \
-<input hidden="" id="eid" value="{{:~descriptor.local_data.eid}}"> \
-<input hidden="" id="entity" value="{{:~descriptor.entity}}"> \
-<input hidden="" id="field" value="{{:id}}"> \
-<input hidden="" id="min_count" value="{{:min_count}}"> \
-<input hidden="" id="max_count" value="{{:max_count}}">',
+show_entity_field_img: '{{if files && files.length > 0 }}<div class="row">{{for files}}<div class="col-lg-6"><a href="#" class="thumbnail"><img src="{{:url}}" alt="{{if ~descriptor.entity && ~descriptor.entity.fields && ~descriptor.entity.fields.name}}{{:~descriptor.entity.fields.name.value}}{{/if}}"/></a></div>{{/for}}</div><!-- /.row -->{{/if}}',
 
 edit_entity_field_link: '<div class="input-group"><input type="text" class="form-control" id="field_{{:id}}_value" placeholder="" value="{{:value}}" readonly><span class="input-group-btn"><button class="btn btn-default" type="button"  aria-label="{{:name}}"  name="{{:id}}" onclick="link_entity(\'{{:(~descriptor ? ~descriptor.local_data.container_id : entity.local_data.container_id)}}\', \'{{:controllerName}}\', \'{{:id}}\', \'radio\');"><span class="glyphicon glyphicon-link" aria-hidden="true"></span></button></span></div>',
 show_entity_field_link: '<p id="field_{{:id}}_value" class="form-control-static">{{:value}}</p>',

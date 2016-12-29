@@ -114,8 +114,7 @@ class OrganizationListController extends ControllerList {
 			else $phql .= ' UserOrganization.user_id=' . $this->add_filter["user_id"];
 		}
 		
-		
-		return $phql;
+		return $phql . " WHERE 1=1";
 	}
 	
 	/* 

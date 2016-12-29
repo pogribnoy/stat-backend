@@ -1,7 +1,7 @@
 <?php
 // информация о кошельке
 // Heading
-$messages["title_header"]    = "Ошибка"; 
+$messages["text_errors_title"]    = "Ошибка"; 
 
 // Text
 $messages["text_page_unauthorized"]	= "Доступ запрещен";

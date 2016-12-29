@@ -115,27 +115,41 @@ class OrganizationController extends ControllerEntity {
 	* Переопределяемый метод.
 	*/
 	protected function fillScrollers() {
+		$this->logger->log(__METHOD__ . ". actionName1: " . json_encode($this->actionName));
+		$role_id = $this->userData['role_id'];
 		// TODO. Надо вынести заполнение в базовый класс в  метод initFields, зпаолнять на основании свойст полей из $this->fields
 		//$this->logger->log('fields: ' . json_encode($this->fields));
-		// cкроллер расходов
-		$controller_expense_list = new ExpenseListController();
-		$scroller_expense_list = $controller_expense_list->createDescriptor($this, array("organization_id" => $this->fields["id"]["value"]));
-		$scroller_expense_list['relationType'] = $this->scrollers[$controller_expense_list->controllerName]['relationType'];
-		$scroller_expense_list["add_style"] = "entity";
-		$scroller_expense_list["edit_style"]  = "modal";
-		
-		// cкроллер пользователей
-		//if($this->tools->isHasAnyAccess($this->userData['role_id'], "userlist", $this->acl)) {
-			$controller_user_list = new UserListController();
-			$scroller_user_list = $controller_user_list->createDescriptor($this, array("organization_id" => $this->fields["id"]["value"]));
+		// грид расходов
+		// если имеется доступ к скроллеру
+		$action = ($this->acl->isAllowed($role_id, "organization_expenselist", 'edit') ? 'edit' : ($this->acl->isAllowed($role_id, "organization_expenselist", 'show') ? 'show' : null));
+		if($action) {
+			$controller_expense_list = new ExpenseListController();
+			$scroller_expense_list = $controller_expense_list->createDescriptor($this, array("organization_id" => $this->fields["id"]["value"]), $action);
 			$scroller_expense_list['relationType'] = $this->scrollers[$controller_expense_list->controllerName]['relationType'];
-			$scroller_user_list["add_style"] = "scroller";
-			$scroller_user_list['edit_style']  = "modal";
+			$scroller_expense_list["add_style"] = "entity";
+			$scroller_expense_list["edit_style"]  = "modal";
 			
 			$this->scrollers[$controller_expense_list->controllerName] = $scroller_expense_list;
-			$this->scrollers[$controller_user_list->controllerName] = $scroller_user_list;
-		//}
-		//else unset($this->scrollers["userlist"]);
+		}
+		else unset($this->scrollers['expenselist']);
+		
+		// грид пользователей
+		// если имеется доступ к скроллеру
+		if($this->acl->isAllowed($role_id, "userlist", 'index')) {
+			$action = $this->acl->isAllowed($role_id, "organization_userlist", 'edit') ? 'edit' : $this->acl->isAllowed($role_id, "organization_userlist", 'show') ? 'show' : null;
+			if($action) {
+				$controller_user_list = new UserListController();
+				$scroller_user_list = $controller_user_list->createDescriptor($this, array("organization_id" => $this->fields["id"]["value"]), $action);
+				$scroller_user_list['relationType'] = $this->scrollers[$controller_user_list->controllerName]['relationType'];
+				$scroller_user_list["add_style"] = "scroller";
+				$scroller_user_list['edit_style']  = "modal";
+				
+				$this->scrollers[$controller_user_list->controllerName] = $scroller_user_list;
+			}
+			else unset($this->scrollers['expenselist']);
+		}
+		else unset($this->scrollers["userlist"]);
+		$this->logger->log(__METHOD__ . ". actionName2: " . json_encode($this->actionName));
 	}
 	
 	/* 

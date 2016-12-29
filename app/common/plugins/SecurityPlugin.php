@@ -68,7 +68,7 @@ class SecurityPlugin extends Plugin {
 					if($ur->id == 1) {
 						//$this->logger->log('Superuser. Module: ' . $this->config->application->module);
 						foreach($resources as $r) {
-							if ($r['module'] === $this->config->application->module)$acl->allow($ur->id, $r['controller'], $r['action']);
+							if ($r['module'] === $this->config->application->module) $acl->allow($ur->id, $r['controller'], $r['action']);
 						}
 					}
 					// роль "Гость" имеет доступ ко всему базовому, не зависимо от активности
@@ -134,7 +134,7 @@ class SecurityPlugin extends Plugin {
 
 		$allowed = $acl->isAllowed($role, $controller, $action);
 		
-		$this->logger->log("Access: user: " . ( $this->user!=null && isset($this->user['id']) ? $this->user['id'] . '(' . $this->user['name'] . '), ' : 'guest, ') . "role: " . $role . ", resource: " . $controller . " \ " . $action . " RESULT: " . ($allowed == Acl::ALLOW ? '1' : '0'));
+		$this->logger->log("Access: user: " . ( $this->user!=null && isset($this->user['id']) ? $this->user['id'] . '(' . $this->user['name'] . '), ' : 'guest, ') . "role: " . $role . ", resource: " . $controller . " \ " . $action . ", URL: " . json_encode($this->request->getURI()) . ", RESULT: " . ($allowed == Acl::ALLOW ? '1' : '0'));
 		
 		if ($allowed != Acl::ALLOW) {
 			if($role == 2 && $this->config->application->module === "backend") {

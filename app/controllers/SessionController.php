@@ -17,7 +17,7 @@ class SessionController extends ControllerBase {
 		$this->response->setContentType('application/json', 'UTF-8');
 		
 		$request = $this->request;
-		$this->logger->log('requestURI = ' . json_encode($request->getURI ()));
+		//$this->logger->log('requestURI = ' . json_encode($request->getURI ()));
 		if (!$request->isAjax()) {
 			$this->logger->log("Not AJAX login");
 			$data = array(
@@ -32,12 +32,11 @@ class SessionController extends ControllerBase {
 		}
 		else {
 			if(isset($_REQUEST["email"])) $email = $this->filter->sanitize(urldecode($_REQUEST["email"]), ['trim', "string"]); else $email = "";
-			if(isset($_REQUEST["phone"])) $phone = $this->filter->sanitize(urldecode($_REQUEST["phone"]), ['trim', "string"]); else $phone = "";
 			if(isset($_REQUEST["password"])) $password = $this->filter->sanitize(urldecode($_REQUEST["password"]), ['trim', "string"]); else $password = "";
 			
 			$auth = $this->session->get('auth');
-			$this->logger->log("auth = " . json_encode($auth));
-			$this->logger->log("REQUEST = " . json_encode($request->get()));
+			//$this->logger->log("auth = " . json_encode($auth));
+			//$this->logger->log("REQUEST = " . json_encode($request->get()));
 			if(isset($auth)) {
 				$data = array(
 					'success' => [
@@ -53,8 +52,8 @@ class SessionController extends ControllerBase {
 			else {
 				$user = false;
 				$user = User::findFirst(array(
-					"(email = :email: OR phone = :phone:) AND password = :password: AND active = 1",
-					'bind' => array('email' => $email, 'phone' => $phone, 'password' => $password)//sha1($password))
+					"email = :email: AND password = :password: AND active = 1",
+					'bind' => array('email' => $email, 'password' => $password)//sha1($password))
 				));
 				if($user != false) {
 					$this->_registerSession($user);
@@ -68,12 +67,12 @@ class SessionController extends ControllerBase {
 								'msg' => "",
 								'code' => '001'
 							]],
-							'redirect' => '/index/index'
+							'redirect' => '/index/index',
 						]
 					);
 				}
 				else {
-					$this->logger->log("Пользователь (email=" . $email . ", phone=" . $phone . ", password=" . $password . ") НЕ найден");
+					$this->logger->log("Пользователь (email=" . $email . ", password=" . $password . ") НЕ найден");
 					$data = array(
 						'error' => [
 							'messages' => [[

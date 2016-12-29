@@ -27,7 +27,7 @@ class ResourceListController extends ControllerList {
 				'name' => $this->controller->t->_("text_resourcelist_group"),
 				'type' => 'text',
 				'filter' => 'select',
-				'filter_value' => isset($this->filter_values['group']) ? $this->filter_values['group'] : '',
+				'filter_value' => isset($this->filter_values['group']) ? $this->filter_values['group'] : 'acl',
 				"sortable" => "DESC",
 				'style' => 'name', //'id'
 			),
@@ -52,7 +52,7 @@ class ResourceListController extends ControllerList {
 				'name' => $this->controller->t->_("text_resourcelist_module"),
 				'type' => 'text',
 				'filter' => 'select',
-				'filter_value' => isset($this->filter_values['module']) ? $this->filter_values['module'] : '',
+				'filter_value' => isset($this->filter_values['module']) ? $this->filter_values['module'] : 'backend',
 				"sortable" => "DESC",
 				'style' => 'name', //'id'
 			),

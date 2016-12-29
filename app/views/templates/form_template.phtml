@@ -290,6 +290,7 @@ function entitySaveToLocalFromHTML(container_id) {
 					
 					// проверка на обязательность не зависимо от типа
 					if(field.required && field.required != "undefined" && (val == null || val == '' || val == 'undefined' || (val == null && val1 == null && val2 == null)) && val_id != "*") {
+						errorMsg += '<li>Поле "' + field.name + '" обязательно для заполнения</li>';
 					}
 					// выполняем остальные проверки
 					else {
@@ -333,6 +334,11 @@ function entitySaveToLocalFromHTML(container_id) {
 						else if(field.type == 'email' && val != null && val != '' && val != 'undefined') {
 							if(val.indexOf('@') == -1) {
 								errorMsg += '<li>Поле "' + field.name + '" содержит значение, не соответствущее адресу электронной почты</li>';
+							}
+						}
+						else if(field.type == 'password' && val != null && val != '' && val != 'undefined') {
+							if(checkPasswordEq(field_jqobj, "field_"+field.id+"_value") === false) {
+								errorMsg += '<li>Пароли в поле "' + field.name + '" не совпадают</li>';
 							}
 						}
 						else if((field.type == 'period') && val1 != null && val1 != '' && val1 != 'undefined' && val2 != null && val2 != '' && val2 != 'undefined') {
@@ -438,7 +444,7 @@ function entitySaveToServer(descriptor){
 	}
 	
 	$.ajax({
-		url: '/' + descriptor.entity + '/save?id=' + descriptor.fields.id.value,
+		url: '/' + descriptor.controllerName + '/save?id=' + descriptor.fields.id.value,
 		dataType: 'json',
 		data:  $.toJSON(data),
 		method: 'post',

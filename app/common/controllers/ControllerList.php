@@ -47,6 +47,36 @@ class ControllerList extends ControllerBase {
 		}
 	}
 	
+	public function editAction() {
+		$this->createDescriptor();
+		
+		if($this->request->isAjax()) {
+			$this->view->disable();
+			$this->response->setContentType('application/json', 'UTF-8');
+			return json_encode($this->descriptor);
+		}
+		else {
+			// передаем в представление имеющиеся данные
+			//$this->view->setVar("page_header", $this->t->_('text_'.$this->controllerName.'_title'));
+			$this->view->setVar("descriptor", $this->descriptor);
+		}
+	}
+	
+	public function showAction() {
+		$this->createDescriptor();
+		
+		if($this->request->isAjax()) {
+			$this->view->disable();
+			$this->response->setContentType('application/json', 'UTF-8');
+			return json_encode($this->descriptor);
+		}
+		else {
+			// передаем в представление имеющиеся данные
+			//$this->view->setVar("page_header", $this->t->_('text_'.$this->controllerName.'_title'));
+			$this->view->setVar("descriptor", $this->descriptor);
+		}
+	}
+	
 	public function filterAction() {
 		$this->view->disable();
 		$this->response->setContentType('application/json', 'UTF-8');
@@ -56,10 +86,12 @@ class ControllerList extends ControllerBase {
 		return json_encode($this->descriptor);
 	}
 	
-	public function createDescriptor($controller = null, $add_filters = null) {
+	public function createDescriptor($controller = null, $add_filters = null, $action = null) {
 		if($controller == null) $this->controller = $this;
 		else {
 			$this->controller = $controller;
+			if($action) $this->actionName = $action;
+			else $this->actionName = $controller->actionName;
 			// данный метод вызван из внешнего контроллера, поэтому надо проинициализировать внутренние сущности
 			$this->namespace = __NAMESPACE__;
 			//$this->dir = __DIR__;
@@ -183,7 +215,7 @@ class ControllerList extends ControllerBase {
 		// получаем действия, доступные пользователю
 		if(!isset($this->controller->tools)) $this->controller->tools = DI::getDefault()->getTools();
 		//var_dump($this->controller->tools);
-		$this->operations = $this->controller->tools->getScrollerOperations($this->controller->userData['role_id'], $this->entityName, $this->controller->acl, $this->controller->t, $this->controller->actionName);
+		$this->operations = $this->controller->tools->getScrollerOperations($this->controller->userData['role_id'], $this->entityName, $this->controller->acl, $this->controller->t, $this->actionName);
 	}
 	
 	/* 
@@ -241,7 +273,7 @@ class ControllerList extends ControllerBase {
 		if(isset($_REQUEST["order"])) $this->filter_values["order"] = $this->filter->sanitize(urldecode($_REQUEST["order"]), ['trim',"string"]); else $this->filter_values['order'] = "DESC";
 		if(isset($_REQUEST["page_size"])) {
 			$this->filter_values["page_size"] = $this->filter->sanitize(urldecode($_REQUEST["page_size"]), ['trim',"int"]); 
-			if($this->filter_values["page_size"]=="" || !in_array($this->max_page_size, $this->pager['page_sizes'])) $this->filter_values['page_size'] = $this->max_page_size;
+			if($this->filter_values["page_size"]=="" || !in_array($this->filter_values["page_size"], $this->pager['page_sizes'])) $this->filter_values['page_size'] = $this->max_page_size;
 		}
 		else $this->filter_values['page_size'] = $this->max_page_size;
 		
@@ -402,19 +434,19 @@ class ControllerList extends ControllerBase {
 		// TODO. Победить то, что MySQL ругается на служебное слово "group"
 		if(isset($this->filter_values["group"]) && isset($this->columns['group'])) $phql .= " AND <TableName>.[group] LIKE '%" . $this->filter_values["group"] . "%'";
 		if(isset($this->filter_values["settlement"]) && isset($this->columns['settlement'])) {
-			if($this->filter_values["settlement"] == $this->columns['settlement']["nullSubstitute"]) $phql .= " AND (<TableName>.settlement IS NULL OR <TableName>.settlement = '' OR <TableName>.settlement = '" . $this->columns['settlement']["nullSubstitute"] . "')";
+			if(isset($this->columns['settlement']["nullSubstitute"]) && $this->filter_values["settlement"] == $this->columns['settlement']["nullSubstitute"]) $phql .= " AND (<TableName>.settlement IS NULL OR <TableName>.settlement = '' OR <TableName>.settlement = '" . $this->columns['settlement']["nullSubstitute"] . "')";
 			else $phql .= " AND <TableName>.settlement LIKE '%" . $this->filter_values["settlement"] . "%'";
 		}
 		if(isset($this->filter_values["street"]) && isset($this->columns['street'])) {
-			if($this->filter_values["street"] == $this->columns['street']["nullSubstitute"]) $phql .= " AND (<TableName>.street IS NULL OR <TableName>.street = '' OR <TableName>.street = '" . $this->columns['street']["nullSubstitute"] . "')";
+			if(isset($this->columns['street']["nullSubstitute"]) && $this->filter_values["street"] == $this->columns['street']["nullSubstitute"]) $phql .= " AND (<TableName>.street IS NULL OR <TableName>.street = '' OR <TableName>.street = '" . $this->columns['street']["nullSubstitute"] . "')";
 			else $phql .= " AND <TableName>.street LIKE '%" . $this->filter_values["street"] . "%'";
 		}
 		if(isset($this->filter_values["house"]) && isset($this->columns['house'])) {
-			if($this->filter_values["house"] == $this->columns['house']["nullSubstitute"]) $phql .= " AND (<TableName>.house IS NULL OR <TableName>.house = '' OR <TableName>.house = '" . $this->columns['house']["nullSubstitute"] . "')";
+			if(isset($this->columns['street']["nullSubstitute"]) && $this->filter_values["house"] == $this->columns['house']["nullSubstitute"]) $phql .= " AND (<TableName>.house IS NULL OR <TableName>.house = '' OR <TableName>.house = '" . $this->columns['house']["nullSubstitute"] . "')";
 			else $phql .= " AND <TableName>.house LIKE '%" . $this->filter_values["house"] . "%'";
 		}
 		if(isset($this->filter_values["executor"]) && isset($this->columns['executor'])) {
-			if($this->filter_values["executor"] == $this->columns['street_type']["nullSubstitute"]) $phql .= " AND (<TableName>.executor IS NULL OR <TableName>.executor = '' OR <TableName>.executor = '" . $this->columns['executor']["nullSubstitute"] . "')";
+			if(isset($this->columns['executor']["nullSubstitute"]) && $this->filter_values["executor"] == $this->columns['street_type']["nullSubstitute"]) $phql .= " AND (<TableName>.executor IS NULL OR <TableName>.executor = '' OR <TableName>.executor = '" . $this->columns['executor']["nullSubstitute"] . "')";
 			else $phql .= " AND <TableName>.executor LIKE '%" . $this->filter_values["executor"] . "%'";
 		}
 		if(isset($this->filter_values["street_type_id"])) {

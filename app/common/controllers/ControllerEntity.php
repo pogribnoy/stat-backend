@@ -33,9 +33,36 @@ class ControllerEntity extends ControllerBase {
 	}
 	
 	/* 
-	* Используется при открытии из скроллера сущности на просмотр на отдельной странице
+	* Используется при открытии сущности на просмотр/редактирование, когда непонятно, какие права на нее имеются
 	*/
 	public function indexAction() {
+		$role_id = $this->userData['role_id'];
+		//var_dump($this->request->getURI());
+		
+		if($this->acl->isAllowed($role_id, $this->controllerName, 'edit')) {
+			$this->dispatcher->forward(array(
+				'controller' => $this->controllerName,
+				'action'     => 'edit',
+			));
+			//$this->forward($this->request->getURI());
+		}
+		else if($this->acl->isAllowed($role_id, $this->controllerName, 'show')) {
+			$this->dispatcher->forward(array(
+				'controller' => $this->controllerName,
+				'action'     => 'show',
+			));
+			//$this->forward($this->request->getURI());
+		}
+		else {
+			$this->dispatcher->forward(array(
+				'controller' => $this->controllerName,
+				'action' => 'show404',
+				'sourceURL' => $this->request->getURI(),
+			));
+		}
+		
+		
+		/*
 		$this->createDescriptor();
 		
 		if($this->request->isAjax()) {
@@ -47,7 +74,32 @@ class ControllerEntity extends ControllerBase {
 			// передаем в представление имеющиеся данные
 			//$this->view->setVar('page_header', $this->t->_('text_' . $this->controllerName . '_title'));
 			$this->view->setVar("descriptor", $this->descriptor);
+		}*/
+	}
+	
+	/* 
+	* Используется при фильтрации скроллеров/гридов сущности
+	*/
+	public function filterAction() {
+		$role_id = $this->userData['role_id'];
+		$scrollerName = $this->request->get("scrollerName", ["trim", "string"]);
+		if(!$scrollerName) {
+			$this->dispatcher->forward(array(
+				'controller' => 'errors',
+				'action' => 'show404',
+				'sourceURL' => $this->request->getURI(),
+			));
+			return;
 		}
+		//$resource = $this->controllerName . '_' . $scrollerName;
+		//var_dump($resource);
+		
+		$actionName = $this->request->get("actionName", ["trim", "string"], "show");
+		//var_dump($actionName);
+		$this->dispatcher->forward(array(
+			'controller' => $scrollerName,
+			'action' => $actionName,
+		));
 	}
 	
 	/* 
@@ -72,7 +124,9 @@ class ControllerEntity extends ControllerBase {
 	* Используется при открытии из скроллера сущности на редактирование на отдельной странице
 	*/
 	public function showAction() {
+		//$this->logger->log(__METHOD__ . ". createDescriptor() before, actionName: " . json_encode($this->actionName));
 		$this->createDescriptor();
+		
 		if($this->request->isAjax()) {
 			$this->view->disable();
 			$this->response->setContentType('application/json', 'UTF-8');
@@ -112,7 +166,7 @@ class ControllerEntity extends ControllerBase {
 			$this->initFields();
 			
 			if($this->sanitizeSaveRqData($rq)) {
-				//$this->logger->log("saveAction. sanitizeSaveRqData: " . json_encode($this->fields));
+				//$this->logger->log(__METHOD__ . ". sanitizeSaveRqData: " . json_encode($this->fields));
 				$id = $this->fields['id']['value'];
 				
 				// открываем транзакцию
@@ -363,7 +417,9 @@ class ControllerEntity extends ControllerBase {
 		
 		// получаем действия, доступные пользователю
 		$this->tools = Phalcon\DI::getDefault()->getTools();
-		$this->operations = $this->tools->getEntityFormOperations($this->userData['role_id'], $this->entityName, $this->acl, $this->t, $exludeOps, $this->actionName);
+		//$this->logger->log(__METHOD__ . ". actionName1: " . json_encode($this->actionName));
+		$this->operations = $this->tools->getEntityFormOperations($this->userData['role_id'], $this->controllerName, $this->acl, $this->t, $exludeOps, $this->actionName);
+		//$this->logger->log(__METHOD__ . ". actionName2: " . json_encode($this->actionName));
 	}
 	
 	/* 

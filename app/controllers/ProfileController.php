@@ -125,6 +125,9 @@ class ProfileController extends ControllerEntity{
 	* Расширяемый метод.
 	*/
 	protected function sanitizeSaveRqData($rq) {
+		// id
+		if(!parent::sanitizeSaveRqData($rq)) return false;
+		
 		// name
 		if(isset($rq->fields->name) && isset($rq->fields->name->value)) {
 			$val = $this->filter->sanitize(urldecode($rq->fields->name->value), ["trim", "string"]);
@@ -138,6 +141,7 @@ class ProfileController extends ControllerEntity{
 			}
 		}
 		else return false;
+		
 		// password
 		if(isset($rq->fields->password) && isset($rq->fields->password->value)) {
 			$val = $this->filter->sanitize(urldecode($rq->fields->password->value), ["trim", "string"]);
@@ -153,11 +157,14 @@ class ProfileController extends ControllerEntity{
 				}
 			}*/
 		}
-		else return false;		
+		
 		// phone
 		if(isset($rq->fields->phone) && isset($rq->fields->phone->value)) {
 			$val = $this->filter->sanitize(urldecode($rq->fields->phone->value), ["trim", "string"]);
 			$this->fields['phone']['value'] = $val;
 		}
+		else $this->fields['phone']['value'] = null;
+		
+		return true;
 	}
 }

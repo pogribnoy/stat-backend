@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Хост: 127.0.0.1
--- Время создания: Дек 11 2016 г., 20:08
+-- Время создания: Дек 20 2016 г., 20:31
 -- Версия сервера: 5.7.9
 -- Версия PHP: 5.6.16
 
@@ -194,7 +194,6 @@ CREATE TABLE IF NOT EXISTS `file_collection` (
 --
 
 INSERT INTO `file_collection` (`id`, `collection_id`, `file_id`) VALUES
-(1, 1, 1),
 (2, 2, 2),
 (3, 3, 3),
 (4, 3, 4),
@@ -690,6 +689,7 @@ INSERT INTO `user_role_resource` (`user_role_id`, `resource_id`) VALUES
 (5, 70),
 (5, 81),
 (5, 104),
+(5, 140),
 (5, 141);
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
