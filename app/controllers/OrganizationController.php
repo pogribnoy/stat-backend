@@ -80,10 +80,10 @@ class OrganizationController extends ControllerEntity {
 	*/
 	protected function fillModelFieldsFromSaveRq() {
 		//$this->entity->id получен ранее при select из БД или будет присвоен при создании записи в БД
-		$this->entity->name = $this->fields['name']['value'];
-		$this->entity->contacts = $this->fields['contacts']['value'];
-		$this->entity->email = $this->fields['email']['value'];
-		$this->entity->region_id = $this->fields['region']['value_id'];
+		if(isset($this->fields['name']['value'])) $this->entity->name = $this->fields['name']['value'];
+		if(isset($this->fields['contacts']['value'])) $this->entity->contacts = $this->fields['contacts']['value'];
+		if(isset($this->fields['email']['value'])) $this->entity->email = $this->fields['email']['value'];
+		if(isset($this->fields['region']['value_id'])) $this->entity->region_id = $this->fields['region']['value_id'];
 	}
 	
 	/* 
@@ -171,7 +171,7 @@ class OrganizationController extends ControllerEntity {
 				return false;
 			}
 		}
-		else return false;
+		
 		// email
 		if(isset($rq->fields->email) && isset($rq->fields->email->value)) {
 			$val = $this->fields['email']['value'] = $this->filter->sanitize(urldecode($rq->fields->email->value), ["trim", "string"]);

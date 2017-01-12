@@ -43,7 +43,7 @@ class SessionController extends ControllerBase {
 						'messages' => [[
 							'title' => 'Успешная авторизация',
 							'msg' => "",
-							'code' => '001'
+							//'code' => '001',
 						]],
 						'redirect' => '/index/index'
 					]
@@ -65,7 +65,7 @@ class SessionController extends ControllerBase {
 							'messages' => [[
 								'title' => 'Успешная авторизация',
 								'msg' => "",
-								'code' => '001'
+								//'code' => '001',
 							]],
 							'redirect' => '/index/index',
 						]
@@ -78,7 +78,7 @@ class SessionController extends ControllerBase {
 							'messages' => [[
 								'title' => 'Ошибка авторизации',
 								'msg' => "Пользователь с указанным паролем не найден",
-								'code' => '001'
+								//'code' => '001',
 							]],
 						],
 					);

@@ -289,7 +289,7 @@ function entitySaveToLocalFromHTML(container_id) {
 					}
 					
 					// проверка на обязательность не зависимо от типа
-					if(field.required && field.required != "undefined" && (val == null || val == '' || val == 'undefined' || (val == null && val1 == null && val2 == null)) && val_id != "*") {
+					if(descriptor.actionName != "show" && field.required && field.required != "undefined" && (val == null || val == '' || val == 'undefined' || (val == null && val1 == null && val2 == null)) && val_id != "*") {
 						errorMsg += '<li>Поле "' + field.name + '" обязательно для заполнения</li>';
 					}
 					// выполняем остальные проверки
@@ -516,7 +516,7 @@ function entitySaveToServer(descriptor){
 		var deferreds = [];
 		for(var key in descriptor.fields) {
 			var field = descriptor.fields[key];
-			if(field.type == 'img') {
+			if(field.type == 'img' && descriptor.local_data.fields && descriptor.local_data.fields[key]) {
 				// создаем отложенное уведомление о завершении загрузки
 				var deferredUpload = $.Deferred();
 				var deferredDelete = $.Deferred();
