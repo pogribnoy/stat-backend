@@ -110,6 +110,8 @@ class ExpenseListController extends ControllerList {
 			'target_date' => array(
 				'id' => 'target_date',
 				'name' => $this->controller->t->_("text_expenselist_target_date"),
+				'filter' => 'text',
+				'filter_value' => isset($this->filter_values['target_date']) ? $this->filter_values['target_date'] : '',
 				'hideble' => 1,
 			),
 			'operations' => array(

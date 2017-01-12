@@ -360,6 +360,10 @@ class ControllerList extends ControllerBase {
 			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_executor"]), "string");
 			if($val != '') $this->filter_values["executor"] =  $val;
 		}
+		if(isset($_REQUEST["filter_target_date"])) {
+			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_target_date"]), ['trim',"string"]);
+			if($val != '') $this->filter_values["target_date"] =  $val;
+		}
 		
 		// фильтры по справочникам
 		if(isset($_REQUEST["filter_region"])) {
@@ -431,8 +435,12 @@ class ControllerList extends ControllerBase {
 			else $phql .= " AND <TableName>.amount LIKE '%" . str_replace([".", ",", "-"], "", $this->filter_values["amount"]) . "%'";
 		}
 		if(isset($this->filter_values["date"]) && isset($this->columns['date'])) $phql .= " AND <TableName>.date LIKE '%" . $this->filter_values["date"] . "%'";
-		// TODO. Победить то, что MySQL ругается на служебное слово "group"
+		
 		if(isset($this->filter_values["group"]) && isset($this->columns['group'])) $phql .= " AND <TableName>.[group] LIKE '%" . $this->filter_values["group"] . "%'";
+		if(isset($this->filter_values["target_date"]) && isset($this->columns['target_date'])) {
+			if(isset($this->columns['street']["nullSubstitute"]) && $this->filter_values["target_date"] == $this->columns['target_date']["nullSubstitute"]) $phql .= " AND (<TableName>.target_date_from IS NULL OR <TableName>.target_date_from = '' OR <TableName>.target_date_from = '" . $this->columns['target_date']["nullSubstitute"] . "' OR (<TableName>.target_date_to IS NULL OR <TableName>.target_date_to = '' OR <TableName>.target_date_to = '" . $this->columns['target_date']["nullSubstitute"] . "'))";
+			else $phql .= " AND (<TableName>.target_date_from LIKE '%" . $this->filter_values["target_date"] . "%' OR <TableName>.target_date_to LIKE '%" . $this->filter_values["target_date"] . "%')";
+		}
 		if(isset($this->filter_values["settlement"]) && isset($this->columns['settlement'])) {
 			if(isset($this->columns['settlement']["nullSubstitute"]) && $this->filter_values["settlement"] == $this->columns['settlement']["nullSubstitute"]) $phql .= " AND (<TableName>.settlement IS NULL OR <TableName>.settlement = '' OR <TableName>.settlement = '" . $this->columns['settlement']["nullSubstitute"] . "')";
 			else $phql .= " AND <TableName>.settlement LIKE '%" . $this->filter_values["settlement"] . "%'";
