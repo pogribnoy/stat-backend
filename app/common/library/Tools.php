@@ -48,41 +48,58 @@ class Tools extends Component {
 		return $operations;
 	}
 	
-	public function getScrollerOperations($role_id, $entity, $acl, $t, $actionName="show"){
-		$operations = array();
+	public function getScrollerOperations($controller, $entityName, $actionName="show") {
+		$role_id = $controller->userData['role_id'];
+		$acl = $controller->acl;
+		$t = $controller->t;
 		
-		// массив операций на основе разрешений, привязанных к одной сущности
-		$operations["item_operations"] = array();
-		if($acl->isAllowed($role_id, $entity, 'show')) {
-			$operations["item_operations"][] = array(
+		
+		$showOp = null;
+		$editOp = null;
+		$deleteOp = null;
+		$addOp = null;
+		
+		if($acl->isAllowed($role_id, $entityName, 'show')) {
+			$showOp = array(
 				'id' => 'show',
 				'name' => $t->_('button_show'),
 			);
 		}
-		if($actionName !== "show") {
-			if($acl->isAllowed($role_id, $entity, 'edit')) {
-				$operations["item_operations"][] = array(
-					'id' => 'edit',
-					'name' => $t->_('button_edit'),
-				);
-			}
+		if($acl->isAllowed($role_id, $entityName, 'edit') /*&& $this->isHasEditAccess($role_id, $controller)*/) {
+			$editOp = array(
+				'id' => 'edit',
+				'name' => $t->_('button_edit'),
+			);
+		}
+		if($acl->isAllowed($role_id, $entityName, 'delete')) {
+			$deleteOp = array(
+				'id' => 'delete',
+				'name' => $t->_('button_delete'),
+			);
+		}
+		if($acl->isAllowed($role_id, $entityName, 'add')) {
+			$addOp = array(
+				'id' => 'add',
+				'name' => $t->_('button_add'),
+			);
+		}
 		
-			if($acl->isAllowed($role_id, $entity, 'delete')) {
-				$operations["item_operations"][] = array(
-					'id' => 'delete',
-					'name' => $t->_('button_delete'),
-				);
-			}
+		$operations = array();
+		
+		// массив операций на основе разрешений, привязанных к одной сущности
+		$operations["item_operations"] = array();
+		if($showOp) $operations["item_operations"][] = $showOp;
+		
+		if($actionName !== "show") {
+			if($editOp) $operations["item_operations"][] = $editOp;
+			if($deleteOp) $operations["item_operations"][] = $deleteOp;
 		}
 		
 		// массив операций на основе разрешений, не привязанных к одной сущности
 		$operations["common_operations"] = array();
-		if($acl->isAllowed($role_id, $entity, 'add') && $actionName != "show") {
+		if($addOp && $actionName != "show") {
 			// для скроллера
-			$operations["common_operations"][] = array(
-				'id' => 'add',
-				'name' => $t->_('button_add'),
-			);
+			$operations["common_operations"][] = $addOp;
 			// для грида
 			$operations["common_operations"][] = array(
 				'id' => 'select',
@@ -92,35 +109,33 @@ class Tools extends Component {
 		
 		// массив групповых операций
 		$operations["group_operations"] = array();
-		if($acl->isAllowed($role_id, $entity, 'delete') && $actionName != "show") {
-			$operations["group_operations"][] = array(
-				'id' => 'delete',
-				'name' => $t->_('button_delete'),
-			);
+		if($deleteOp && $actionName != "show") {
+			$operations["group_operations"][] = $deleteOp;
 		}
-
 		
 		// массив операций для фильтра
-		$operations["filter_operations"] = array();
-		$operations["filter_operations"][] = array(
+		$operations["filter_operations"] = [[
 			'id' => 'apply',
 			'name' => $t->_('button_apply')
-		);
-		$operations["filter_operations"][] = array(
+		],
+		[
 			'id' => 'clear',
 			'name' => $t->_('button_clear')
-		);
-		
+		]];
 		return $operations;
 	}
 	
-	public function isHasAnyAccess($role_id, $controllerName, $acl){
-		if($acl->isAllowed($role_id, $controllerName, 'index') || $acl->isAllowed($role_id, $controllerName, 'show') || $acl->isAllowed($role_id, $controllerName, 'edit') || $acl->isAllowed($role_id, $controllerName, 'add') || $acl->isAllowed($role_id, $controllerName, 'save') || $acl->isAllowed($role_id, $controllerName, 'delete')) {
-			return true;
+	public function isHasEditAccess($role_id, $controller){
+		$acl = $controller->acl;
+		$entityName = $controller->entity;
+		
+		if($acl->isAllowed($role_id, $entityName, 'edit')) return true;
+		
+		foreach($controller->scrollers as $scrollerName => $scrollerDescriptor){
+			if($acl->isAllowed($role_id, $controllerName, 'edit_' . $scrollerName)) return true;
 		}
-		else {
-			return false;
-		}
+		
+		return false;
 	}
 	
 	public function sendEmail($user, $subject, $msg, $msgAlt) {

@@ -146,7 +146,7 @@ class OrganizationController extends ControllerEntity {
 				
 				$this->scrollers[$controller_user_list->controllerName] = $scroller_user_list;
 			}
-			else unset($this->scrollers['expenselist']);
+			else unset($this->scrollers['userlist']);
 		}
 		else unset($this->scrollers["userlist"]);
 		$this->logger->log(__METHOD__ . ". actionName2: " . json_encode($this->actionName));

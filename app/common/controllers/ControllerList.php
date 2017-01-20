@@ -215,7 +215,7 @@ class ControllerList extends ControllerBase {
 		// получаем действия, доступные пользователю
 		if(!isset($this->controller->tools)) $this->controller->tools = DI::getDefault()->getTools();
 		//var_dump($this->controller->tools);
-		$this->operations = $this->controller->tools->getScrollerOperations($this->controller->userData['role_id'], $this->entityName, $this->controller->acl, $this->controller->t, $this->actionName);
+		$this->operations = $this->controller->tools->getScrollerOperations($this->controller, $this->entityName, $this->actionName);
 	}
 	
 	/* 

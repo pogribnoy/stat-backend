@@ -98,7 +98,8 @@ class ControllerEntity extends ControllerBase {
 		//var_dump($actionName);
 		$this->dispatcher->forward(array(
 			'controller' => $scrollerName,
-			'action' => $actionName,
+			'action' => 'index',
+			'priorAction' => $actionName,
 		));
 	}
 	
