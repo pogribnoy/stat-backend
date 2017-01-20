@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Хост: 127.0.0.1
--- Время создания: Дек 20 2016 г., 20:31
+-- Время создания: Янв 20 2017 г., 07:22
 -- Версия сервера: 5.7.9
 -- Версия PHP: 5.6.16
 
@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS `expense` (
   `target_date_from` date DEFAULT NULL,
   `target_date_to` date DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=101 DEFAULT CHARSET=utf16;
+) ENGINE=InnoDB AUTO_INCREMENT=103 DEFAULT CHARSET=utf16;
 
 --
 -- Дамп данных таблицы `expense`
@@ -75,7 +75,9 @@ INSERT INTO `expense` (`id`, `name`, `amount`, `expense_type_id`, `expense_statu
 (95, 'Выплата ветеранам ВОВ', 2500, 8, 3, 38, NULL, 2, '-', '-', '-', NULL, '2016-11-30'),
 (96, 'Закупка камер видеонаблюдения для города', 3000, 10, 3, 38, NULL, NULL, '-', '-', 'ИП &#34;ГАРАНТЗАЩИТА&#34;', NULL, '2016-12-01'),
 (99, 'Поддержка предпринимателей в 4 кв.', 4000, 9, 3, 38, NULL, NULL, NULL, NULL, NULL, NULL, '2016-12-01'),
-(100, 'asd', 11001, 10, 3, 46, 'qwe', NULL, NULL, NULL, NULL, '2016-12-07', '2016-12-08');
+(100, 'asd', 11001, 10, 3, 46, 'qwe', NULL, NULL, NULL, NULL, '2016-12-07', '2016-12-08'),
+(101, 'asd', 167, 10, 3, 38, 'asd', NULL, NULL, NULL, NULL, NULL, NULL),
+(102, 'asd', 12, 10, 3, 38, NULL, NULL, NULL, NULL, NULL, '2017-01-12', '2017-01-13');
 
 -- --------------------------------------------------------
 
@@ -199,7 +201,6 @@ INSERT INTO `file_collection` (`id`, `collection_id`, `file_id`) VALUES
 (4, 3, 4),
 (5, 3, 5),
 (6, 4, 6),
-(7, 5, 7),
 (8, 6, 8),
 (9, 7, 9),
 (10, 8, 10),
@@ -222,7 +223,6 @@ INSERT INTO `file_collection` (`id`, `collection_id`, `file_id`) VALUES
 (27, 1, 27),
 (28, 22, 28),
 (29, 23, 29),
-(30, 5, 30),
 (31, 5, 31),
 (32, 24, 32),
 (33, 25, 33),
@@ -405,7 +405,7 @@ CREATE TABLE IF NOT EXISTS `resource` (
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `controller_3` (`controller`,`action`,`module`)
-) ENGINE=InnoDB AUTO_INCREMENT=144 DEFAULT CHARSET=utf16;
+) ENGINE=InnoDB AUTO_INCREMENT=173 DEFAULT CHARSET=utf16;
 
 --
 -- Дамп данных таблицы `resource`
@@ -514,7 +514,36 @@ INSERT INTO `resource` (`id`, `group`, `controller`, `action`, `module`, `descri
 (139, 'base', 'user', 'sendpassword', 'backend', '', '2016-12-03 01:22:14'),
 (140, 'acl', 'profile', 'edit', 'backend', '', '2016-12-03 01:41:23'),
 (141, 'acl', 'organization', 'show', 'backend', '', '2016-12-10 20:30:17'),
-(143, 'acl', 'organization', 'index', 'backend', '', '2016-12-10 20:49:58');
+(143, 'acl', 'organization', 'index', 'backend', '', '2016-12-10 20:49:58'),
+(144, 'acl', 'organization_expenselist', 'show', 'backend', 'Скроллер расходов в организации', '2016-12-20 23:32:49'),
+(145, 'acl', 'expenselist', 'index', 'backend', '', '2016-12-21 00:06:34'),
+(146, 'acl', 'userlist', 'show', 'backend', '', '2016-12-21 00:07:55'),
+(147, 'acl', 'user', 'show', 'backend', '', '2016-12-21 00:11:24'),
+(148, 'acl', 'expenselist', 'show', 'backend', '', '2016-12-21 00:12:40'),
+(149, 'acl', 'expense', 'show', 'backend', '', '2016-12-21 00:12:58'),
+(150, 'acl', 'userrole', 'index', 'backend', '', '2016-12-21 00:16:42'),
+(151, 'acl', 'userrole', 'show', 'backend', '', '2016-12-21 00:16:53'),
+(152, 'acl', 'resource', 'index', 'backend', '', '2016-12-21 00:18:39'),
+(153, 'acl', 'resource', 'show', 'backend', '', '2016-12-21 00:18:53'),
+(154, 'acl', 'streettype', 'show', 'backend', '', '2016-12-21 00:20:23'),
+(155, 'acl', 'streettype', 'index', 'backend', '', '2016-12-21 00:20:40'),
+(156, 'acl', 'streettypelist', 'show', 'backend', '', '2016-12-21 00:20:55'),
+(157, 'acl', 'expensetypelist', 'show', 'backend', '', '2016-12-21 00:22:16'),
+(158, 'acl', 'expensetype', 'show', 'backend', '', '2016-12-21 00:22:43'),
+(159, 'acl', 'expensetype', 'index', 'backend', '', '2016-12-21 00:22:57'),
+(160, 'base', 'regionlist', 'filter', 'backend', '', '2016-12-21 00:23:30'),
+(161, 'acl', 'regionlist', 'show', 'backend', '', '2016-12-21 00:23:41'),
+(162, 'acl', 'region', 'show', 'backend', '', '2016-12-21 00:23:59'),
+(163, 'acl', 'region', 'index', 'backend', '', '2016-12-21 00:24:08'),
+(164, 'acl', 'expensestatuslist', 'show', 'backend', '', '2016-12-21 00:24:54'),
+(165, 'acl', 'newslist', 'show', 'backend', '', '2016-12-21 00:25:24'),
+(166, 'acl', 'newslist', 'filter', 'backend', '', '2016-12-21 00:25:37'),
+(167, 'acl', 'news', 'show', 'backend', '', '2016-12-21 00:25:54'),
+(168, 'acl', 'news', 'index', 'backend', '', '2016-12-21 00:26:05'),
+(169, 'acl', 'organization', 'filter', 'backend', '', '2016-12-21 00:46:48'),
+(170, 'acl', 'profile', 'save', 'backend', '', '2016-12-22 00:19:09'),
+(171, 'acl', 'organization_expenselist', 'edit', 'backend', '', '2016-12-22 01:38:47'),
+(172, 'acl', 'expenselist', 'edit', 'backend', '', '2016-12-24 14:14:12');
 
 -- --------------------------------------------------------
 
@@ -681,16 +710,21 @@ INSERT INTO `user_role_resource` (`user_role_id`, `resource_id`) VALUES
 (4, 29),
 (5, 1),
 (5, 60),
-(5, 61),
 (5, 64),
 (5, 67),
 (5, 68),
 (5, 69),
-(5, 70),
 (5, 81),
 (5, 104),
 (5, 140),
-(5, 141);
+(5, 141),
+(5, 143),
+(5, 144),
+(5, 148),
+(5, 169),
+(5, 170),
+(5, 171),
+(5, 172);
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
