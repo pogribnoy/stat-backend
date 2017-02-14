@@ -44,6 +44,7 @@ class ControllerList extends ControllerBase {
 			// передаем в представление имеющиеся данные
 			//$this->view->setVar("page_header", $this->t->_('text_'.$this->controllerName.'_title'));
 			$this->view->setVar("descriptor", $this->descriptor);
+			return null;
 		}
 	}
 	

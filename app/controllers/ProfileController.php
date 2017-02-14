@@ -146,6 +146,7 @@ class ProfileController extends ControllerEntity{
 		if(isset($rq->fields->password) && isset($rq->fields->password->value)) {
 			$val = $this->filter->sanitize(urldecode($rq->fields->password->value), ["trim", "string"]);
 			$this->fields['password']['value'] = $val;
+			
 			/*if($val != '') $this->fields['password']['value'] = $val;
 			else {
 				if(count($this->entity->password)==0) {

@@ -135,20 +135,18 @@ class OrganizationController extends ControllerEntity {
 		
 		// грид пользователей
 		// если имеется доступ к скроллеру
-		if($this->acl->isAllowed($role_id, "userlist", 'index')) {
-			$action = $this->acl->isAllowed($role_id, "organization_userlist", 'edit') ? 'edit' : $this->acl->isAllowed($role_id, "organization_userlist", 'show') ? 'show' : null;
-			if($action) {
-				$controller_user_list = new UserListController();
-				$scroller_user_list = $controller_user_list->createDescriptor($this, array("organization_id" => $this->fields["id"]["value"]), $action);
-				$scroller_user_list['relationType'] = $this->scrollers[$controller_user_list->controllerName]['relationType'];
-				$scroller_user_list["add_style"] = "scroller";
-				$scroller_user_list['edit_style']  = "modal";
-				
-				$this->scrollers[$controller_user_list->controllerName] = $scroller_user_list;
-			}
-			else unset($this->scrollers['userlist']);
+		$action = ($this->acl->isAllowed($role_id, "organization_userlist", 'edit') ? 'edit' : ($this->acl->isAllowed($role_id, "organization_userlist", 'show') ? 'show' : null));
+		if($action) {
+			$controller_user_list = new UserListController();
+			$scroller_user_list = $controller_user_list->createDescriptor($this, array("organization_id" => $this->fields["id"]["value"]), $action);
+			$scroller_user_list['relationType'] = $this->scrollers[$controller_user_list->controllerName]['relationType'];
+			$scroller_user_list["add_style"] = "scroller";
+			$scroller_user_list['edit_style']  = "modal";
+			
+			$this->scrollers[$controller_user_list->controllerName] = $scroller_user_list;
 		}
-		else unset($this->scrollers["userlist"]);
+		else unset($this->scrollers['userlist']);
+		
 		$this->logger->log(__METHOD__ . ". actionName2: " . json_encode($this->actionName));
 	}
 	

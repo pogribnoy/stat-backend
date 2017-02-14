@@ -29,13 +29,13 @@ edit_entity_field_label: '<p id="field_{{:id}}_value" class="form-control-static
 show_entity_field_label: '<p id="field_{{:id}}_value" class="form-control-static">{{if (id==\'id\' && (value==\'-1\' || value==null)) }}-{{else}}{{:value}}{{/if}}</p>',
 edit_entity_field_text: '<input type="{{:type}}" class="form-control" id="field_{{:id}}_value" placeholder="{{:name}}" value="{{:value}}">',
 show_entity_field_text: '<p id="field_{{:id}}_value" class="form-control-static">{{:value}}</p>',
-edit_entity_field_period: '<div class="row"><div class="col-lg-1 text-right">{{:name1}}</div><div class="col-lg-5"><input type="date" class="form-control" id="field_{{:id}}_value1" placeholder="" value="{{:value1}}"></div><div class="col-lg-1 text-right">{{:name2}}</div><div class="col-lg-5"><input type="date" class="form-control" id="field_{{:id}}_value2" placeholder="" value="{{:value2}}"></div></div>',
+edit_entity_field_period: '<div class="form-group"><div class="col-sm-1 col-md-1 col-lg-1 text-right">{{:name1}}</div><div class="col-sm-8 col-md-5 col-lg-5"><input type="date" class="form-control" id="field_{{:id}}_value1" placeholder="" value="{{:value1}}"></div><div class="col-lg-1 text-right">{{:name2}}</div><div class="col-lg-5"><input type="date" class="form-control" id="field_{{:id}}_value2" placeholder="" value="{{:value2}}"></div></div>',
 show_entity_field_period: '<p id="field_{{:id}}_value" class="form-control-static">{{:value1}}-{{:value2}}</p>',
 edit_entity_field_textarea: '<textarea rows="3" class="form-control" id="field_{{:id}}_value" placeholder="{{:name}}">{{:value}}</textarea>',
 show_entity_field_textarea: '<p id="field_{{:id}}_value" class="form-control-static">{{:value}}</p>',
-edit_entity_field_password: '<div class="row"><div class="col-lg-5"><div class="input-group">\
+edit_entity_field_password: '<div class="row"><div class="col-lg-6"><div class="input-group">\
 <input id="field_{{:id}}_value" type="password" class="form-control" placeholder="Новый пароль" onkeyup="checkPasswordStrength(this, \'field_{{:id}}_value\');"/>\
-<span class="input-group-addon" title="Показать/скрыть пароль"  onclick="togglePasswordMask(this, \'field_{{:id}}_value\');"><span class="glyphicon glyphicon-eye-open"></span></span></div><label id="pass_strength_result"></label></div><div class="col-lg-1"></div><div class="col-lg-5"><div class="input-group">\
+<span class="input-group-addon" title="Показать/скрыть пароль"  onclick="togglePasswordMask(this, \'field_{{:id}}_value\');"><span class="glyphicon glyphicon-eye-open"></span></span></div><label id="pass_strength_result"></label></div><div class="col-lg-6"><div class="input-group">\
 <input id="password2" type="password" class="form-control" placeholder="Повторите новый пароль" onkeyup="checkPasswordEq(this, \'field_{{:id}}_value\');"/><span class="input-group-addon" title="Показать/скрыть пароль"><span class="glyphicon glyphicon-asterisk"></span></span></div><label id="pass_eq_result"></label></div></div>',
 show_entity_field_password: '<p id="field_{{:id}}_value" class="form-control-static">**********</p>',
 edit_entity_field_bool: '<input type="checkbox" id="field_{{:id}}_value" {{if value == 1}}checked="checked"{{/if}} value="">',

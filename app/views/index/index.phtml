@@ -13,7 +13,11 @@
 						<?php foreach($orgs as $org) { ?>
 							<div class="col-lg-2">
 								<a href="/organization/index?id=<?php echo $org["id"]; ?>" class="thumbnail">
-									<img src="/<?php echo $org["img"]; ?>" alt="..." >
+									<?php if($org["img"] != "") { ?>
+										<img src="/<?php echo $org["img"]; ?>" alt="..." >
+									<?php } else { ?>
+										<img src="/no_image.jpg" alt="Нет изображения" >
+									<?php } ?>
 									<p class="text-center h4"><?php echo $org["name"]; ?></p>
 								</a>
 							</div>
@@ -25,7 +29,7 @@
 	</div><!-- /.row -->
 <?php } ?>
 <?php //var_dump( $user); ?>
-<?php //var_dump( $orgs); ?>
+<?php var_dump( $orgs); ?>
 
 
 <script type="text/javascript"><!--

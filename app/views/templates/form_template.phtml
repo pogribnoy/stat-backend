@@ -18,8 +18,8 @@
 			{{if descriptor.fields ~fields=~utilities.objectToArray(descriptor.fields) ~descriptor=descriptor}}
 				{{for ~fields}}
 					<div class="form-group" name="field_{{:id}}">
-						<label for="field_{{:id}}_value" class="col-sm-2 control-label">{{:name}}</label>
-						<div class="col-sm-8">
+						<label for="field_{{:id}}_value" class="col-sm-4 col-md-3 col-lg-offset-0 col-lg-3 control-label">{{:name}}</label>
+						<div class="col-sm-8 col-md-8 col-lg-8">
 							{{if type == "label"}}
 								{{include tmpl = ~descriptor.actionName + "_entity_field_label" /}}
 							{{else type == "text"}}

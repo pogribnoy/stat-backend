@@ -126,7 +126,28 @@ class SecurityPlugin extends Plugin {
 	 * @param Dispatcher $dispatcher
 	 */
 	public function beforeDispatch(Event $event, Dispatcher $dispatcher) {
-		$role = $this->getUserData()['role_id'];
+		$userData = $this->getUserData();
+		
+		// проверяем время жизни сессии
+		$auth = $this->session->get('auth');
+		//$this->logger->log(__METHOD__ . ". Auth = " . json_encode($auth));
+		if($auth) {
+			$curDateTime = new DateTime('now');
+			$sessionLastUpdateTime = isset($auth['sessionLastUpdate']) ? $auth['sessionLastUpdate'] : $curDateTime;
+			$timeout = $curDateTime->diff($sessionLastUpdateTime);
+			//$this->logger->log(__METHOD__ . ". Session inactivity = " . $timeout->s);
+			if($timeout->s > $this->config['application']['sessionTimeout']) {
+				$this->logger->log(__METHOD__ . ". User (" . ( $this->user!=null && isset($this->user['id']) ? "id=" . $this->user['id'] . ", name=" . $this->user['name'] : "guest") .  "). Session timeout = " . $timeout->s . ". Redirect to _/session/end_");
+				$dispatcher->forward(array(
+					'controller' => 'session',
+					'action'     => 'end',
+				));
+			}
+			$auth['sessionLastUpdate'] = $curDateTime;
+			$this->session->set('auth', $auth);
+		}
+		
+		$role = $userData['role_id'];
 		$controller = $dispatcher->getControllerName();
 		$action = $dispatcher->getActionName();
 		
@@ -134,9 +155,10 @@ class SecurityPlugin extends Plugin {
 
 		$allowed = $acl->isAllowed($role, $controller, $action);
 		
-		$this->logger->log("Access: user: " . ( $this->user!=null && isset($this->user['id']) ? $this->user['id'] . '(' . $this->user['name'] . '), ' : 'guest, ') . "role: " . $role . ", resource: " . $controller . " \ " . $action . ", URL: " . json_encode($this->request->getURI()) . ", RESULT: " . ($allowed == Acl::ALLOW ? '1' : '0'));
+		$this->logger->log("Access: user: " . ( $this->user!=null && isset($this->user['id']) ? $this->user['id'] . ' (' . $this->user['name'] . '), ' : 'guest, ') . "role: " . $role . ", resource: " . $controller . " \ " . $action . ", URL: " . json_encode($this->request->getURI()) . ", RESULT: " . ($allowed == Acl::ALLOW ? '1' : '0'));
 		
 		if ($allowed != Acl::ALLOW) {
+			// админка, гость
 			if($role == 2 && $this->config->application->module === "backend") {
 				if ($this->request->isAjax()) {
 					$this->logger->log("AJAX. Redirect to _/login/index_");
@@ -167,6 +189,7 @@ class SecurityPlugin extends Plugin {
 					//$this->response->redirect("/login/index", true, 301)->sendHeaders();
 				}
 			}
+			// общедоступная часть, не важно, какая роль
 			else if($this->config->application->module === "frontend") {
 				if ($this->request->isAjax()) {
 					$this->logger->log("AJAX. Redirect to _/index/index_");
@@ -204,6 +227,7 @@ class SecurityPlugin extends Plugin {
 				//$response = new Phalcon\Http\Response();
 				//$this->response->redirect('/login/index', true, 301)->sendHeaders();
 			}
+			// остальные: авторизованный пользователь, в админке
 			else {
 				if ($this->request->isAjax()) {
 					$this->logger->log("AJAX. Redirect to _/errors/show401_");

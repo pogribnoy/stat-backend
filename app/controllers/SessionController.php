@@ -8,7 +8,8 @@ class SessionController extends ControllerBase {
     private function _registerSession(User $user) {
         $this->session->set('auth', array(
             'id' => $user->id,
-            'name' => $user->name
+            'name' => $user->name,
+			'sessionLastUpdate' => new DateTime('now'),
         ));
     }
 	
