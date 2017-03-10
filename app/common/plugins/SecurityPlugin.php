@@ -127,6 +127,7 @@ class SecurityPlugin extends Plugin {
 	 */
 	public function beforeDispatch(Event $event, Dispatcher $dispatcher) {
 		$userData = $this->getUserData();
+		$this->logger->log(__METHOD__ . ". getControllerClass = " . $dispatcher->getControllerClass());
 		
 		// проверяем время жизни сессии
 		$auth = $this->session->get('auth');

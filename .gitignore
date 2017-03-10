@@ -1,5 +1,6 @@
-app/logs/*.log
-app/cache/*
+#app/logs/*.log
+app/cache/metadata/*
+app/cache/views/*
 .DS_Store*
 ehthumbs.db
 Icon?
