@@ -21,7 +21,7 @@ class NotFoundPlugin extends Plugin {
 	public function beforeException(Event $event, MvcDispatcher $dispatcher, $exception) {
 		//var_dump($dispatcher);
 		// инициализируем лог
-		$logger = new FileAdapter(APP_PATH . "/app/logs/errors.log", array('mode' => 'a'));
+		$logger = new FileAdapter(APP_PATH . "app/logs/errors.log", array('mode' => 'a'));
 		//$logger->log('ctrler = ' . $dispatcher->getControllerName ());
 		$str = "NotFoundPlugin. Ошибка 500: ";
 		if ($exception instanceof DispatcherException) {

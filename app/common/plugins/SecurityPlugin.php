@@ -17,7 +17,7 @@ use Phalcon\Logger\Adapter\File as FileAdapter;
  */
 class SecurityPlugin extends Plugin {
 	public function __construct() {
-		$this->logger = new FileAdapter(APP_PATH . "/app/logs/secure.log", array('mode' => 'a'));
+		$this->logger = new FileAdapter(APP_PATH . "app/logs/secure.log", array('mode' => 'a'));
 	}
 
 	public $user = null;
