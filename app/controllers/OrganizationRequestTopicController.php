@@ -1,5 +1,5 @@
 <?php
-class OrganizationRequestTopicController extends ControllerEntity {
+class Organizationrequesttopiccontroller extends ControllerEntity {
 	public $entityName  = 'OrganizationRequestTopic';
 	public $tableName  = 'organization_request_topic';
 	

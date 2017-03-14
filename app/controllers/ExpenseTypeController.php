@@ -1,5 +1,5 @@
 <?php
-class ExpenseTypeController extends ControllerEntity {
+class ExpensetypeController extends ControllerEntity {
 	public $entityName  = 'ExpenseType';
 	public $tableName  = 'expense_type';
 	

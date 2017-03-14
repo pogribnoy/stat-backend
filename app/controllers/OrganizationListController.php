@@ -1,7 +1,7 @@
 <?php
-class OrganizationListController extends ControllerList {
+class OrganizationlistController extends ControllerList {
 	public $entityName = 'Organization';
-	public $controllerName = "OrganizationList";
+	public $controllerName = "Organizationlist";
 	
 	public function initialize() {
 		parent::initialize();

@@ -1,5 +1,5 @@
 <?php
-class StreetTypeController extends ControllerEntity {
+class StreettypeController extends ControllerEntity {
 	public $entityName  = 'StreetType';
 	public $tableName  = 'street_type';
 	

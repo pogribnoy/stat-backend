@@ -1,7 +1,7 @@
 <?php
-class StreetTypeListController extends ControllerList {
+class StreettypelistController extends ControllerList {
 	public $entityName = 'StreetType';
-	public $controllerName = "StreetTypeList";
+	public $controllerName = "Streettypelist";
 	
 	public function initialize() {
 		parent::initialize();

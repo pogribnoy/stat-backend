@@ -1,5 +1,5 @@
 <?php
-class UserRoleController extends ControllerEntity {
+class UserroleController extends ControllerEntity {
 	public $entityName  = 'UserRole';
 	public $tableName  = 'user_role';
 	

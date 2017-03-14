@@ -1,7 +1,7 @@
 <?php
-class OrganizationRequestTopicListController extends ControllerList {
+class OrganizationrequesttopiclistController extends ControllerList {
 	public $entityName = 'OrganizationRequestTopic';
-	public $controllerName = "OrganizationRequestTopicList";
+	public $controllerName = "Organizationrequesttopiclist";
 	
 	public function initialize() {
 		parent::initialize();
