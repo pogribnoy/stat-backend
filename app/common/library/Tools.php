@@ -14,6 +14,7 @@ class Tools extends Component {
 	
 	// операции
 	public function getEntityFormOperations($role_id, $entity, $acl, $t, $exludeOps = null, $actionName="show", $scrollers = null){
+		$entity = strtolower($entity);
 		$operations = array();
 		if(!$exludeOps) $exludeOps = array();
 		
@@ -49,6 +50,7 @@ class Tools extends Component {
 	}
 	
 	public function getScrollerOperations($controller, $entityName, $actionName="show") {
+		$entity = strtolower($entity);
 		$role_id = $controller->userData['role_id'];
 		$acl = $controller->acl;
 		$t = $controller->t;
