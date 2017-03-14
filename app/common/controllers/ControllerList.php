@@ -224,8 +224,8 @@ class ControllerList extends ControllerBase {
 	*/
 	public function createDescriptorObject() {
 		$this->descriptor = array(
-			"controllerName" => $this->controllerName,
-			"entity" => $this->entityName,
+			"controllerName" => strtolower($this->controllerName),
+			"entity" => strtolower($this->entityName),
 			"type" => "scroller",
 			"columns" => $this->columns,
 			"item_operations" => $this->operations["item_operations"], // действия над строками
