@@ -1,6 +1,6 @@
 <?php
 class SettingController extends ControllerEntity {
-	public $entityName  = 'setting';
+	public $entityName  = 'Setting';
 	
 	public function initialize() {
 		parent::initialize();

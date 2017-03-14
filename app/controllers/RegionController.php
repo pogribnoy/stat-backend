@@ -1,6 +1,6 @@
 <?php
 class RegionController extends ControllerEntity {
-	public $entityName  = 'region';
+	public $entityName  = 'Region';
 	public $tableName  = 'region';
 	
 	public function initialize() {

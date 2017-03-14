@@ -1,7 +1,7 @@
 <?php
 class ResourceListController extends ControllerList {
-	public $entityName = 'resource';
-	public $controllerName = "resourcelist";
+	public $entityName = 'Resource';
+	public $controllerName = "ResourceList";
 	
 	public function initialize() {
 		parent::initialize();

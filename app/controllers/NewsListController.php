@@ -1,7 +1,7 @@
 <?php
 class NewsListController extends ControllerList {
-	public $entityName = 'news';
-	public $controllerName = "newslist";
+	public $entityName = 'News';
+	public $controllerName = "NewsList";
 	
 	public function initialize() {
 		parent::initialize();

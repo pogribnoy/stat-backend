@@ -1,6 +1,6 @@
 <?php
 class NewsController extends ControllerEntity {
-	public $entityName  = 'news';
+	public $entityName  = 'News';
 	
 	public function initialize() {
 		parent::initialize();

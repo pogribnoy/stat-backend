@@ -1,7 +1,7 @@
 <?php
 class UserRoleListController extends ControllerList{
-	public $entityName = 'userrole';
-	public $controllerName = "userrolelist";
+	public $entityName = 'UserRole';
+	public $controllerName = "UserRoleList";
 	
 	public function initialize() {
 		parent::initialize();

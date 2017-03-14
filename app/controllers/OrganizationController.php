@@ -1,17 +1,17 @@
 <?php
 class OrganizationController extends ControllerEntity {
-	public $entityName  = 'organization';
-	public $tableName  = 'organization';
+	public $entityName  = 'Organization';
+	public $tableName  = 'Organization';
 	
 	protected $scrollers = [
 		'userlist' => [
-			'linkEntityName' => 'user',
+			'linkEntityName' => 'User',
 			'linkTableName' => 'UserOrganization',
 			'linkTableLinkEntityFieldName' => 'user_id',
 			'relationType' => 'nn'
 		],
 		'expenselist' => [
-			'linkEntityName' => 'expense',
+			'linkEntityName' => 'Expense',
 			'linkEntityFieldName' => 'organization_id',
 			'relationType' => 'n'
 		]
@@ -45,7 +45,7 @@ class OrganizationController extends ControllerEntity {
 				'name' => $this->t->_("text_organization_region"),
 				'type' => 'select',
 				'style' => 'id', //name
-				'linkEntityName' => 'region',
+				'linkEntityName' => 'Region',
 				'required' => 1,
 				'newEntityValue' => null,
 			), 

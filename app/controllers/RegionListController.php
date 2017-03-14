@@ -1,7 +1,7 @@
 <?php
 class RegionListController extends ControllerList {
-	public $entityName = 'region';
-	public $controllerName = "regionlist";
+	public $entityName = 'Region';
+	public $controllerName = "RegionList";
 	
 	public function initialize() {
 		parent::initialize();

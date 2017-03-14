@@ -1,7 +1,7 @@
 <?php
 class ExpenseListController extends ControllerList {
-	public $entityName = 'expense';
-	public $controllerName = "expenselist";
+	public $entityName = 'Expense';
+	public $controllerName = "ExpenseList";
 	
 	public function initialize() {
 		parent::initialize();

@@ -1,6 +1,6 @@
 <?php
 class ResourceController extends ControllerEntity {
-	public $entityName = 'resource';
+	public $entityName = 'Resource';
 	public $tableName  = 'resource';
 	
 	public function initialize() {

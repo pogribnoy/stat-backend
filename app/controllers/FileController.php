@@ -1,6 +1,6 @@
 <?php
 class FileController extends ControllerBase {
-	public $entityName = 'file';
+	public $entityName = 'File';
 	
 	// переменные для структурированного ответа
 	public $data = array('dbg' => '');

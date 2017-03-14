@@ -1,7 +1,7 @@
 <?php
 class ProfileController extends ControllerEntity{
-	public $entityName  = 'user';
-	public $tableName  = 'user';
+	public $entityName  = 'User';
+	public $tableName  = 'User';
 	
 	public function initialize() {
 		parent::initialize();
@@ -37,7 +37,7 @@ class ProfileController extends ControllerEntity{
 				//'type' => 'select',
 				//'style' => 'id' //name
 				'type' => 'link',
-				'controllerName' => 'userrolelist',
+				'controllerName' => 'UserRoleList',
 				'field' => 'name',
 				'linkEntityName' => 'UserRole',
 				'required' => 1,

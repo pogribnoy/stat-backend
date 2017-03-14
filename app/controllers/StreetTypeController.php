@@ -1,6 +1,6 @@
 <?php
 class StreetTypeController extends ControllerEntity {
-	public $entityName  = 'streettype';
+	public $entityName  = 'StreetType';
 	public $tableName  = 'street_type';
 	
 	public function initialize() {

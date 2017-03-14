@@ -1,6 +1,6 @@
 <?php
 class ExpenseController extends ControllerEntity {
-	public $entityName  = 'expense';
+	public $entityName  = 'Expense';
 	
 	public function initialize() {
 		parent::initialize();
@@ -73,7 +73,7 @@ class ExpenseController extends ControllerEntity {
 				'name' => $this->t->_("text_entity_property_street_type"),
 				'type' => 'select',
 				'style' => 'id', //name
-				'linkEntityName' => 'streettype',
+				'linkEntityName' => 'StreetType',
 				//'required' => 1,
 				'nullSubstitute' => '-',
 				'newEntityValue' => null,

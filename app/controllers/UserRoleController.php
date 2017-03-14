@@ -1,6 +1,6 @@
 <?php
 class UserRoleController extends ControllerEntity {
-	public $entityName  = 'userrole';
+	public $entityName  = 'UserRole';
 	public $tableName  = 'user_role';
 	
 	protected $scrollers = [

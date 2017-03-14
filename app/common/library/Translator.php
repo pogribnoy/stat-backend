@@ -9,6 +9,7 @@ class Translator extends Component {
 	//$messages = array(); // массив загружается из файлов перевода
 	
 	public function getTranslation($language, $controller) {
+		$controller = strtolower($controller);
 		$this->language = $language;
 		// Проверка существования файла с переводом общего функционала
 		if (file_exists(APP_PATH . "app/translate/".$language."/".$language.".php")) {
@@ -30,6 +31,7 @@ class Translator extends Component {
 		return new \Phalcon\Translate\Adapter\NativeArray(array("content" => $messages));
 	}
 	public function addTranslation($controller) {
+		$controller = strtolower($controller);
 		// Проверка существования файла с переводом конкретного компонента
 		if (file_exists(APP_PATH . "app/translate/".$this->language."/".$controller.".php")) {
 			 require APP_PATH . "app/translate/".$this->language."/".$controller.".php";

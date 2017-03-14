@@ -1,7 +1,7 @@
 <?php
 class SettingListController extends ControllerList {
-	public $entityName = 'setting';
-	public $controllerName = "settinglist";
+	public $entityName = 'Setting';
+	public $controllerName = "SettingList";
 	
 	public function initialize() {
 		parent::initialize();

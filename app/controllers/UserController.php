@@ -1,11 +1,11 @@
 <?php
 class UserController extends ControllerEntity{
-	public $entityName  = 'user';
+	public $entityName  = 'User';
 	public $tableName  = 'user';
 	
 	protected $scrollers = [
 		'organizationlist' => [
-			'linkEntityName' => 'organization',
+			'linkEntityName' => 'Organization',
 			'linkTableName' => 'UserOrganization',
 			'linkTableLinkEntityFieldName' => 'organization_id',
 			'relationType' => 'nn'
@@ -53,7 +53,7 @@ class UserController extends ControllerEntity{
 				//'type' => 'select',
 				//'style' => 'id' //name
 				'type' => 'link',
-				'controllerName' => 'userrolelist',
+				'controllerName' => 'UserRoleList',
 				'field' => 'name',
 				'linkEntityName' => 'UserRole',
 				'required' => 1,
