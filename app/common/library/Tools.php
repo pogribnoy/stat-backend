@@ -50,7 +50,7 @@ class Tools extends Component {
 	}
 	
 	public function getScrollerOperations($controller, $entityName, $actionName="show") {
-		$entity = strtolower($entity);
+		$entityName = strtolower($entityName);
 		$role_id = $controller->userData['role_id'];
 		$acl = $controller->acl;
 		$t = $controller->t;
