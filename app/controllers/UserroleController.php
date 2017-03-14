@@ -4,8 +4,8 @@ class UserroleController extends ControllerEntity {
 	public $tableName  = 'user_role';
 	
 	protected $scrollers = [
-		'resourcelist' => [
-			'linkEntityName' => 'resource',
+		'Resourcelist' => [
+			'linkEntityName' => 'Resource',
 			'linkTableName' => 'UserRoleResource',
 			'linkTableLinkEntityFieldName' => 'resource_id',
 			'relationType' => 'nn'

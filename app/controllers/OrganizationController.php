@@ -4,13 +4,13 @@ class OrganizationController extends ControllerEntity {
 	public $tableName  = 'Organization';
 	
 	protected $scrollers = [
-		'userlist' => [
+		'Userlist' => [
 			'linkEntityName' => 'User',
 			'linkTableName' => 'UserOrganization',
 			'linkTableLinkEntityFieldName' => 'user_id',
 			'relationType' => 'nn'
 		],
-		'expenselist' => [
+		'Expenselist' => [
 			'linkEntityName' => 'Expense',
 			'linkEntityFieldName' => 'organization_id',
 			'relationType' => 'n'

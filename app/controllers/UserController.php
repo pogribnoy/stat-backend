@@ -4,7 +4,7 @@ class UserController extends ControllerEntity{
 	public $tableName  = 'user';
 	
 	protected $scrollers = [
-		'organizationlist' => [
+		'Organizationlist' => [
 			'linkEntityName' => 'Organization',
 			'linkTableName' => 'UserOrganization',
 			'linkTableLinkEntityFieldName' => 'organization_id',
