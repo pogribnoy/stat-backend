@@ -19,7 +19,7 @@ class NewslistController extends ControllerList {
 				'name' => $this->controller->t->_("text_entity_property_id"),
 				'filter' => 'number',
 				'filter_value' => isset($this->filter_values['id']) ? $this->filter_values['id'] : '',
-				"sortable" => "DESC"
+				"sortable" => "DESC",
 			),
 			'name' => array(
 				'id' => 'name',
