@@ -123,7 +123,7 @@ class OrganizationController extends ControllerEntity {
 		// если имеется доступ к скроллеру
 		$action = ($this->acl->isAllowed($role_id, "organization_expenselist", 'edit') ? 'edit' : ($this->acl->isAllowed($role_id, "organization_expenselist", 'show') ? 'show' : null));
 		if($action) {
-			$controller_expense_list = new ExpenseListController();
+			$controller_expense_list = new ExpenselistController();
 			$scroller_expense_list = $controller_expense_list->createDescriptor($this, array("organization_id" => $this->fields["id"]["value"]), $action);
 			$scroller_expense_list['relationType'] = $this->scrollers[$controller_expense_list->controllerName]['relationType'];
 			$scroller_expense_list["add_style"] = "entity";
@@ -137,7 +137,7 @@ class OrganizationController extends ControllerEntity {
 		// если имеется доступ к скроллеру
 		$action = ($this->acl->isAllowed($role_id, "organization_userlist", 'edit') ? 'edit' : ($this->acl->isAllowed($role_id, "organization_userlist", 'show') ? 'show' : null));
 		if($action) {
-			$controller_user_list = new UserListController();
+			$controller_user_list = new UserlistController();
 			$scroller_user_list = $controller_user_list->createDescriptor($this, array("organization_id" => $this->fields["id"]["value"]), $action);
 			$scroller_user_list['relationType'] = $this->scrollers[$controller_user_list->controllerName]['relationType'];
 			$scroller_user_list["add_style"] = "scroller";

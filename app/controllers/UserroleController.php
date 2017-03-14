@@ -80,7 +80,7 @@ class UserroleController extends ControllerEntity {
 	*/
 	protected function fillScrollers() {
 		// грид доступов
-		$controller_resource_list = new ResourceListController();
+		$controller_resource_list = new ResourcelistController();
 		$scroller_resource_list = $controller_resource_list->createDescriptor($this, array("user_role_id" => $this->fields["id"]["value"]));
 		$scroller_resource_list['edit_style']  = "modal";
 		$scroller_resource_list["add_style"] = "scroller";
