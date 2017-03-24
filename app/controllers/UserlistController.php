@@ -1,7 +1,7 @@
 <?php
 class UserlistController extends ControllerList {
 	public $entityName = 'User';
-	public $controllerName = "Userlist";
+	public $controllerName = "userlist";
 	
 	public function initialize() {
 		parent::initialize();

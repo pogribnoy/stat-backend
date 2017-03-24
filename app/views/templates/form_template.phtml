@@ -251,117 +251,129 @@ function entitySaveToLocalFromHTML(container_id) {
 			val_id = null;
 			field = descriptor.fields[field_id];
 			
-			// все, кроме статичного текста, можно сохранять
-			if(field.type != 'label') {
-				if(field.id != "operations") {
-					if(field.type=='text' || field.type=='textarea' || field.type=='number' || field.type=='email' || field.type=='password' || field.type=='date' || field.type=='amount') {
-						field_jqobj = jqobj.find("#field_"+field.id+"_value");
-						if(field_jqobj.length>0) val = field_jqobj.val();
-						else val = "";
-						if(field.type=='password') val = sha1(val);
+			if(!field.required || field.required == "undefined") field.required = null;
+			
+			// все, кроме статичного текста и операций, можно сохранять
+			if(field.type != 'label' && field.id != "operations") {
+				if(field.type=='text' || field.type=='textarea' || field.type=='number' || field.type=='email' || field.type=='password' || field.type=='date' || field.type=='amount') {
+					field_jqobj = jqobj.find("#field_"+field.id+"_value");
+					if(field_jqobj.length>0) val = field_jqobj.val();
+					else val = null;
+					if(field.type=='password' && val != null) val = sha1(val);
+				}
+				else if(field.type=='period') {
+					field_jqobj1 = jqobj.find("#field_"+field.id+"_value1");
+					field_jqobj2 = jqobj.find("#field_"+field.id+"_value2");
+					if(field_jqobj1.length>0) val1 = field_jqobj1.val();
+					else val1 = null;
+					if(field_jqobj2.length>0) val2 = field_jqobj2.val();
+					else val2 = null;
+				}
+				else if(field.type=='select') {
+					field_jqobj = jqobj.find("#field_"+field.id+"_value");
+					if(field_jqobj.val()) {
+						val = field_jqobj.find("option:selected").text();
+						val_id = field_jqobj.val();
 					}
-					else if(field.type=='period') {
-						field_jqobj1 = jqobj.find("#field_"+field.id+"_value1");
-						field_jqobj2 = jqobj.find("#field_"+field.id+"_value2");
-						if(field_jqobj1.length>0) val1 = field_jqobj1.val();
-						else val1 = "";
-						if(field_jqobj2.length>0) val2 = field_jqobj2.val();
-						else val2 = "";
-					}
-					else if(field.type=='select') {
-						field_jqobj = jqobj.find("#field_"+field.id+"_value");
-						if(field_jqobj.val()) {
-							val = field_jqobj.find("option:selected").text();
-							val_id = field_jqobj.val();
-						}
-						else {
-							val = "";
-							val_id = "";
-						}
-					}
-					else if(field.type=='link') {
-						//значение сохраняется в сущность при закрытии моделки со скроллером
-						val = field.value;
-						val_id = field.value_id;
-						/*field_jqobj = jqobj.find("#field_"+field.id+"_value");
-						if(field_jqobj.length>0) val = field_jqobj.val();
-						else val = "";*/
-					}
-					
-					// проверка на обязательность не зависимо от типа
-					if(descriptor.actionName != "show" && field.required && field.required != "undefined" && (val == null || val == '' || val == 'undefined' || (val == null && val1 == null && val2 == null)) && val_id != "*") {
-						errorMsg += '<li>Поле "' + field.name + '" обязательно для заполнения</li>';
-					}
-					// выполняем остальные проверки
 					else {
-						if(field.type == 'amount' && val != null && val != '' && val != 'undefined') {
-							if((val != null && val.length>0) || val == "") {
-								if(/^\d{1,15}.?\d{0,2}$/.test(val)==null) {
-									errorMsg += '<li>Поле "' + field.name + '" содержит значение, не соответствующее формату десятичного числа</li>';
+						val = null;
+						val_id = null;
+					}
+				}
+				else if(field.type=='link') {
+					//значение сохраняется в сущность при закрытии моделки со скроллером
+					val = field.value;
+					val_id = field.value_id;
+					/*field_jqobj = jqobj.find("#field_"+field.id+"_value");
+					if(field_jqobj.length>0) val = field_jqobj.val();
+					else val = "";*/
+				}
+				
+				if(val == '' || val == 'undefined') val = null;
+				if(val1 == '' || val1 == 'undefined') val1 = null;
+				if(val2 == '' || val2 == 'undefined') val2 = null;
+				if(val_id == '' || val_id == 'undefined') val_id = null;
+				
+				
+				// проверка на обязательность не зависимо от типа
+				if	(descriptor.actionName != "show" && field.required) {
+					if(field.type == 'period'){
+						if(field.required == 1 && val1 == null) errorMsg += '<li>Поле "' + field.name + '". Дата "' + field.name1 + '" обязательна для заполнения</li>';
+						else if(field.required == 2 && val1 == null) errorMsg += '<li>Поле "' + field.name + '". Дата "' + field.name2 + '" обязательна для заполнения</li>';
+						else if(field.required == 3 && val1 == null && val2 == null) errorMsg += '<li>Поле "' + field.name + '". Должна быть заполнена хотя бы одна дата</li>';
+						else if(field.required == 4 && (val1 == null || val2 == null)) errorMsg += '<li>Поле "' + field.name + '. Период должен быть заполнен полностью</li>';
+					}
+					else if(val == null && val_id != "*") errorMsg += '<li>Поле "' + field.name + '" обязательно для заполнения</li>';
+				}
+				// выполняем остальные проверки
+				else {
+					if(field.type == 'amount' && val != null && val != '' && val != 'undefined') {
+						if((val != null && val.length>0) || val == "") {
+							if(/^\d{1,15}.?\d{0,2}$/.test(val)==null) {
+								errorMsg += '<li>Поле "' + field.name + '" содержит значение, не соответствующее формату десятичного числа</li>';
+							}
+							else {
+								realVal = null;
+								var pos = val.indexOf('.');
+								var cents;
+								if(pos>=0) cents = val.replace(".", '');
+								else cents = val + "00";
+								realVal = parseInt(cents, 10);
+								if(realVal != null && field.min && realVal < field.min) {
+									errorMsg += '<li>Поле "' + field.name + '" содержит значение меньше допустимого</li>';
 								}
-								else {
-									realVal = null;
-									var pos = val.indexOf('.');
-									var cents;
-									if(pos>=0) cents = val.replace(".", '');
-									else cents = val + "00";
-									realVal = parseInt(cents, 10);
-									if(realVal != null && field.min && realVal < field.min) {
-										errorMsg += '<li>Поле "' + field.name + '" содержит значение меньше допустимого</li>';
-									}
-									if(realVal != null && field.max && realVal > field.max) {
-										errorMsg += '<li>Поле "' + field.name + '" содержит значение больше допустимого</li>';
-									}
+								if(realVal != null && field.max && realVal > field.max) {
+									errorMsg += '<li>Поле "' + field.name + '" содержит значение больше допустимого</li>';
 								}
-							}
-						}
-						else if(field.type == 'number' && val != null && val != '' && val != 'undefined') {
-							if((val != null && val.length>0) || val == "") {
-								if(/^\d{0,18}$/.test(val)==null) {
-									errorMsg += '<li>Поле "' + field.name + '" содержит значение, не соответствующее формату десятичного числа</li>';
-								}
-								else {
-									realVal = parseInt(val, 10);
-									if(realVal != null && field.min && realVal < field.min) {
-										errorMsg += '<li>Поле "' + field.name + '" содержит значение меньше допустимого</li>';
-									}
-									if(realVal != null && field.max && realVal > field.max) {
-										errorMsg += '<li>Поле "' + field.name + '" содержит значение больше допустимого</li>';
-									}
-								}
-							}
-						}
-						else if(field.type == 'email' && val != null && val != '' && val != 'undefined') {
-							if(val.indexOf('@') == -1) {
-								errorMsg += '<li>Поле "' + field.name + '" содержит значение, не соответствущее адресу электронной почты</li>';
-							}
-						}
-						else if(field.type == 'password' && val != null && val != '' && val != 'undefined') {
-							if(checkPasswordEq(field_jqobj, "field_"+field.id+"_value") === false) {
-								errorMsg += '<li>Пароли в поле "' + field.name + '" не совпадают</li>';
-							}
-						}
-						else if((field.type == 'period') && val1 != null && val1 != '' && val1 != 'undefined' && val2 != null && val2 != '' && val2 != 'undefined') {
-							// TODO. Проверять, чтобы дата from не была больше даты to
-						}
-						else if((field.type == 'text' || val == 'textarea') && val != null && val != '' && val != 'undefined') {
-							if(field.min && val.length < field.min) {
-								errorMsg += '<li>Поле "' + field.name + '" содержит слишком короткое значение (должно быть не менее ' + field.min + ' символов)</li>';
-							}
-							if(field.max && val.length > field.max) {
-								errorMsg += '<li>Поле "' + field.name + '" содержит слишком длинное значение (должно быть не более ' + field.max + ' символов)</li>';
 							}
 						}
 					}
-					if(errorMsg.length==0) { 
-						if(val != null && val != "undefined") tmpFields[field.id] = {value: val};
-						if((val1 != null && val1 != "undefined") || (val2 != null && val2 != "undefined")) {
-							tmpFields[field.id] = {};
-							if(val1 != null && val1 != "undefined") tmpFields[field.id].value1 = val1;
-							if(val2 != null && val2 != "undefined") tmpFields[field.id].value2 = val2;
+					else if(field.type == 'number' && val != null && val != '' && val != 'undefined') {
+						if((val != null && val.length>0) || val == "") {
+							if(/^\d{0,18}$/.test(val)==null) {
+								errorMsg += '<li>Поле "' + field.name + '" содержит значение, не соответствующее формату десятичного числа</li>';
+							}
+							else {
+								realVal = parseInt(val, 10);
+								if(realVal != null && field.min && realVal < field.min) {
+									errorMsg += '<li>Поле "' + field.name + '" содержит значение меньше допустимого</li>';
+								}
+								if(realVal != null && field.max && realVal > field.max) {
+									errorMsg += '<li>Поле "' + field.name + '" содержит значение больше допустимого</li>';
+								}
+							}
 						}
-						if(val_id != null && val_id != "undefined") tmpFields[field.id].value_id = val_id;
 					}
+					else if(field.type == 'email' && val != null && val != '' && val != 'undefined') {
+						if(val.indexOf('@') == -1) {
+							errorMsg += '<li>Поле "' + field.name + '" содержит значение, не соответствущее адресу электронной почты</li>';
+						}
+					}
+					else if(field.type == 'password' && val != null && val != '' && val != 'undefined') {
+						if(checkPasswordEq(field_jqobj, "field_"+field.id+"_value") === false) {
+							errorMsg += '<li>Пароли в поле "' + field.name + '" не совпадают</li>';
+						}
+					}
+					else if((field.type == 'period') && val1 != null && val1 != '' && val1 != 'undefined' && val2 != null && val2 != '' && val2 != 'undefined') {
+						// TODO. Проверять, чтобы дата from не была больше даты to
+					}
+					else if((field.type == 'text' || val == 'textarea') && val != null && val != '' && val != 'undefined') {
+						if(field.min && val.length < field.min) {
+							errorMsg += '<li>Поле "' + field.name + '" содержит слишком короткое значение (должно быть не менее ' + field.min + ' символов)</li>';
+						}
+						if(field.max && val.length > field.max) {
+							errorMsg += '<li>Поле "' + field.name + '" содержит слишком длинное значение (должно быть не более ' + field.max + ' символов)</li>';
+						}
+					}
+				}
+				if(errorMsg.length==0) { 
+					if(val != null) tmpFields[field.id] = {value: val};
+					if(val1 != null || val2 != null) {
+						tmpFields[field.id] = {};
+						if(val1 != null) tmpFields[field.id].value1 = val1;
+						if(val2 != null) tmpFields[field.id].value2 = val2;
+					}
+					if(val_id != null) tmpFields[field.id].value_id = val_id;
 				}
 			}
 		}
@@ -378,7 +390,9 @@ function entitySaveToLocalFromHTML(container_id) {
 				tmpField = tmpFields[tmpID];
 				if(tmpField.value) descriptor.fields[tmpID].value = tmpField.value;//encodeURIComponent(tmpField.value);
 				if(tmpField.value1) descriptor.fields[tmpID].value1 = tmpField.value1;//encodeURIComponent(tmpField.value);
+				else descriptor.fields[tmpID].value1 = null;
 				if(tmpField.value2) descriptor.fields[tmpID].value2 = tmpField.value2;//encodeURIComponent(tmpField.value);
+				else descriptor.fields[tmpID].value2 = null;
 				if(tmpField.value_id)descriptor.fields[tmpID].value_id = tmpField.value_id;//encodeURIComponent(tmpField.value_id);
 				//field.value = val;
 				//if(val_id != "undefined") field.value_id = val_id;

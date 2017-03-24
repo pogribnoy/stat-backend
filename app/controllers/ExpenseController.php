@@ -105,6 +105,7 @@ class ExpenseController extends ControllerEntity {
 				'type' => 'period',
 				'newEntityValue1' => null,
 				'newEntityValue2' => (new DateTime('now'))->format("Y-m-d"),
+				'required' => 3,	// 1-обязательно value1, 2-обязательно value2, 3-обязательно value1 ИЛИ value2, 4-обязательно value1 И value2
 			),
 		];
 		// наполняем поля данными
@@ -280,32 +281,75 @@ class ExpenseController extends ControllerEntity {
 		else $this->fields['executor']['value'] = null;
 		
 		//target_date
-		if(isset($rq->fields->target_date) && isset($rq->fields->target_date->value1) && isset($rq->fields->target_date->value2)) {
-			$val1 = $this->filter->sanitize(urldecode($rq->fields->target_date->value1), ["trim", "string"]);
-			$val2 = $this->filter->sanitize(urldecode($rq->fields->target_date->value2), ["trim", "string"]);
-			if($val1 == '') $this->fields['target_date']['value1'] = null;
-			if($val2 == '') $this->fields['target_date']['value2'] = null;
-			if($val1 != '' && $val2 != '') {
-				$d1 = new dateTime ($val1); //(new DateTime('now'))->format("Y-m-d")
-				$d2 = new dateTime ($val2);
-				if($d1 > $d2) {
+		if(isset($rq->fields->target_date)) {
+			$val1 = null;
+			$val2 = null;
+			if(isset($rq->fields->target_date->value1) && $rq->fields->target_date->value1 != null)	$val1 = $this->filter->sanitize(urldecode($rq->fields->target_date->value1), ["trim", "string"]);
+			if(isset($rq->fields->target_date->value2) && $rq->fields->target_date->value2 != null)	$val2 = $this->filter->sanitize(urldecode($rq->fields->target_date->value2), ["trim", "string"]);
+			if($val1 == '') $val1 = null;
+			if($val2 == '') $val2 = null;
+			
+			$this->logger->log(__METHOD__ . '. val1 = ' . $val1 . '. val2 = ' . $val2);
+			
+			
+			if(isset($this->fields['target_date']['required'])) {
+				$reqMode = $this->fields['target_date']['required'];
+				if($reqMode == 1 && $val1 == null) {
 					$this->error['messages'][] = [
 						'title' => "Ошибка",
-						'msg' => 'В поле "'. $this->fields['target_date']['name'] .'" дата окончания периода не может быть меньше даты начала периода',
+						'msg' => 'Поле "' . $this->fields['target_date']['name'] . '". Дата "' . $this->fields['target_date']['name1'] . '" обязательна для заполнения',
 					];
 					return false;
+				}
+				else if($reqMode == 2 && $val2 == null) {
+					$this->error['messages'][] = [
+						'title' => "Ошибка",
+						'msg' => 'Поле "' . $this->fields['target_date']['name'] . '". Дата "' . $this->fields['target_date']['name2'] . '" обязательна для заполнения',
+					];
+					return false;
+				}
+				else if($reqMode == 3 && $val1 == null && $val2 == null) {
+					$this->error['messages'][] = [
+						'title' => "Ошибка",
+						'msg' => 'Поле "' . $this->fields['target_date']['name'] . '". Должна быть заполнена хотя бы одна дата',
+					];
+					return false;
+				}
+				else if($reqMode == 4 && ($val1 == null || $val2 == null)) {
+					$this->error['messages'][] = [
+						'title' => "Ошибка",
+						'msg' => 'Поле "' . $this->fields['target_date']['name'] . '". Период должен быть заполнен полностью',
+					];
+					return false;
+				}
+			
+				if($val1 != null && $val2 != null) {
+					$d1 = new dateTime ($val1); //(new DateTime('now'))->format("Y-m-d")
+					$d2 = new dateTime ($val2);
+					if($d1 > $d2) {
+						$this->error['messages'][] = [
+							'title' => "Ошибка",
+							'msg' => 'В поле "'. $this->fields['target_date']['name'] .'" дата окончания периода не может быть меньше даты начала периода',
+						];
+						return false;
+					}
 				}
 			}
 			$this->fields['target_date']['value1'] = $val1;
 			$this->fields['target_date']['value2'] = $val2;
-			
+			$this->logger->log(__METHOD__ . '. value1 = ' . $this->fields['target_date']['value1'] . '. value2 = ' . $this->fields['target_date']['value2']);
 			//$this->logger->log('val1 = ' . $this->fields['target_date']['value1']);
 			//$this->logger->log('val2 = ' . $this->fields['target_date']['value2']);
 		}
 		else {
 			//$this->logger->log('target_date = ' . json_encode($rq->fields->target_date));
-			$this->fields['target_date']['value1'] = null;
-			$this->fields['target_date']['value2'] = null;
+			//$this->fields['target_date']['value1'] = null;
+			//$this->fields['target_date']['value2'] = null;
+			$this->error['messages'][] = [
+				'title' => "Системная ошибка",
+				'msg' => 'Поле "' . $this->fields['target_date']['name'] . '". Не получены данные о периоде',
+			];
+			return false;
 		}
 		
 		return true;
