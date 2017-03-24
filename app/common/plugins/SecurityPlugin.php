@@ -137,7 +137,7 @@ class SecurityPlugin extends Plugin {
 			$sessionLastUpdateTime = isset($auth['sessionLastUpdate']) ? $auth['sessionLastUpdate'] : $curDateTime;
 			$timeout = $curDateTime->diff($sessionLastUpdateTime);
 			$sessionSeconds = $timeout->days*86400 + $timeout->h*3600 + $timeout->i*60 + $timeout->s;
-			$this->logger->log(__METHOD__ . ". Session inactivity = " . $sessionSeconds . " (max: " . $this->config['application']['sessionTimeout'] ")");
+			$this->logger->log(__METHOD__ . ". Session inactivity = " . $sessionSeconds . " (max: " . $this->config['application']['sessionTimeout'] . ")");
 			if($sessionSeconds > $this->config['application']['sessionTimeout']) {
 				$this->logger->log(__METHOD__ . ". User (" . ( $this->user!=null && isset($this->user['id']) ? "id=" . $this->user['id'] . ", name=" . $this->user['name'] : "guest") .  "). Session timeout = " . $sessionSeconds . ". Redirect to _/session/end_");
 				$dispatcher->forward(array(
