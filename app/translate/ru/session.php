@@ -1,5 +1,5 @@
 <?php
-$messages = array(
+/*$messages = array(
 
 // общедоступная часть, главная страница
 "main_text_search"    => "Введите значение для поиска",
@@ -17,4 +17,4 @@ $messages = array(
 
 "title"	=> "Заголовок страницы",
 "hi-name" => "Здарова %name%"
-);
+);*/

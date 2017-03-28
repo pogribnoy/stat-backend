@@ -8,7 +8,7 @@ class LoginController extends ControllerBase {
 	}
 
 	public function indexAction() {
-		$this->view->setVar("page_header", $this->t->_("text_site_full_name"));
-		$auth = $this->session->get('auth');
+		//$this->view->page_header = $this->t->_("text_site_full_name");
+		//$auth = $this->session->get('auth');
 	}
 }

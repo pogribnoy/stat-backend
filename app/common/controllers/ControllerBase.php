@@ -5,6 +5,16 @@ use Phalcon\DI;
 use Phalcon\Filter;
 
 class ControllerBase extends Controller {
+	// наименование контроллера
+	public $controllerName;
+	// наименование контроллера в нижнем регистре
+	public $controllerNameLC;
+	// наименование действия в нижнем регистре
+	public $actionName;
+	// наименование действия в нижнем регистре
+	public $actionNameLC;
+
+	
 	// фильтр
 	public $filter;
 	public $descriptor;
@@ -38,7 +48,9 @@ class ControllerBase extends Controller {
 	
 	public function beforeExecuteRoute($dispatcher){
 		$this->controllerName = $dispatcher->getControllerName();
+		$this->controllerNameLC = strtolower($this->controllerName);
 		$this->actionName = $dispatcher->getActionName();
+		$this->actionNameLC = strtolower($this->actionName);
 		//var_dump(__METHOD__ . ". actionName: " . json_encode($this->actionName));
 		//$this->dispatcher = $dispatcher;
 		
@@ -47,16 +59,16 @@ class ControllerBase extends Controller {
 		$this->language = $this->request->getBestLanguage();
 		
 		$this->translator = DI::getDefault()->getTranslator();
-		$this->t = $this->translator->getTranslation($this->language, $this->controllerName);
+		$this->t = $this->translator->getTranslation($this->language, $this->controllerNameLC);
 		
 		if(!$this->request->isAjax()) {
 			// передаем данные, зависящие от пути, в представление
 			// перевод
-			$this->view->setVar("t", $this->t);
+			$this->view->t = $this->t;
 			// контроллер и действие
-			$this->view->setVar("controllerName", $this->controllerName);
-			$this->view->setVar("actionName", $this->actionName);
-			$this->view->setVar('page_header', $this->t->_('text_' . $this->controllerName . '_title'));
+			$this->view->controllerName = $this->controllerNameLC;
+			$this->view->actionName = $this->actionNameLC;
+			$this->view->page_header = $this->t->_('text_' . $this->controllerNameLC . '_title');
 		}
 	}
 

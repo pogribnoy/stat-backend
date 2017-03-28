@@ -4,7 +4,7 @@
 		<!-- Brand and toggle get grouped for better mobile display -->
 		<div class="navbar-header">
 			<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
-				<span class="sr-only">Навигация</span>
+				<span class="sr-only"><?php echo $t->_("main_menu_navigation"); ?></span>
 				<span class="icon-bar"></span>
 				<span class="icon-bar"></span>
 				<span class="icon-bar"></span>
@@ -30,34 +30,34 @@
 			<ul class="nav navbar-nav">
 				<?php if(isset($access['organizationlist_index']) || isset($access['newslist_index'])) { ?>
 					<li class="dropdown">
-						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Содержимое <span class="caret"></span></a>
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><?php echo $t->_("main_menu_content"); ?> <span class="caret"></span></a>
 						<ul class="dropdown-menu">
-							<?php if(isset($access['organizationlist_index'])) { ?><li><a href="/organizationlist">Организации</a></li><?php } ?>
+							<?php if(isset($access['organizationlist_index'])) { ?><li><a href="/organizationlist"><?php echo $t->_("main_menu_organizationlist"); ?></a></li><?php } ?>
 							<!--<li role="separator" class="divider"></li>-->
-							<?php if(isset($access['newslist_index'])) { ?><li><a href="/newslist">Новости</a></li><?php } ?>
+							<?php if(isset($access['newslist_index'])) { ?><li><a href="/newslist"><?php echo $t->_("main_menu_content"); ?></a></li><?php } ?>
 						</ul>
 					</li>
 				<?php } ?>
 				<?php if(isset($access['userlist_index']) || isset($access['userrolelist_index']) || isset($access['resourcelist_index']) || isset($access['streettypelist_index']) || isset($access['expensetypelist_index']) || isset($access['regionlist_index']) || isset($access['expensestatuslist_index'])) { ?>
 					<li>
-						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Настройки сайта <span class="caret"></span></a>
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><?php echo $t->_("main_menu_settings"); ?> <span class="caret"></span></a>
 						<ul class="dropdown-menu">
-							<?php if(isset($access['userlist_index'])) { ?><li><a href="/userlist">Пользователи</a></li><?php } ?>
-							<?php if(isset($access['userrolelist_index'])) { ?><li><a href="/userrolelist">Роли пользователей</a></li><?php } ?>
-							<?php if(isset($access['resourcelist_index'])) { ?><li><a href="/resourcelist">Ресурсы сайта</a></li><?php } ?>
-							<?php if(isset($access['streettypelist_index'])) { ?><li><a href="/streettypelist">Типы улиц</a></li><?php } ?>
-							<?php if(isset($access['expensetypelist_index'])) { ?><li><a href="/expensetypelist">Типы расходов</a></li><?php } ?>
-							<?php if(isset($access['regionlist_index'])) { ?><li><a href="/regionlist">Регионы</a></li><?php } ?>
-							<?php if(isset($access['expensestatuslist_index'])) { ?><li><a href="/expensestatuslist">Статусы расходов</a></li><?php } ?>
+							<?php if(isset($access['userlist_index'])) { ?><li><a href="/userlist"><?php echo $t->_("main_menu_userlist"); ?></a></li><?php } ?>
+							<?php if(isset($access['userrolelist_index'])) { ?><li><a href="/userrolelist"><?php echo $t->_("main_menu_userrolelist"); ?></a></li><?php } ?>
+							<?php if(isset($access['resourcelist_index'])) { ?><li><a href="/resourcelist"><?php echo $t->_("main_menu_resourcelist"); ?></a></li><?php } ?>
+							<?php if(isset($access['streettypelist_index'])) { ?><li><a href="/streettypelist"><?php echo $t->_("main_menu_streettypelist"); ?></a></li><?php } ?>
+							<?php if(isset($access['expensetypelist_index'])) { ?><li><a href="/expensetypelist"><?php echo $t->_("main_menu_expensetypelist"); ?></a></li><?php } ?>
+							<?php if(isset($access['regionlist_index'])) { ?><li><a href="/regionlist"><?php echo $t->_("main_menu_regionlist"); ?></a></li><?php } ?>
+							<?php if(isset($access['expensestatuslist_index'])) { ?><li><a href="/expensestatuslist"><?php echo $t->_("main_menu_expensestatuslist"); ?></a></li><?php } ?>
 						</ul>
 					</li>
 				<?php } ?>
-				<li><a href="/profile/edit?id=<?php echo $controller->userData['id']; ?>">Профиль пользователя</a></li>
+				<li><a href="/profile/edit?id=<?php echo $controller->userData['id']; ?>"><?php echo $t->_("main_menu_profile"); ?></a></li>
 			</ul>
 		</div><!-- /.navbar-collapse -->
 		<ul class="nav navbar-nav navbar-right">
 			<li>
-				<p class="navbar-text"><?php if(isset($controller->userData['name'])) { echo $controller->userData['name']; ?> (<a href="/session/end" class="navbar-link">выход</a>)<?php }else echo "Гость"; ?></p>
+				<p class="navbar-text"><?php if(isset($controller->userData['name'])) { echo $controller->userData['name']; ?> (<a href="/session/end" class="navbar-link"><?php echo $t->_("main_menu_exit_link"); ?></a>)<?php }else echo "Гость"; ?></p>
 			</li>
 		</ul>
 	</div><!-- /.container-fluid -->

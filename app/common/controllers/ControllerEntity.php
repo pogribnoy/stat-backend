@@ -39,23 +39,23 @@ class ControllerEntity extends ControllerBase {
 		$role_id = $this->userData['role_id'];
 		//var_dump($this->request->getURI());
 		
-		if($this->acl->isAllowed($role_id, $this->controllerName, 'edit')) {
+		if($this->acl->isAllowed($role_id, $this->controllerNameLC, 'edit')) {
 			$this->dispatcher->forward(array(
-				'controller' => $this->controllerName,
+				'controller' => $this->controllerNameLC,
 				'action'     => 'edit',
 			));
 			//$this->forward($this->request->getURI());
 		}
-		else if($this->acl->isAllowed($role_id, $this->controllerName, 'show')) {
+		else if($this->acl->isAllowed($role_id, $this->controllerNameLC, 'show')) {
 			$this->dispatcher->forward(array(
-				'controller' => $this->controllerName,
+				'controller' => $this->controllerNameLC,
 				'action'     => 'show',
 			));
 			//$this->forward($this->request->getURI());
 		}
 		else {
 			$this->dispatcher->forward(array(
-				'controller' => $this->controllerName,
+				'controller' => $this->controllerNameLC,
 				'action' => 'show404',
 				'sourceURL' => $this->request->getURI(),
 			));
@@ -72,7 +72,7 @@ class ControllerEntity extends ControllerBase {
 		}
 		else {
 			// передаем в представление имеющиеся данные
-			//$this->view->setVar('page_header', $this->t->_('text_' . $this->controllerName . '_title'));
+			//$this->view->setVar('page_header', $this->t->_('text_' . $this->controllerNameLC . '_title'));
 			$this->view->setVar("descriptor", $this->descriptor);
 		}*/
 	}
@@ -91,7 +91,7 @@ class ControllerEntity extends ControllerBase {
 			));
 			return;
 		}
-		//$resource = $this->controllerName . '_' . $scrollerName;
+		//$resource = $this->controllerNameLC . '_' . $scrollerName;
 		//var_dump($resource);
 		
 		$actionName = $this->request->get("actionName", ["trim", "string"], "show");
@@ -116,7 +116,7 @@ class ControllerEntity extends ControllerBase {
 		}
 		else {
 			// передаем в представление имеющиеся данные
-			//$this->view->setVar('page_header', $this->t->_('text_' . $this->controllerName . '_title'));
+			//$this->view->setVar('page_header', $this->t->_('text_' . $this->controllerNameLC . '_title'));
 			$this->view->setVar("descriptor", $this->descriptor);
 		}
 	}
@@ -135,7 +135,7 @@ class ControllerEntity extends ControllerBase {
 		}
 		else {
 			// передаем в представление имеющиеся данные
-			//$this->view->setVar('page_header', $this->t->_('text_' . $this->controllerName . '_title'));
+			//$this->view->setVar('page_header', $this->t->_('text_' . $this->controllerNameLC . '_title'));
 			$this->view->setVar("descriptor", $this->descriptor);
 		}
 	}
@@ -402,7 +402,7 @@ class ControllerEntity extends ControllerBase {
 	*/
 	protected function getTmpl() {
 		// передаем шаблон, если он есть
-		$tmplFileName = APP_PATH . $this->config->application->templatesDir . $this->controllerName . ".phtml";
+		$tmplFileName = APP_PATH . $this->config->application->templatesDir . $this->controllerNameLC . ".phtml";
 		//$this->logger->log(json_encode($tmplFileName));
 		if (file_exists($tmplFileName)) return file_get_contents($tmplFileName);
 		else return null;
@@ -419,7 +419,7 @@ class ControllerEntity extends ControllerBase {
 		// получаем действия, доступные пользователю
 		$this->tools = Phalcon\DI::getDefault()->getTools();
 		//$this->logger->log(__METHOD__ . ". actionName1: " . json_encode($this->actionName));
-		$this->operations = $this->tools->getEntityFormOperations($this->userData['role_id'], $this->controllerName, $this->acl, $this->t, $exludeOps, $this->actionName);
+		$this->operations = $this->tools->getEntityFormOperations($this->userData['role_id'], $this->controllerNameLC, $this->acl, $this->t, $exludeOps, $this->actionName);
 		//$this->logger->log(__METHOD__ . ". actionName2: " . json_encode($this->actionName));
 	}
 	
@@ -441,15 +441,15 @@ class ControllerEntity extends ControllerBase {
 	protected function createDescriptorObject() {
 		//$this->logger->log(json_encode($this->fields["name"]));
 		$this->descriptor = array(
-			"controllerName" =>  strtolower($this->controllerName),
-			"entity" => strtolower($this->entityName),
+			"controllerName" => $this->controllerNameLC,
+			"entity" => $this->entityNameLC,
 			"type" => "entity",
 			"fields" => $this->fields,
 			"scrollers" => $this->scrollers,
 			"operations" => $this->operations,
 			"filter_values" => $this->filter_values,
 			"title" => (isset($this->fields["name"]) && $this->fields["name"]["value"] != '') ? $this->fields["name"]["value"] : 
-				(($this->fields["id"] == -1) ? $this->t->_("text_" . $this->controllerName . "_new_entity_title") : $this->t->_("text_" . $this->controllerName . "_title")),
+				(($this->fields["id"] == -1) ? $this->t->_("text_" . $this->controllerNameLC . "_new_entity_title") : $this->t->_("text_" . $this->controllerNameLC . "_title")),
 			"template" => $this->getTmpl(),
 			'data' => $this->data,
 			'actionName' => $this->actionName,
@@ -749,7 +749,7 @@ class ControllerEntity extends ControllerBase {
 					));
 					if(!$entity) {
 						$field["value"] = null;
-						$this->logger->log('Controller/Action: ' . $this->controllerName . '/' . $this->actionName . '. Function: ' . __FUNCTION__ . '. Default entity "' . $linkEntityName . '" with ID=' . $field["value_id"] . ' for field "' . $fieldID . '" not found');
+						$this->logger->log('Controller/Action: ' . $this->controllerNameLC . '/' . $this->actionNameLC . '. Function: ' . __FUNCTION__ . '. Default entity "' . $linkEntityName . '" with ID=' . $field["value_id"] . ' for field "' . $fieldID . '" not found');
 					}
 					else $field["value"] = null;
 				}
@@ -764,9 +764,9 @@ class ControllerEntity extends ControllerBase {
 					$field["value"] = null;
 					if(isset($field["values"])) {
 						if(in_array($field["newEntityValue"], $field["values"]))  $field["value"] = $field["newEntityValue"];
-						else $this->logger->log('Controller/Action: ' . $this->controllerName . '/' . $this->actionName . '. Function: ' . __FUNCTION__ . '. Default value "' . $field["newEntityValue"] . '" for field "' . $fieldID . '" not found in inline array "field["values"]"');
+						else $this->logger->log('Controller/Action: ' . $this->controllerNameLC . '/' . $this->actionNameLC . '. Function: ' . __FUNCTION__ . '. Default value "' . $field["newEntityValue"] . '" for field "' . $fieldID . '" not found in inline array "field["values"]"');
 					}
-					else if(isset($field["newEntityValue"]) && $field["newEntityValue"] != '' && $field["newEntityValue"] != null) $this->logger->log('Controller/Action: ' . $this->controllerName . '/' . $this->actionName . '. Function: ' . __FUNCTION__ . '. Default value "' . $field["newEntityValue"] . '" for field "' . $fieldID . '" is set, but inline array "field["values"]" is not set');
+					else if(isset($field["newEntityValue"]) && $field["newEntityValue"] != '' && $field["newEntityValue"] != null) $this->logger->log('Controller/Action: ' . $this->controllerNameLC . '/' . $this->actionNameLC . '. Function: ' . __FUNCTION__ . '. Default value "' . $field["newEntityValue"] . '" for field "' . $fieldID . '" is set, but inline array "field["values"]" is not set');
 				}
 			}
 			else if($field['type'] == 'img') {

@@ -1,13 +1,13 @@
 <div class="row-fluid text-center">
 	<div class="row">
 		<div class="col-lg-offset-3 col-lg-6">
-			<h1 class="page-header"><?php if(isset($page_header)) echo $page_header; ?></h1>
+			<h1 class="page-header"><?php echo $t->_("text_site_full_name"); ?></h1>
 		</div>
 	</div><!-- /.row-fluid -->
 <div class="row">
 	<div class="col-lg-offset-4 col-lg-4">
 		<div class="form-signin" id="loginForm">
-			<h2 class="form-signin-heading text-center">Авторизация</h2>
+			<h2 class="form-signin-heading text-center"><?php echo $t->_("text_login_authorization"); ?></h2>
 			<div class="input-group">
 				<span class="input-group-addon"><i class="glyphicon glyphicon-envelope"></i></span>
 				<input type="email" id="email" class="form-control" placeholder="Email" autofocus="">
@@ -20,7 +20,7 @@
 			<div class="row"><div class="col-lg-12 text-center">&nbsp;</div></div>
 			<div class="input-group">
 				<span class="input-group-addon"><i class="glyphicon glyphicon-lock"></i></span>
-				<input id="password" type="password" class="form-control" name="password" value="" required="" placeholder="Пароль">                                        
+				<input id="password" type="password" class="form-control" name="password" value="" required="" placeholder="<?php echo $t->_("text_login_password_placeholder"); ?>">                                        
 			</div>
 			<div class="row"><div class="col-lg-12 text-center">&nbsp;</div></div>
 			<div class="row"><div class="col-lg-12 text-right"><a href="#" data-toggle="modal" data-target="#recoverModal"><?php echo $t->_("button_password_recover"); ?></a></div></div>

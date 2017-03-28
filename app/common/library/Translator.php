@@ -6,10 +6,11 @@ use Phalcon\Mvc\User\Component;
  */
 class Translator extends Component {
 	public $language = "ru";
+	//public $messages;
 	//$messages = array(); // массив загружается из файлов перевода
 	
-	public function getTranslation($language, $controller) {
-		$controller = strtolower($controller);
+	public function getTranslation($language, $functionalityCode) {
+		$functionalityCode = strtolower($functionalityCode);
 		$this->language = $language;
 		// Проверка существования файла с переводом общего функционала
 		if (file_exists(APP_PATH . "app/translate/".$language."/".$language.".php")) {
@@ -20,28 +21,33 @@ class Translator extends Component {
 		}
 			
 		// Проверка существования файла с переводом конкретного компонента
-		if (file_exists(APP_PATH . "app/translate/".$language."/".$controller.".php")) {
-			 require APP_PATH . "app/translate/".$language."/".$controller.".php";
+		if (file_exists(APP_PATH . "app/translate/".$language."/".$functionalityCode.".php")) {
+			 require APP_PATH . "app/translate/".$language."/".$functionalityCode.".php";
 		} else {
 			 // Переключение на язык по умолчанию
-			 if (file_exists(APP_PATH . "app/translate/ru/".$controller.".php")) require APP_PATH . "app/translate/ru/".$controller.".php";
+			 if (file_exists(APP_PATH . "app/translate/ru/".$functionalityCode.".php")) require APP_PATH . "app/translate/ru/".$functionalityCode.".php";
 		}
-		$this->messages = $messages;
+		if(isset($messages)) $this->messages = $messages;
+		else $this->messages = array();
+		// TODO. Необходимо сделать вывод ошибки в лог
+			
 		// Возвращение объекта работы с переводом
-		return new \Phalcon\Translate\Adapter\NativeArray(array("content" => $messages));
+		return new \Phalcon\Translate\Adapter\NativeArray(array("content" => $this->messages));
 	}
-	public function addTranslation($controller) {
-		$controller = strtolower($controller);
+	public function addTranslation($functionalityCode) {
+		$functionalityCode = strtolower($functionalityCode);
 		// Проверка существования файла с переводом конкретного компонента
-		if (file_exists(APP_PATH . "app/translate/".$this->language."/".$controller.".php")) {
-			 require APP_PATH . "app/translate/".$this->language."/".$controller.".php";
+		if (file_exists(APP_PATH . "app/translate/".$this->language."/".$functionalityCode.".php")) {
+			 require APP_PATH . "app/translate/".$this->language."/".$functionalityCode.".php";
 		} 
 		// Переключение на язык по умолчанию
-		else if (file_exists(APP_PATH . "/app/translate/ru/".$controller.".php")) {
-			require APP_PATH . "/app/translate/ru/".$controller.".php";
+		else if (file_exists(APP_PATH . "/app/translate/ru/".$functionalityCode.".php")) {
+			require APP_PATH . "/app/translate/ru/".$functionalityCode.".php";
 		}
 		
-		$this->messages = array_merge($messages, $this->messages);
+		if(isset($messages)) $this->messages = array_merge($messages, $this->messages);
+		// TODO. Необходимо сделать вывод ошибки в лог
+		
 		// Возвращение объекта работы с переводом
 		return new \Phalcon\Translate\Adapter\NativeArray(array("content" => $this->messages));
 	}
