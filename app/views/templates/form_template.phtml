@@ -111,6 +111,7 @@ function entitySave(container_id, item) {
 		var asd;
 		// текущую сущность сохраняем на сервер, если она не открыта на редактирование или не 
 		if((!descriptor.local_data.relationType || descriptor.local_data.relationType != 'n' || !container_id) && descriptor.local_data.status == 'edited') {
+		//if((descriptor.local_data.relationType && descriptor.local_data.relationType == 'n' )|| !container_id && descriptor.local_data.status == 'edited') {
 			asd = $.when(entitySaveToServer(descriptor)).done(function() {
 				def.resolve();
 			});
@@ -129,6 +130,7 @@ function entitySave(container_id, item) {
 			// добавляем сущность в скроллер
 			var opts = {
 				confirmFromServer: ((descriptor.local_data.relationType && descriptor.local_data.relationType == 'n') || !container_id) ? false : true,
+				//confirmFromServer: ((descriptor.local_data.relationType && descriptor.local_data.relationType == 'n') || !container_id) ? true : false,
 			}
 			if(tContainerData.type == 'scroller') addItemToScroller(descriptor, tContainerData, opts);
 			

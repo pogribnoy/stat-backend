@@ -441,8 +441,8 @@ class ControllerEntity extends ControllerBase {
 	protected function createDescriptorObject() {
 		//$this->logger->log(json_encode($this->fields["name"]));
 		$this->descriptor = array(
-			"controllerName" => $this->controllerName,
-			"entity" => $this->entityName,
+			"controllerName" =>  strtolower($this->controllerName),
+			"entity" => strtolower($this->entityName),
 			"type" => "entity",
 			"fields" => $this->fields,
 			"scrollers" => $this->scrollers,

@@ -689,6 +689,7 @@ function addItemToScroller(item, tScroller, opts) {
 		}
 	}
 
+	//  не нашли нигде
 	if(!isFound) {
 		if(opts.confirmFromServer) {
 			tScroller.items.unshift(item);
