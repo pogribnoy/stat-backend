@@ -2,6 +2,8 @@
 class ControllerEntity extends ControllerBase {
 	// наименование сущности
 	public $entityName;
+	// наименование сущности в нижнем регистре
+	public $entityNameLC;
 	// наименование основной таблицы для хранения сущности
 	public $tableName;
 	
@@ -30,6 +32,12 @@ class ControllerEntity extends ControllerBase {
 	
 	public function initialize() {
 		parent::initialize();
+	}
+	
+	public function beforeExecuteRoute($dispatcher){
+		parent::beforeExecuteRoute($dispatcher);
+		
+		$this->entityNameLC = strtolower($this->entityName);
 	}
 	
 	/* 
@@ -308,7 +316,7 @@ class ControllerEntity extends ControllerBase {
 		if(isset($this->success['messages']) && count($this->success['messages'])>0) $this->data['success'] = $this->success;
 		echo json_encode($this->data);
 	}
-	
+			
 	/* 
 	* Удаляет сушность, хранимую в $this->entity, если не передана отдельная сущность
 	*/

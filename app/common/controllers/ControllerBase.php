@@ -13,7 +13,6 @@ class ControllerBase extends Controller {
 	public $actionName;
 	// наименование действия в нижнем регистре
 	public $actionNameLC;
-
 	
 	// фильтр
 	public $filter;
@@ -51,6 +50,7 @@ class ControllerBase extends Controller {
 		$this->controllerNameLC = strtolower($this->controllerName);
 		$this->actionName = $dispatcher->getActionName();
 		$this->actionNameLC = strtolower($this->actionName);
+		
 		//var_dump(__METHOD__ . ". actionName: " . json_encode($this->actionName));
 		//$this->dispatcher = $dispatcher;
 		
