@@ -27,6 +27,14 @@ class Tools extends Component {
 				);
 			}
 		//}
+		
+		if($acl->isAllowed($role_id, $entity, 'check') && !in_array('check', $exludeOps)) {
+			$operations[] = array(
+				'id' => 'check',
+				'name' => $t->_('button_check'),
+			);
+		}
+			
 		if($acl->isAllowed($role_id, $entity, 'delete') && !in_array('delete', $exludeOps)) {
 			$operations[] = array(
 				'id' => 'delete',

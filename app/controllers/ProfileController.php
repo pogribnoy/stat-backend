@@ -125,47 +125,33 @@ class ProfileController extends ControllerEntity{
 	* Расширяемый метод.
 	*/
 	protected function sanitizeSaveRqData($rq) {
-		// id
-		if(!parent::sanitizeSaveRqData($rq)) return false;
+		$res = 0;
+		// id, select, link
+		$res |= parent::sanitizeSaveRqData($rq);
 		
 		// name
+		$this->fields['name']['value'] = null;
 		if(isset($rq->fields->name) && isset($rq->fields->name->value)) {
-			$val = $this->filter->sanitize(urldecode($rq->fields->name->value), ["trim", "string"]);
-			if($val != '') $this->fields['name']['value'] = $val;
-			else {
-				$this->error['messages'][] = [
-					'title' => "Ошибка",
-					'msg' => 'Поле "' . $this->fields['name']['name'] . '" обязательно для указания'
-				];
-				return false;
-			}
+			$this->fields['name']['value'] = $this->filter->sanitize(urldecode($rq->fields->name->value), ["trim", "string"]);
+			if($this->fields['name']['value'] == '') $this->fields['name']['value'] = null;
 		}
-		else return false;
 		
 		// password
+		$this->fields['password']['value'] = null;
 		if(isset($rq->fields->password) && isset($rq->fields->password->value)) {
-			$val = $this->filter->sanitize(urldecode($rq->fields->password->value), ["trim", "string"]);
-			$this->fields['password']['value'] = $val;
-			
-			/*if($val != '') $this->fields['password']['value'] = $val;
-			else {
-				if(count($this->entity->password)==0) {
-					$this->error['messages'][] = [
-						'title' => "Ошибка",
-						'msg' => 'Поле "' . $this->fields['password']['name'] . '" обязательно для указания'
-					];
-					return false;
-				}
-			}*/
+			$this->fields['password']['value'] = $this->filter->sanitize(urldecode($rq->fields->password->value), ["trim", "string"]);
+			if($this->fields['password']['value'] == '') $this->fields['password']['value'] = null;
 		}
 		
 		// phone
+		$this->fields['phone']['value'] = null;
 		if(isset($rq->fields->phone) && isset($rq->fields->phone->value)) {
-			$val = $this->filter->sanitize(urldecode($rq->fields->phone->value), ["trim", "string"]);
-			$this->fields['phone']['value'] = $val;
+			$this->fields['phone']['value'] = $this->filter->sanitize(urldecode($rq->fields->phone->value), ["trim", "string"]);
+			if($this->fields['phone']['value'] == '') $this->fields['phone']['value'] = null;
 		}
-		else $this->fields['phone']['value'] = null;
 		
-		return true;
+		$res |= $this->check();
+		
+		return $res;
 	}
 }

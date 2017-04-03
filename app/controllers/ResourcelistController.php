@@ -96,6 +96,8 @@ class ResourcelistController extends ControllerList {
 		}
 		else $phql = str_replace("{user_role_resource_columns}", "", $phql);
 		
+		$this->logger->log(__METHOD__ . ". add_filter=" . json_encode($this->add_filter));
+		
 		return $phql . " WHERE 1=1";
 	}
 	

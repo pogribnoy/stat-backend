@@ -43,7 +43,7 @@ class ControllerList extends ControllerBase {
 		else {
 			// передаем в представление имеющиеся данные
 			//$this->view->setVar("page_header", $this->t->_('text_'.$this->controllerName.'_title'));
-			$this->view->setVar("descriptor", $this->descriptor);
+			$this->view->descriptor = $this->descriptor;
 			return null;
 		}
 	}
@@ -90,19 +90,22 @@ class ControllerList extends ControllerBase {
 	public function createDescriptor($controller = null, $add_filters = null, $action = null) {
 		if($controller == null) $this->controller = $this;
 		else {
+			// данный метод вызван из внешнего контроллера, поэтому надо проинициализировать внутренние сущности
 			$this->controller = $controller;
+			$this->controllerNameLC = strtolower($this->controllerName);
 			if($action) $this->actionName = $action;
 			else $this->actionName = $controller->actionName;
-			// данный метод вызван из внешнего контроллера, поэтому надо проинициализировать внутренние сущности
+			$this->actionNameLC = strtolower($this->actionName);
 			$this->namespace = __NAMESPACE__;
-			//$this->dir = __DIR__;
-			$this->controller->t = $this->controller->translator->addTranslation($this->controllerName);
+			//$this->controller->t = $this->controller->translator->addTranslation($this->controllerNameLC);
 			// фильтр для значений
 			$this->filter = new Phalcon\Filter();
 			// инициализируем лог
-			$this->logger = new FileAdapter(APP_PATH . '/app/logs/' . $this->controllerName /*. "_" . $this->actionName*/ . ".log", array('mode' => 'a'));
-			// пример: $this->logger->log("add_filters['page_size']=" . $add_filters["page_size"]);
+			$this->logger = new FileAdapter(APP_PATH . '/app/logs/' . $this->controllerNameLC /*. "_" . $this->actionName*/ . ".log", array('mode' => 'a'));
+			// пример: $this->logger->log(__METHOD__ . ". add_filters['page_size']=" . $add_filters["page_size"]);
 			$this->viewCacheKey = $this->controllerName . (isset($this->actionName) ? "_" . $this->actionName : "") . ".html";
+			
+			$this->logger->log(__METHOD__ . ". controllerNameLC=" . $this->controllerNameLC);
 		}
 		
 		// читаем настройки
@@ -110,6 +113,7 @@ class ControllerList extends ControllerBase {
 		
 		// разбираем доп. фильтры, передаваемые из других контроллеров
 		$this->parseAddFilters($add_filters);
+		
 		
 		// Разбираем значения параметров фильтра из запроса
 		$this->sanitizeGetDataRqFilters();
@@ -189,8 +193,10 @@ class ControllerList extends ControllerBase {
 			if(isset($add_filters["organization_id"])) $this->add_filter["organization_id"] = $this->filter->sanitize($add_filters["organization_id"], "int");
 		}
 		else {
+			// TODO. Если с киента не переданы id, то надо проверять на доступность пользователю данного скроллера
 			if(isset($_REQUEST["add_filter"])) {
 				if(isset($_REQUEST["add_filter"]['organization_id'])) $this->add_filter["organization_id"] = $this->filter->sanitize(urldecode($_REQUEST["add_filter"]['organization_id']), "int"); 
+				if(isset($_REQUEST["add_filter"]['user_role_id'])) $this->add_filter["user_role_id"] = $this->filter->sanitize(urldecode($_REQUEST["add_filter"]['user_role_id']), "int"); 
 			}
 		}
 	}
@@ -224,7 +230,7 @@ class ControllerList extends ControllerBase {
 	*/
 	public function createDescriptorObject() {
 		$this->descriptor = array(
-			"controllerName" => strtolower($this->controllerName),
+			"controllerName" => $this->controllerNameLC,
 			"entity" => strtolower($this->entityName),
 			"type" => "scroller",
 			"columns" => $this->columns,
@@ -236,7 +242,7 @@ class ControllerList extends ControllerBase {
 			"add_filter" => $this->add_filter,
 			//"items" => array(), // после получения данных из БД присваивается значение $this->items
 			"pager" => $this->pager,
-			"title" => $this->controller->t->_("text_".$this->controllerName."_title"),
+			"title" => $this->controller->t->_("text_" . $this->controllerNameLC . "_title"),
 			"add_style" => "entity", //scroller
 			"edit_style" => 'modal', //url
 			"template" => $this->getTmpl(),
@@ -277,6 +283,11 @@ class ControllerList extends ControllerBase {
 			if($this->filter_values["page_size"]=="" || !in_array($this->filter_values["page_size"], $this->pager['page_sizes'])) $this->filter_values['page_size'] = $this->max_page_size;
 		}
 		else $this->filter_values['page_size'] = $this->max_page_size;
+		
+		/*if(isset($_REQUEST["add_filters"])) {
+			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_id"]), ['trim',"int"]);
+			if($val != '') $this->filter_values["id"] =  $val;
+		}*/
 		
 		if(isset($_REQUEST["filter_id"])) {
 			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_id"]), ['trim',"int"]);

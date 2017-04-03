@@ -4,7 +4,7 @@ class UserController extends ControllerEntity{
 	public $tableName  = 'user';
 	
 	protected $scrollers = [
-		'Organizationlist' => [
+		'organizationlist' => [
 			'linkEntityName' => 'Organization',
 			'linkTableName' => 'UserOrganization',
 			'linkTableLinkEntityFieldName' => 'organization_id',
@@ -157,7 +157,7 @@ class UserController extends ControllerEntity{
 		$scroller_organization_list['edit_style']  = "modal";
 		$scroller_organization_list["add_style"] = "scroller";
 		
-		$this->scrollers[$controller_organization_list->controllerName] = $scroller_organization_list;
+		$this->scrollers[$controller_organization_list->controllerNameLC] = $scroller_organization_list;
 	}
 	
 	/* 
@@ -165,75 +165,53 @@ class UserController extends ControllerEntity{
 	* Расширяемый метод.
 	*/
 	protected function sanitizeSaveRqData($rq) {
-		// id
-		if(!parent::sanitizeSaveRqData($rq)) return false;
+		$res = 0;
+		// id, //select, link
+		$res |= parent::sanitizeSaveRqData($rq);
+		
+		//$this->error['messages'][] = ['title' => "Debug. " . __METHOD__, 'msg' => "id=" . $this->fields['id']['value']];
 		
 		// active
+		$this->fields['active']['value'] = null;
 		if(isset($rq->fields->active) && isset($rq->fields->active->value)) {
-			$val = $this->filter->sanitize(urldecode($rq->fields->active->value), ["trim", "int"]);
-			if($val != '') $this->fields['active']['value'] = $val;
-			else {
-				$this->error['messages'][] = [
-					'title' => "Ошибка",
-					'msg' => 'Поле "' . $this->fields['active']['name'] . '" обязательно для указания'
-				];
-				return false;
-			}
+			$this->fields['active']['value'] = $this->filter->sanitize(urldecode($rq->fields->active->value), ["trim", "int"]);
+			if($this->fields['active']['value'] == '') $this->fields['active']['value'] = null;
 		}
 		
 		// name
+		$this->fields['name']['value'] = null;
 		if(isset($rq->fields->name) && isset($rq->fields->name->value)) {
-			$val = $this->filter->sanitize(urldecode($rq->fields->name->value), ["trim", "string"]);
-			if($val != '') $this->fields['name']['value'] = $val;
-			else {
-				$this->error['messages'][] = [
-					'title' => "Ошибка",
-					'msg' => 'Поле "' . $this->fields['name']['name'] . '" обязательно для указания'
-				];
-				return false;
-			}
-		}
-		else{
-			$this->error['messages'][] = [
-				'title' => "Ошибка",
-				'msg' => 'Поле "' . $this->fields['name']['name'] . '" обязательно для указания'
-			];
-			return false;
+			$this->fields['name']['value'] = $this->filter->sanitize(urldecode($rq->fields->name->value), ["trim", "string"]);
+			if($this->fields['name']['value'] == '') $this->fields['name']['value'] = null;
 		}
 		
 		// password
+		$this->fields['password']['value'] = null;
 		if(isset($rq->fields->password) && isset($rq->fields->password->value)) {
-			$val = $this->filter->sanitize(urldecode($rq->fields->password->value), ["trim", "string"]);
-			$this->fields['password']['value'] = $val;
-			/*if($val != '') $this->fields['password']['value'] = $val;
-			else {
-				if(count($this->entity->password)==0) {
-					$this->error['messages'][] = [
-						'title' => "Ошибка",
-						'msg' => 'Поле "' . $this->fields['password']['name'] . '" обязательно для указания'
-					];
-					return false;
-				}
-			}*/
+			$this->fields['password']['value'] = $this->filter->sanitize(urldecode($rq->fields->password->value), ["trim", "string"]);
+			if($this->fields['password']['value'] == '') $this->fields['password']['value'] = null;
 		}
-		//else return false;	
 		
 		// phone
+		$this->fields['phone']['value'] = null;
 		if(isset($rq->fields->phone) && isset($rq->fields->phone->value)) {
-			$val = $this->filter->sanitize(urldecode($rq->fields->phone->value), ["trim", "string"]);
-			$this->fields['phone']['value'] = $val;
+			$this->fields['phone']['value'] = $this->filter->sanitize(urldecode($rq->fields->phone->value), ["trim", "string"]);
+			if($this->fields['phone']['value'] == '') $this->fields['phone']['value'] = null;
 		}
-		else $this->fields['phone']['value'] = null;
 		
 		// email
+		$this->fields['email']['value'] = null;
 		if(isset($rq->fields->email) && isset($rq->fields->email->value)) {
-			$val = $this->fields['email']['value'] = $this->filter->sanitize(urldecode($rq->fields->email->value), ["trim", "string"]);
-			$this->fields['email']['value'] = $val;
+			$this->fields['email']['value'] = $this->filter->sanitize(urldecode($rq->fields->email->value), ["trim", "string"]);
+			if($this->fields['email']['value'] == '') $this->fields['email']['value'] = null;
 		}
-		else $this->fields['email']['value'] = null;
 		
 		// organizationlist
-		return $this->sanitizeSaveRqDataCheckRelations($rq);
+		if(!$this->sanitizeSaveRqDataCheckRelations($rq)) $res |= 2;
+		
+		$res |= $this->check();
+		
+		return $res;
 	}
 	
 	/* 

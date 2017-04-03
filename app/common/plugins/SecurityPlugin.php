@@ -46,12 +46,21 @@ class SecurityPlugin extends Plugin {
 			if($rs) {
 				foreach($rs as $r){
 					$resources[$r->id] = array(
-						'controller' => $r->controller, 
+						'controller' => $r->controller,
 						'action' => $r->action, 
 						'group' => $r->group, 
 						'module' => $r->module
 					);
 					$acl->addResource(new Acl\Resource($r->controller), $r->action);
+					/*if($r->action == 'save') {
+						$resources[-$r->id] = array(
+							'controller' => $r->controller,
+							'action' => 'check', 
+							'group' => $r->group, 
+							'module' => $r->module
+						);
+						$acl->addResource(new Acl\Resource($r->controller), 'check');
+					}*/
 				}
 			}
 			
@@ -140,10 +149,26 @@ class SecurityPlugin extends Plugin {
 			$this->logger->log(__METHOD__ . ". Session inactivity = " . $sessionSeconds . " (max: " . $this->config['application']['sessionTimeout'] . ")");
 			if($sessionSeconds > $this->config['application']['sessionTimeout']) {
 				$this->logger->log(__METHOD__ . ". User (" . ( $this->user!=null && isset($this->user['id']) ? "id=" . $this->user['id'] . ", name=" . $this->user['name'] : "guest") .  "). Session timeout = " . $sessionSeconds . ". Redirect to _/session/end_");
-				$dispatcher->forward(array(
-					'controller' => 'session',
-					'action'     => 'end',
-				));
+				if ($this->request->isAjax()) {
+					$this->view->disable();
+					$this->response->setContentType('application/json', 'UTF-8');
+					$data = array(
+						'error' => [
+							'messages' => [[
+								'title' => 'Ошибка доступа',
+								'msg' => "Время жизни сессии истекло",
+								'code' => '001'
+							]],
+							'redirect' => '/session/end'
+						]
+					);
+					$this->response->setJsonContent(json_encode($data));
+				} else {
+					$dispatcher->forward(array(
+						'controller' => 'session',
+						'action'     => 'end',
+					));
+				}
 			}
 			$auth['sessionLastUpdate'] = $curDateTime;
 			$this->session->set('auth', $auth);
@@ -242,7 +267,7 @@ class SecurityPlugin extends Plugin {
 								'msg' => "Не права доступа",
 								'code' => '001'
 							]],
-							'redirect' => '/errors/show401'
+							'redirect' => '/errors/show401',
 						]
 					);
 					$this->response->setJsonContent(json_encode($data));
@@ -254,7 +279,7 @@ class SecurityPlugin extends Plugin {
 					));
 				}
 			}
-			return false;
+			return true;
 		}
 		//$this->logger->log("SequrityPlugin returns true");
 		return true;

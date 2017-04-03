@@ -74,7 +74,7 @@ $messages = array(
 "text_user_new_entity_title"	=> "Новый пользователь", // new entity form|page title
 
 // Scroller. User role list
-"text_userrole_title"				=> "Роль пользователя",
+"text_userrolelist_title"			=> "Роли пользователей", // scroller|page title
 "text_userrole_new_entity_title"	=> "Новая роль пользователя",
 
 // Entity. User role
@@ -215,6 +215,7 @@ $messages = array(
 "button_back"				=> "Назад",
 "button_clear"				=> "Очистить",
 "button_change_address"		=> "Изменить адрес",
+"button_check"				=> "Проверить",
 "button_confirm"			=> "Подтвердить",
 "button_continue"			=> "Продолжить",
 "button_copy"				=> "Копировать",

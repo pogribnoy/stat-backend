@@ -18,7 +18,7 @@
 			{{if descriptor.fields ~fields=~utilities.objectToArray(descriptor.fields) ~descriptor=descriptor}}
 				{{for ~fields}}
 					<div class="form-group" name="field_{{:id}}">
-						<label for="field_{{:id}}_value" class="col-sm-4 col-md-3 col-lg-offset-0 col-lg-3 control-label">{{:name}}</label>
+						<label for="field_{{:id}}_value" class="col-sm-4 col-md-3 col-lg-offset-0 col-lg-3 control-label">{{:name}}{{if ~utilities.isFieldRequired(#data)== true}}<span class="text-danger">*<span>{{/if}}</label>
 						<div class="col-sm-8 col-md-8 col-lg-8">
 							{{if type == "label"}}
 								{{include tmpl = ~descriptor.actionName + "_entity_field_label" /}}
@@ -64,6 +64,56 @@
 </div><!-- /.container-fluid -->
 </script>
 
+<script id="ckecks_modal_template" type="text/x-jsrender">
+<span></span>
+<!--<br>templates\modal_template-->
+<div class="modal" id="{{:modal_container_id}}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel_{{:modal_container_id}}" data-backdrop="static">
+	<div class="modal-dialog modal-md" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title" id="myModalLabel_{{:modal_container_id}}">{{:descriptor.title}}</h4>
+			</div>
+			<div class="modal-body">
+				<div class="container-fluid">
+					<div class="row">
+						<div class="pull-right">
+							{{if !~utilities.checksHasError(descriptor.checkResult) }}
+								<button type="button" class="btn btn-default" data-dismiss="modal" onclick="hideModal('{{:modal_container_id}}'); entitySave('{{:descriptor.local_data.container_id}}', null)">Сохранить</button>
+							{{/if}}
+							<button type="button" class="btn btn-default" data-dismiss="modal" onclick="hideModal('{{:modal_container_id}}');">Назад</button>
+							<div>&nbsp;</div>
+						</div><!-- /.pull-right -->
+					</div><!-- /.row -->
+						{{if descriptor.checkResult}}
+							{{for descriptor.checkResult}}
+								<div class="row">
+									<div class="col-lg-12">
+										{{if type == "error"}}
+											<p class="text-danger">{{:msg}}</p>
+										{{else type == "warning"}}
+											<p class="text-warning">{{:msg}}</p>
+										{{else}}
+											<p>{{:msg}}</p>
+										{{/if}}
+									</div>
+								</div><!-- /.row -->
+							{{/for}}
+						{{else}}
+							<div class="row">
+								<div class="col-lg-12">
+									<p class="text-success">Все проверки прошли успешно</p>
+								</div>
+							</div><!-- /.row -->
+						{{/if}}
+				</div><!-- /.container-fluid -->
+			</div>
+			<div class="modal-footer"></div>
+		</div><!-- /.modal-content -->
+	</div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+</script>
+
 <script type="text/javascript"><!--
 
 /* Cохраняет данные сущности на сервер из локальных данных. Если вызванв из интерфейса, то предварительно сохраняет формы локально
@@ -71,82 +121,262 @@
 * @item - сущность, которую надо сохранить, передается при вызове из кода для сохранения на сервер
 */
 function entitySave(container_id, item) {
-	// описатель сохраняемой сущности
-	var descriptor;
-	// если вызвана из интерфейса, то сохраняем
-	if(container_id) {
-		descriptor = containers[container_id].data;
-		// сохраняем данные формы локально
-		if(!entitySaveToLocalFromHTML(container_id)) return;
-	}
-	else descriptor = item;
 	
-	// сохраняем на сервер новые записи в скроллерах с типом связи 'n', т.к. они еще не имеют нормального id, также у них нет container_id (т.к. они не отображаются отдельно), поэтому используется метод
-	var deferreds = [];
-	if(descriptor.scrollers) {
-		for (var key in descriptor.scrollers) {
-			var scroller = descriptor.scrollers[key];
-			if(scroller.relationType == 'n' )	{
-				// сохраняем добавленные сущности
-				if(scroller.local_data.added_items) {
-					var len = scroller.local_data.added_items.length;
+	$.when(entityCheck(container_id, item)).done(function (data) {
+		if(data.json.checkResult) {
+			showChecksModal(data);
+			return;
+		}
+		// описатель сохраняемой сущности
+		var descriptor;
+		var descriptor = data.descriptor;/**/
+		entitySaveToLocalFromHTML(descriptor.local_data.container_id);
+		// если вызвали из интерфейса, то сохраняем
+		/*if(container_id) {
+			descriptor = containers[container_id].data;
+			// сохраняем данные формы локально
+			if(!entitySaveToLocalFromHTML(container_id)) return;
+		}
+		else descriptor = item;*/
+		
+		//console.log("Result:");
+		//console.log(data.json);
+			
+		// сохраняем на сервер новые записи в скроллерах с типом связи 'n', т.к. они еще не имеют нормального id, также у них нет container_id (т.к. они не отображаются отдельно), поэтому используется метод
+		var deferreds = [];
+		if(descriptor.scrollers) {
+			for (var key in descriptor.scrollers) {
+				var scroller = descriptor.scrollers[key];
+				if(scroller.relationType == 'n' )	{
+					// сохраняем добавленные сущности
+					if(scroller.local_data.added_items) {
+						var len = scroller.local_data.added_items.length;
+						for (var i = 0; i<len; i++) {
+							deferreds.push(entitySave(null, scroller.local_data.added_items[i]));
+						}
+					}
+					// сохраняем измененные сущности
+					var len = scroller.items.length;
 					for (var i = 0; i<len; i++) {
-						deferreds.push(entitySave(null, scroller.local_data.added_items[i]));
+						if(scroller.items[i].local_data.status == 'edited') deferreds.push(entitySave(null, scroller.items[i]));
 					}
 				}
-				// сохраняем измененные сущности
-				var len = scroller.items.length;
-				for (var i = 0; i<len; i++) {
-					if(scroller.items[i].local_data.status == 'edited') deferreds.push(entitySave(null, scroller.items[i]));
+			}
+		}
+		
+		// привязываем сохранение на сервер сразу после сохранения сущностей дочерних скроллеров
+		var res = $.when.apply($, deferreds);
+		
+		var def = $.Deferred();
+		res.done(function() {
+			var asd;
+			// текущую сущность сохраняем на сервер, если она не открыта на редактирование или не 
+			if((!descriptor.local_data.relationType || descriptor.local_data.relationType != 'n' || !container_id) && descriptor.local_data.status == 'edited') {
+			//if((descriptor.local_data.relationType && descriptor.local_data.relationType == 'n' )|| !container_id && descriptor.local_data.status == 'edited') {
+				asd = $.when(entitySaveToServer(descriptor)).done(function() {
+					def.resolve();
+				});
+			}
+			else {
+				def.resolve();
+			}
+		});
+		def.done(function() {
+			// если сущность открывалась на редактирование для другого контейнера, то надо его обновить и закрыть модалку
+			if(descriptor.local_data.target_container_id) {
+				//var container = containers[descriptor.local_data.container_id];
+				// перерисовываем скроллер
+				var tContainerData = containers[descriptor.local_data.target_container_id].data;
+				
+				// добавляем сущность в скроллер
+				var opts = {
+					confirmFromServer: ((descriptor.local_data.relationType && descriptor.local_data.relationType == 'n') || !container_id) ? false : true,
+					//confirmFromServer: ((descriptor.local_data.relationType && descriptor.local_data.relationType == 'n') || !container_id) ? true : false,
+				}
+				if(tContainerData.type == 'scroller') addItemToScroller(descriptor, tContainerData, opts);
+				
+				// перерисовываем грид/скроллер
+				renderScroller(tContainerData, false);
+				
+				hideModal(containers[container_id].parent_container_id);
+			}
+		});
+		
+		
+		// если сохраняем из визуалки, то надо уведомить пользователя, что сохранение успешно
+		/*if(container_id) def.done(function(){
+			
+		});*/
+		
+		return def;
+	});
+}
+
+function entityCheckOnly(container_id, item) {
+	$.when(entityCheck(container_id, item)).done(function (data) {
+		showChecksModal(data);
+	});
+}
+
+function showChecksModal(data) {
+	var modal_container_id = "modal_checks";
+			
+	data.descriptor.checkResult = data.json.checkResult;
+	
+	var tmpl = $.templates("#ckecks_modal_template");
+	var html = tmpl.render({descriptor:data.descriptor, modal_container_id:modal_container_id});
+
+	var modalsJQ = $("#container_modals");
+	var mJQ = modalsJQ.find("#" + modal_container_id);
+	if(mJQ.length>0) mJQ.replaceWith(html);
+	else modalsJQ.append(html);
+	containers[modal_container_id] = {jqobj:modalsJQ.find("#" + modal_container_id), data: data.descriptor};
+				
+	// показываем модалку
+	showModal(modal_container_id);
+}
+
+function entityCheck(container_id, item) {
+	// описатель сохраняемой сущности
+	var descriptor;
+	if(container_id) descriptor = containers[container_id].data;
+	else descriptor = item;
+	// объект jquery контейнера сущности, которую надо проверить
+	var jqobj = containers[container_id].jqobj;
+	
+	var def = $.Deferred();
+	
+	// собираем данные формы
+	
+	// собираем поля формы по идентификаторам в локальной сущности
+	if(descriptor.fields) {
+		var field, field_jqobj, val, val_id;
+		var tmpFields = {};
+		var error={messages:[],};
+		
+		var checkFields = {};
+		
+		for(field_id in descriptor.fields) {
+			val = null, val1 = null, val2 = null;
+			val_id = null;
+			field = descriptor.fields[field_id];
+			
+			// все, кроме статичного текста и операций, можно сохранять
+			if(field.type != 'label' && field.id != "operations") {
+				if(field.type=='text' || field.type=='textarea' || field.type=='number' || field.type=='email' || field.type=='password' || field.type=='date' || field.type=='amount') {
+					field_jqobj = jqobj.find("#field_"+field.id+"_value");
+					if(field_jqobj.length>0) val = field_jqobj.val();
+					else val = null;
+					if(field.type=='password' && val != null) val = sha1(val);
+				}
+				else if(field.type=='period') {
+					field_jqobj1 = jqobj.find("#field_"+field.id+"_value1");
+					field_jqobj2 = jqobj.find("#field_"+field.id+"_value2");
+					if(field_jqobj1.length>0) val1 = field_jqobj1.val();
+					else val1 = null;
+					if(field_jqobj2.length>0) val2 = field_jqobj2.val();
+					else val2 = null;
+				}
+				else if(field.type=='select') {
+					field_jqobj = jqobj.find("#field_"+field.id+"_value");
+					if(field_jqobj.val()) {
+						val = field_jqobj.find("option:selected").text();
+						val_id = field_jqobj.val();
+					}
+					else {
+						val = null;
+						val_id = null;
+					}
+				}
+				else if(field.type=='link') {
+					//значение сохраняется в сущность при закрытии модалки со скроллером
+					val = field.value;
+					val_id = field.value_id;
+					/*field_jqobj = jqobj.find("#field_"+field.id+"_value");
+					if(field_jqobj.length>0) val = field_jqobj.val();
+					else val = "";*/
+				}
+				
+				if(val == '' || val == 'undefined') val = null;
+				if(val1 == '' || val1 == 'undefined') val1 = null;
+				if(val2 == '' || val2 == 'undefined') val2 = null;
+				if(val_id == '' || val_id == 'undefined') val_id = null;
+				
+				checkFields[field_id] = {
+					id: field_id,
+					value: val,
+					value1: val1,
+					value2: val2,
+					value_id: val_id,
+				};
+			}
+		}
+		checkFields['id'] = {
+			id: 'id',
+			value: descriptor.fields['id']['value'],
+		};
+		
+		var data = {
+			fields: checkFields,
+		}
+		
+		if(descriptor.scrollers) {
+			data.scrollers = {};
+			for (var key in descriptor.scrollers) {
+				var scroller = descriptor.scrollers[key];
+				data.scrollers[key] = {};
+				// сохраняем добавленные сущности
+				if(scroller.local_data.added_items) {
+					data.scrollers[key].added_items = [];
+					var len = scroller.local_data.added_items.length;
+					for (var i = 0; i<len; i++) {
+						data.scrollers[key].added_items.push(scroller.local_data.added_items[i].fields.id.value);
+					}
+				}
+				// удаляем удаленные сущности
+				if(scroller.local_data.deleted_items) {
+					data.scrollers[key].deleted_items = [];
+					var len = scroller.local_data.deleted_items.length;
+					for (var i = 0; i<len; i++) data.scrollers[key].deleted_items.push(scroller.local_data.deleted_items[i].fields.id.value);
 				}
 			}
 		}
-	}
-	
-	// привязываем сохранение на сервер сразу после сохранения сущностей дочерних скроллеров
-	var res = $.when.apply($, deferreds);
-	
-	var def = $.Deferred();
-	res.done(function() {
-		var asd;
-		// текущую сущность сохраняем на сервер, если она не открыта на редактирование или не 
-		if((!descriptor.local_data.relationType || descriptor.local_data.relationType != 'n' || !container_id) && descriptor.local_data.status == 'edited') {
-		//if((descriptor.local_data.relationType && descriptor.local_data.relationType == 'n' )|| !container_id && descriptor.local_data.status == 'edited') {
-			asd = $.when(entitySaveToServer(descriptor)).done(function() {
-				def.resolve();
-			});
-		}
-		else {
-			def.resolve();
-		}
-	});
-	def.done(function() {
-		// если сущность открывалась на редактирование для другого контейнера, то надо его обновить и закрыть модалку
-		if(descriptor.local_data.target_container_id) {
-			//var container = containers[descriptor.local_data.container_id];
-			// перерисовываем скроллер
-			var tContainerData = containers[descriptor.local_data.target_container_id].data;
-			
-			// добавляем сущность в скроллер
-			var opts = {
-				confirmFromServer: ((descriptor.local_data.relationType && descriptor.local_data.relationType == 'n') || !container_id) ? false : true,
-				//confirmFromServer: ((descriptor.local_data.relationType && descriptor.local_data.relationType == 'n') || !container_id) ? true : false,
-			}
-			if(tContainerData.type == 'scroller') addItemToScroller(descriptor, tContainerData, opts);
-			
-			// перерисовываем грид/скроллер
-			renderScroller(tContainerData, false);
-			
-			hideModal(containers[container_id].parent_container_id);
-		}
-	});
-	
-	
-	// если сохраняем из визуалки, то надо уведомить пользователя, что сохранение успешно
-	/*if(container_id) def.done(function(){
 		
-	});*/
-	
+		//console.log(data);
+		//console.log($.toJSON(data));
+		
+		$.ajax({
+			url: '/' + descriptor.controllerName + '/check?id=' + descriptor.fields.id.value,
+			dataType: 'json',
+			data:  $.toJSON(data),
+			method: 'post',
+			beforeSend: function() {
+				// показываем прогрессбар
+			},
+			complete: function() {
+				// скрываем прогрессбар
+			},			
+			success: function(json) {
+				//console.log("Сущность проверена");
+				//console.log(json);
+				
+				// если нет ошибок
+				if(!handleAjaxError(json.error)) {
+					def.resolve({json: json, descriptor:descriptor});
+				}
+			},
+			error: function(xhr, ajaxOptions, thrownError) {
+				console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+				handleAjaxError({
+					messages: [{
+						title: 'Ошибка обмена данными',
+						msg: 'Ошибка обработки запроса на стороне сервера. Обратитесь в службу поддержки',
+					}],
+				});
+				def.reject();
+			}
+		});
+	}
 	return def;
 }
 
@@ -235,7 +465,7 @@ function entityDelete(container_id, id) {
 /* Cохраняет данные формы локально
 * @container_id - идентификатор контейнера сущности
 */
-function entitySaveToLocalFromHTML(container_id) {
+/*function entitySaveToLocalFromHTML(container_id) {
 	// описатель сущности, которую надо сохранить
 	var descriptor = containers[container_id].data;
 	// объект jquery контейнера сущности, которую надо сохранить
@@ -283,12 +513,9 @@ function entitySaveToLocalFromHTML(container_id) {
 					}
 				}
 				else if(field.type=='link') {
-					//значение сохраняется в сущность при закрытии моделки со скроллером
+					//значение сохраняется в сущность при закрытии модалки со скроллером, поэтому здесь можно взять оттуда
 					val = field.value;
 					val_id = field.value_id;
-					/*field_jqobj = jqobj.find("#field_"+field.id+"_value");
-					if(field_jqobj.length>0) val = field_jqobj.val();
-					else val = "";*/
 				}
 				
 				if(val == '' || val == 'undefined') val = null;
@@ -298,7 +525,7 @@ function entitySaveToLocalFromHTML(container_id) {
 				
 				
 				// проверка на обязательность не зависимо от типа
-				if	(descriptor.actionName != "show" && field.required) {
+				if	(descriptor.actionName != "show" && field.required && field.required > 0) {
 					if(field.type == 'period'){
 						if(field.required == 1 && val1 == null) errorMsg += '<li>Поле "' + field.name + '". Дата "' + field.name1 + '" обязательна для заполнения</li>';
 						else if(field.required == 2 && val1 == null) errorMsg += '<li>Поле "' + field.name + '". Дата "' + field.name2 + '" обязательна для заполнения</li>';
@@ -369,13 +596,23 @@ function entitySaveToLocalFromHTML(container_id) {
 					}
 				}
 				if(errorMsg.length==0) { 
-					if(val != null) tmpFields[field.id] = {value: val};
-					if(val1 != null || val2 != null) {
-						tmpFields[field.id] = {};
-						if(val1 != null) tmpFields[field.id].value1 = val1;
-						if(val2 != null) tmpFields[field.id].value2 = val2;
-					}
-					if(val_id != null) tmpFields[field.id].value_id = val_id;
+					tmpFields[field.id] = {
+						value: val,
+						value1: val1,
+						value2: val2,
+						value_id: val_id,
+					};
+					//if(val != null)
+						//tmpFields[field.id] = {value: val};
+					//if(val1 != null || val2 != null) {
+						//tmpFields[field.id] = {};
+						//if(val1 != null)
+							//tmpFields[field.id].value1 = val1;
+						//if(val2 != null) 
+							//tmpFields[field.id].value2 = val2;
+					//}
+					//if(val_id != null) 
+						//tmpFields[field.id].value_id = val_id;
 				}
 			}
 		}
@@ -390,14 +627,101 @@ function entitySaveToLocalFromHTML(container_id) {
 			// переносим значения в локальную сущность
 			for(tmpID in tmpFields) {
 				tmpField = tmpFields[tmpID];
-				if(tmpField.value) descriptor.fields[tmpID].value = tmpField.value;//encodeURIComponent(tmpField.value);
-				if(tmpField.value1) descriptor.fields[tmpID].value1 = tmpField.value1;//encodeURIComponent(tmpField.value);
-				else descriptor.fields[tmpID].value1 = null;
-				if(tmpField.value2) descriptor.fields[tmpID].value2 = tmpField.value2;//encodeURIComponent(tmpField.value);
-				else descriptor.fields[tmpID].value2 = null;
-				if(tmpField.value_id)descriptor.fields[tmpID].value_id = tmpField.value_id;//encodeURIComponent(tmpField.value_id);
+				//if(tmpField.value) 
+					descriptor.fields[tmpID].value = tmpField.value;//encodeURIComponent(tmpField.value);
+				//if(tmpField.value1) 
+					descriptor.fields[tmpID].value1 = tmpField.value1;//encodeURIComponent(tmpField.value);
+				//else descriptor.fields[tmpID].value1 = null;
+				//if(tmpField.value2) 
+					descriptor.fields[tmpID].value2 = tmpField.value2;//encodeURIComponent(tmpField.value);
+				//else descriptor.fields[tmpID].value2 = null;
+				//if(tmpField.value_id)
+					descriptor.fields[tmpID].value_id = tmpField.value_id;//encodeURIComponent(tmpField.value_id);
 				//field.value = val;
 				//if(val_id != "undefined") field.value_id = val_id;
+			}
+		}
+		
+		// обрабатка скроллеров не выполняется, т.к. сущности в скроллере уже в группе "added_items", а сами сущности в состоянии "edited".
+		// помечаем сущность, как измененную локально
+		if(descriptor.local_data.status == 'actual') descriptor.local_data.status = "edited";
+		
+		// TODO. Сообщить остальным контейнерам, что сущность обновлена, а в текущем контейнере убрать такое уведомление, т.к. сущность актуальна
+		
+		return descriptor;
+	}
+}
+*/
+function entitySaveToLocalFromHTML(container_id) {
+	// описатель сущности, которую надо сохранить
+	var descriptor = containers[container_id].data;
+	// объект jquery контейнера сущности, которую надо сохранить
+	var jqobj = containers[container_id].jqobj;
+	
+	// собираем поля формы по идентификаторам в локальной сущности
+	if(descriptor.fields) {
+		var field, field_jqobj, val, val_id;
+		var tmpFields = {};
+		var error={messages:[],};
+		var errorMsg = '';
+		
+		for(field_id in descriptor.fields) {
+			val = null, val1 = null, val2 = null;
+			val_id = null;
+			field = descriptor.fields[field_id];
+			
+			if(!field.required || field.required == "undefined") field.required = null;
+			
+			// все, кроме статичного текста и операций, можно сохранять
+			if(field.type != 'label' && field.id != "operations") {
+				if(field.type=='text' || field.type=='textarea' || field.type=='number' || field.type=='email' || field.type=='password' || field.type=='date' || field.type=='amount') {
+					field_jqobj = jqobj.find("#field_"+field.id+"_value");
+					if(field_jqobj.length>0) val = field_jqobj.val();
+					else val = null;
+					if(field.type=='password' && val != null) val = sha1(val);
+				}
+				else if(field.type=='bool') {
+					field_jqobj = jqobj.find("#field_"+field.id+"_value");
+					if(field_jqobj.length>0 && field_jqobj.is(':checked')) val = 1;
+					else val = 0;
+				}
+				else if(field.type=='period') {
+					field_jqobj1 = jqobj.find("#field_"+field.id+"_value1");
+					field_jqobj2 = jqobj.find("#field_"+field.id+"_value2");
+					if(field_jqobj1.length>0) val1 = field_jqobj1.val();
+					else val1 = null;
+					if(field_jqobj2.length>0) val2 = field_jqobj2.val();
+					else val2 = null;
+				}
+				else if(field.type=='select') {
+					field_jqobj = jqobj.find("#field_"+field.id+"_value");
+					if(field_jqobj.val()) {
+						val = field_jqobj.find("option:selected").text();
+						val_id = field_jqobj.val();
+					}
+					else {
+						val = null;
+						val_id = null;
+					}
+				}
+				else if(field.type=='link') {
+					// значение сохраняется в сущность при закрытии модалки со скроллером, поэтому здесь можно взять оттуда
+					val = field.value;
+					val_id = field.value_id;
+					/*field_jqobj = jqobj.find("#field_"+field.id+"_value");
+					if(field_jqobj.length>0) val = field_jqobj.val();
+					else val = "";*/
+				}
+				
+				if(val === '' || val == 'undefined') val = null;
+				if(val1 === '' || val1 == 'undefined') val1 = null;
+				if(val2 === '' || val2 == 'undefined') val2 = null;
+				if(val_id === '' || val_id == 'undefined') val_id = null;
+				
+				descriptor.fields[field_id].value = val;
+				descriptor.fields[field_id].value1 = val1;
+				descriptor.fields[field_id].value2 = val2;
+				descriptor.fields[field_id].value_id = val_id;
 			}
 		}
 		

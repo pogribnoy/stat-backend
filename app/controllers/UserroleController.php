@@ -4,7 +4,7 @@ class UserroleController extends ControllerEntity {
 	public $tableName  = 'user_role';
 	
 	protected $scrollers = [
-		'Resourcelist' => [
+		'resourcelist' => [
 			'linkEntityName' => 'Resource',
 			'linkTableName' => 'UserRoleResource',
 			'linkTableLinkEntityFieldName' => 'resource_id',
@@ -85,7 +85,7 @@ class UserroleController extends ControllerEntity {
 		$scroller_resource_list['edit_style']  = "modal";
 		$scroller_resource_list["add_style"] = "scroller";
 		
-		$this->scrollers[$controller_resource_list->controllerName] = $scroller_resource_list;
+		$this->scrollers[$controller_resource_list->controllerNameLC] = $scroller_resource_list;
 	}
 	
 	/* 
@@ -147,37 +147,32 @@ class UserroleController extends ControllerEntity {
 	* Расширяемый метод.
 	*/
 	protected function sanitizeSaveRqData($rq) {
-		// id
-		if(!parent::sanitizeSaveRqData($rq)) return false;
+		$res = 0;
+		// id, //select, link
+		$res |= parent::sanitizeSaveRqData($rq);
+		
+		//$this->error['messages'][] = ['title' => "Debug. " . __METHOD__, 'msg' => "id=" . $this->fields['id']['value']];
+		
 		// active
+		$this->fields['active']['value'] = null;
 		if(isset($rq->fields->active) && isset($rq->fields->active->value)) {
-			$val = $this->filter->sanitize(urldecode($rq->fields->active->value), ["trim", "int"]);
-			if($val != '') $this->fields['active']['value'] = $val;
-			else {
-				$this->error['messages'][] = [
-					'title' => "Ошибка",
-					'msg' => 'Поле "' . $this->fields['active']['name'] . '" обязательно для указания'
-				];
-				return false;
-			}
+			$this->fields['active']['value'] = $this->filter->sanitize(urldecode($rq->fields->active->value), ["trim", "int"]);
+			if($this->fields['active']['value'] == '') $this->fields['active']['value'] = null;
 		}
 
 		// name
+		$this->fields['name']['value'] = null;
 		if(isset($rq->fields->name) && isset($rq->fields->name->value)) {
-			$val = $this->filter->sanitize(urldecode($rq->fields->name->value), ["trim", "string"]);
-			if($val != '') $this->fields['name']['value'] = $val;
-			else {
-				$this->error['messages'][] = [
-					'title' => "Ошибка",
-					'msg' => 'Поле "' . $this->fields['active']['name'] . '" обязательно для указания'
-				];
-				return false;
-			}
+			$this->fields['name']['value'] = $this->filter->sanitize(urldecode($rq->fields->name->value), ["trim", "string"]);
+			if($this->fields['name']['value'] == '') $this->fields['name']['value'] = null;
 		}
-		else return false;
 		
 		// resourcelist
-		return $this->sanitizeSaveRqDataCheckRelations($rq);
+		if(!$this->sanitizeSaveRqDataCheckRelations($rq)) $res |= 2;
+		
+		$res |= $this->check();
+		
+		return $res;
 	}
 	
 	

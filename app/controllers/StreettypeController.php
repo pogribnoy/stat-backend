@@ -17,12 +17,14 @@ class StreettypeController extends ControllerEntity {
 				'id' => 'id',
 				'name' => $this->t->_("text_entity_property_id"),
 				'type' => 'label',
+				'required' => 2,
 				'newEntityValue' => '-1',
 			), 
 			'name' => array(
 				'id' => 'name',
 				'name' => $this->t->_("text_entity_property_name"),
 				'type' => 'text',
+				'required' => 2,
 				'newEntityValue' => null,
 			)
 		];
@@ -54,23 +56,20 @@ class StreettypeController extends ControllerEntity {
 	* Расширяемый метод.
 	*/
 	protected function sanitizeSaveRqData($rq) {
+		$res = 0;
 		// id, select, link
-		if(!parent::sanitizeSaveRqData($rq)) return false;
-		// name
-		if(isset($rq->fields->name) && isset($rq->fields->name->value)) {
-			$val = $this->filter->sanitize(urldecode($rq->fields->name->value), ["trim", "string"]);
-			if($val != '') $this->fields['name']['value'] = $val;
-			else {
-				$this->error['messages'][] = [
-					'title' => "Ошибка",
-					'msg' => 'Поле "'. $this->fields['name']['name'] .'" обязательно для указания'
-				];
-				return false;
-			}
-		}
-		else return false;
+		$res |= parent::sanitizeSaveRqData($rq);
 		
-		return true;
+		// name
+		$this->fields['name']['value'] = null;
+		if(isset($rq->fields->name) && isset($rq->fields->name->value)) {
+			$this->fields['name']['value'] = $this->filter->sanitize(urldecode($rq->fields->name->value), ["trim", "string"]);
+			if($this->fields['name']['value'] == '') $this->fields['name']['value'] = null;
+		}
+		
+		$res |= $this->check();
+		
+		return $res;
 	}
 	
 	/* 

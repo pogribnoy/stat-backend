@@ -17,7 +17,7 @@ class ExpenseController extends ControllerEntity {
 				'name' => $this->t->_("text_entity_property_id"),
 				'type' => 'label',
 				'newEntityValue' => '-1',
-			), 
+			),
 			'expense_type' => array(
 				'id' => 'expense_type',
 				'name' => $this->t->_("text_expense_expense_type"),
@@ -103,8 +103,11 @@ class ExpenseController extends ControllerEntity {
 				'name1' => $this->t->_("text_entity_property_period_from"),
 				'name2' => $this->t->_("text_entity_property_period_to"),
 				'type' => 'period',
-				'newEntityValue1' => null,
-				'newEntityValue2' => (new DateTime('now'))->format("Y-m-d"),
+				//'newEntityValue1' => null,
+				//'newEntityValue2' => function () { return ["value1" => (new DateTime('now'))->format("Y-m-d"),
+				'newEntityValue' => function () { return [
+					"value2" => (new DateTime('now'))->format("Y-m-d"),
+				]; },
 				'required' => 3,	// 1-обязательно value1, 2-обязательно value2, 3-обязательно value1 ИЛИ value2, 4-обязательно value1 И value2
 			),
 		];

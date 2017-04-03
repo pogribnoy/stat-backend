@@ -6,6 +6,8 @@ class ControllerEntity extends ControllerBase {
 	public $entityNameLC;
 	// наименование основной таблицы для хранения сущности
 	public $tableName;
+	// результат выполнения контролей
+	public $checkResult = array();
 	
 	// перечень полей для фильтра (уникальные для разных таблиц)
 	protected $filter_values = array();
@@ -174,9 +176,12 @@ class ControllerEntity extends ControllerBase {
 			
 			$this->initFields();
 			
-			if($this->sanitizeSaveRqData($rq)) {
+			$res = $this->sanitizeSaveRqData($rq);
+			$this->logger->log(__METHOD__ . ". res: " . $res);
+			if($res<2) {
 				//$this->logger->log(__METHOD__ . ". sanitizeSaveRqData: " . json_encode($this->fields));
 				$id = $this->fields['id']['value'];
+				//$this->error['messages'][] = ['title' => "Debug. " . __METHOD__, 'msg' => "id=" . $this->fields['id']['value']];
 				
 				// открываем транзакцию
 				$this->db->begin();
@@ -219,7 +224,7 @@ class ControllerEntity extends ControllerBase {
 								$dbMessages .= "<li>" . $message . "</li>";
 							}
 							$this->error['messages'][] = [
-								'title' => "Ошибка обновления данных",
+								'title' => "Ошибка обновления данных (id=" . $id . ')',
 								'msg' => "<ul>" . $dbMessages . "</ul>"
 							];
 						}
@@ -258,6 +263,41 @@ class ControllerEntity extends ControllerBase {
 		$this->data['rq'] = $rq; // исходные параметры запроса для отладки
 		if(isset($this->error['messages']) && count($this->error['messages'])>0) $this->data['error'] = $this->error;
 		else if(isset($this->success['messages']) && count($this->success['messages'])>0) $this->data['success'] = $this->success;
+		if(count($this->checkResult)>0) $this->data['checkResult'] = $this->checkResult;
+		echo json_encode($this->data);
+	}
+	
+	/* 
+	* Проверяет запись
+	*/
+	public function checkAction() {
+		$this->view->disable();
+		$this->response->setContentType('application/json', 'UTF-8');
+		
+		if ($this->request->isPost()) {
+			$rq = $this->request->getJsonRawBody();
+			$id = null;
+			
+			$this->initFields();
+			
+			$this->sanitizeSaveRqData($rq);
+			//$this->logger->log(__METHOD__ . ". sanitizeSaveRqData: " . json_encode($this->fields));
+			//$this->error['messages'][] = ['title' => "Debug. " . __METHOD__, 'msg' => "id=" . $this->fields['id']['value']];
+		}
+		else {
+			$this->error['messages'][] = [
+				'title' => "Ошибка",
+				'msg' => "Запрошено сохранение данных методом GET. Ожидается метод POST"
+			];
+		}
+		
+		$this->data['item'] = $this->entity;	
+		$this->data['rq'] = $rq; // исходные параметры запроса для отладки
+		
+		if(isset($this->error['messages']) && count($this->error['messages'])>0) $this->data['error'] = $this->error;
+		else if(isset($this->success['messages']) && count($this->success['messages'])>0) $this->data['success'] = $this->success;
+		if(count($this->checkResult)>0) $this->data['checkResult'] = $this->checkResult;
+		
 		echo json_encode($this->data);
 	}
 	
@@ -470,6 +510,7 @@ class ControllerEntity extends ControllerBase {
 	*/
 	protected function sanitizeSaveRqDataCheckRelations($rq) {
 		if(isset($rq->scrollers)) {
+			// TODO. переделать цикл. Обходить скроллеры $this->scrollers и смотреть есть ли что в запросе - остальное игнорить
 			foreach($rq->scrollers as $scrollerName => $scroller) {
 				if(array_key_exists($scrollerName, $this->scrollers)) {
 					$entities = false;
@@ -651,6 +692,7 @@ class ControllerEntity extends ControllerBase {
 			else if($this->scrollers[$scrollerName]['relationType'] == 'nn') {
 				$linkTableName = $this->scrollers[$scrollerName]['linkTableName'];
 				$linkTableLinkEntityFieldName = $this->scrollers[$scrollerName]['linkTableLinkEntityFieldName'];
+				//$this->logger->log("Trulala");
 				// обновляем связи с сущностями
 				$links = $linkTableName::find(["conditions" => $linkTableLinkEntityFieldName . " IN ({deleted_items:array}) AND " . $this->tableName . '_id = ?2', "bind" => [
 					'deleted_items' => $this->scrollers[$scrollerName]['deleted_items'],
@@ -745,48 +787,67 @@ class ControllerEntity extends ControllerBase {
 	protected function fillNewEntityFields() {
 		//$this->logger->log("fillNewEntityFields: " . json_encode($this->filter_values));
 		foreach($this->fields as $fieldID => &$field) {
+			$field["value"] = null;
+			
 			// если поля связывает по id
 			if($field['type'] == 'link' || ($field['type'] == 'select' && $field['style'] == 'id')) {
 				$field["value"] = null;
+				$id = null;
+				if(isset($field["newEntityValue"])) {
+					if(is_object($field["newEntityValue"])) $id = $field["newEntityValue"]();
+					else $id = $field["newEntityValue"];
+				}
+				//$this->logger->log(__METHOD__ . '. id=' . $id);
+				
 				$linkEntityName = $field['linkEntityName'];
-				if(isset($field["value_id"]) && $field["value_id"] != null) {
+				if($id != null) {
 					$entity = false;
 					$entity = $linkEntityName::findFirst( array(
 						"conditions" => "id = ?1",
-						"bind" => array(1 => $field["newEntityValue"])
+						"bind" => array(1 => $id)
 					));
 					if(!$entity) {
-						$field["value"] = null;
-						$this->logger->log('Controller/Action: ' . $this->controllerNameLC . '/' . $this->actionNameLC . '. Function: ' . __FUNCTION__ . '. Default entity "' . $linkEntityName . '" with ID=' . $field["value_id"] . ' for field "' . $fieldID . '" not found');
+						$this->logger->log(__METHOD__ . '. Controller/Action: ' . $this->controllerNameLC . '/' . $this->actionNameLC . '. Default entity "' . $linkEntityName . '" with ID=' . $id . ' in "newEntityValue" for field "' . $fieldID . '" not found');
 					}
-					else $field["value"] = null;
+					else $field["value_id"] = $id;
 				}
-				// наполняем выпадающий список для select
-				/*if($field['type'] == 'select') {
-					$this->fillFieldWithLists($field);
-				}*/
 			}
 			// если поле связывает по тексту
 			else if($field['type'] == 'select') {
 				if(isset($field['style']) && $field['style'] == 'name') {
 					$field["value"] = null;
-					if(isset($field["values"])) {
-						if(in_array($field["newEntityValue"], $field["values"]))  $field["value"] = $field["newEntityValue"];
-						else $this->logger->log('Controller/Action: ' . $this->controllerNameLC . '/' . $this->actionNameLC . '. Function: ' . __FUNCTION__ . '. Default value "' . $field["newEntityValue"] . '" for field "' . $fieldID . '" not found in inline array "field["values"]"');
+					$value = null;
+					if(isset($field["newEntityValue"])) {
+						if(is_object($field["newEntityValue"])) $value = $field["newEntityValue"]();
+						else $value = $field["newEntityValue"];
 					}
-					else if(isset($field["newEntityValue"]) && $field["newEntityValue"] != '' && $field["newEntityValue"] != null) $this->logger->log('Controller/Action: ' . $this->controllerNameLC . '/' . $this->actionNameLC . '. Function: ' . __FUNCTION__ . '. Default value "' . $field["newEntityValue"] . '" for field "' . $fieldID . '" is set, but inline array "field["values"]" is not set');
+					if(isset($field["values"])) {
+						if(in_array($value, $field["values"]))  $field["value"] = $value;
+						else $this->logger->log(__METHOD__ . '. Controller/Action: ' . $this->controllerNameLC . '/' . $this->actionNameLC . '. Default value "' . $value . '" for field "' . $fieldID . '" not found in inline array "field["values"]"');
+					}
+					else if($value != null) $this->logger->log(__METHOD__ . '. Controller/Action: ' . $this->controllerNameLC . '/' . $this->actionNameLC . '. Default value "' . $field["newEntityValue"] . '" for field "' . $fieldID . '" is set, but inline array "field["values"]" is not set');
 				}
 			}
 			else if($field['type'] == 'img') {
 				// для изображениq значение по умолчанию пока не предусмотрено
 			}
 			else if($field["type"] == 'period') {
-				if(isset($field["newEntityValue1"]) && $field["newEntityValue1"] != '' && $field["newEntityValue1"] != null) $field["value1"] = $field["newEntityValue1"];
-				else $field["value1"] = null;
-				if(isset($field["newEntityValue1"]) && $field["newEntityValue2"] != '' && $field["newEntityValue2"] != null) $field["value2"] = $field["newEntityValue2"];
-				else $field["value2"] = null;
+				$period = null;
+				$field["value1"] = null;
+				$field["value2"] = null;
+				
+				if(isset($field["newEntityValue"])) {
+					if(is_object($field["newEntityValue"])) {
+						$period = $field["newEntityValue"]();
+						if(isset($period['value1'])) $field["value1"] = $period['value1'];
+						if(isset($period['value2'])) $field["value2"] = $period['value2'];
+					}
+				}
 			}
-			else if(isset($field["newEntityValue"]) && $field["newEntityValue"] != '' && $field["newEntityValue"] != null) $field["value"] = $field["newEntityValue"];
+			else if(isset($field["newEntityValue"]) && $field["newEntityValue"] != '') {
+				if(is_object($field["newEntityValue"])) $field["value"] = $field["newEntityValue"]();
+				else $field["value"] = $field["newEntityValue"];
+			}
 			// если предусмотрена выборка по ID, то надо запросить значение в связанной таблице
 			else if(isset($field["newEntityID"]) && $field["newEntityID"] != '' && $field["newEntityID"] != null && 
 					isset($this->filter_values[$field["id"] . "_id"]) && $this->filter_values[$field["id"] . "_id"] != '' && $this->filter_values[$field["id"] . "_id"] != null) {
@@ -911,7 +972,7 @@ class ControllerEntity extends ControllerBase {
 	* Очищает параметры запроса
 	* Расширяемый метод.
 	*/
-	protected function sanitizeSaveRqData($rq) {
+	/*protected function sanitizeSaveRqData($rq) {
 		// id
 		if(isset($rq->fields->id) && isset($rq->fields->id->value)) {
 			$val = $this->filter->sanitize(urldecode($rq->fields->id->value), ["trim", "int"]);
@@ -1052,61 +1113,309 @@ class ControllerEntity extends ControllerBase {
 			}
 		}
 		return true;
-	}
+	}*/
 	
-	/* 
-	* Очищает параметры запроса
-	* Расширяемый метод.
-	*/
-	protected function check() {
-		foreach($this->fields as $fieldID => $field) {
-			// проверка на обязательность не зависимо от типа
-			if(isset($field['required']) && $field['required'] == 1 && (!isset($field['value']) || $field['value'] == null || $field['value'] == '')) {
+	protected function sanitizeSaveRqData($rq) {
+		$res = 0;
+		// id
+		if(isset($rq->fields->id) && isset($rq->fields->id->value)) {
+			$val = $this->filter->sanitize(urldecode($rq->fields->id->value), ["trim", "int"]);
+			if($val == '') {
 				$this->error['messages'][] = [
 					'title' => "Ошибка",
-					'msg' => 'Поле "' .  $field['name'] . '" обязательно для указания',
+					'msg' => "Не получен идентификатор сущности"
 				];
 			}
-			// если поле заполнено, то выполняем остальные проверки
-			else {
-				if($field['type'] == 'amount') {
-					if(isset($field['min']) && $field['value'] < $field['min']) {
+			else $this->fields['id']['value'] = $val;
+		}
+		else {
+			$this->error['messages'][] = [
+				'title' => "Ошибка",
+				'msg' => "Не получен идентификатор сущности"
+			];
+		}
+		
+		//$this->error['messages'][] = ['title' => "Debug1. " . __METHOD__, 'msg' => "res=" . $res . ". id=" . $this->fields['id']['value']];
+		
+		// ссылочные поля (select, link, bool)
+		foreach($this->fields as $fieldID => &$field) {
+			// поле есть в запросе и содержит id значения
+			if(($field['type'] == 'select' || $field['type'] == 'link')) {
+				$field['value'] = null;
+				$field['value_id'] = null;
+				if(isset($rq->fields->$fieldID) && isset($rq->fields->$fieldID->value_id)) {
+					// выбрано пустое значение 
+					if($rq->fields->$fieldID->value_id != '*' && $rq->fields->$fieldID->value_id != '') {
+						$field['value_id'] = $this->filter->sanitize($rq->fields->$fieldID->value_id, "int");
+						if($field['value_id']=='') $field['value_id'] = null;
+						else {
+							if(isset($field['values']) && isset($field['values'][$field['value_id']])) {
+								$field['value'] = $field['values'][$field['value_id']];
+							}
+							else $this->error['messages'][] = [
+								'title' => "Ошибка",
+								'msg' => 'Поле "'. $field['name'] .'". Передано некорректное значение 2. value_id=' . $field['value_id'] . ', rq_id=' . $this->filter->sanitize($rq->fields->$fieldID->value_id, "int"),
+							];
+						}
+					}
+					else {
 						$this->error['messages'][] = [
 							'title' => "Ошибка",
-							'msg' => 'Поле "' . $field['name'] . '" содержит значение меньше допустимого',
+							'msg' => 'Поле "'. $field['name'] .'". Передано некорректное значение. value_id=' . $field['value_id'] . ', rq_id=' . $this->filter->sanitize($rq->fields->$fieldID->value_id, "int"),
 						];
 					}
-					if(isset($field['max']) && $field['value'] > $field['max']) {
-						$this->error['messages'][] = [
-							'title' => "Ошибка",
-							'msg' => 'Поле "' .$field['name'] . '" содержит значение больше допустимого',
-						];
-					}
+					
+					//$this->logger->log(__METHOD__ . ". fieldID = " . $fieldID . ". value_id = " . $field['value_id']);
 				}
-				if($field['type'] == 'email') {
-					if(!strpos($field['value'], "@") === FALSE) {
-						$this->error['messages'][] = [
-							'title' => "Ошибка",
-							'msg' => 'Поле "' . $field['name'] . '" содержит значение, не соответствущее адресу электронной почты',
-						];
-					}
-				}
-				if($field['type'] == 'text' || $field['type'] == 'textarea') {
-					if(isset($field['min']) && $field['value'] < $field['min']) {
-						$this->error['messages'][] = [
-							'title' => "Ошибка",
-							'msg' => 'Поле "' . $field['name'] . '" содержит слишком короткое значение (должно быть не менее ' . $field['min'] . ' символов)',
-						];
-					}
-					if(isset($field['max']) && $field['value'] > $field['max']) {
-						$this->error['messages'][] = [
-							'title' => "Ошибка",
-							'msg' => 'Поле "' . $field['name'] . '" содержит слишком длинное значение (должно быть не более ' . $field['max'] . ' символов)',
-						];
-					}
+			}
+			else if($field['type'] == 'bool') {
+				$field['value'] = null;
+				if(isset($rq->fields->$fieldID) && isset($rq->fields->$fieldID->value)) {
+					$field['value'] = $this->filter->sanitize($rq->fields->$fieldID->value_id, "int");
+					if($field['value']=='') $field['value'] = null;
 				}
 			}
 		}
-		return true;
+		//$this->error['messages'][] = ['title' => "Debug2. " . __METHOD__, 'msg' => "res=" . $res . ". id=" . $this->fields['id']['value']];
+		return $res;
 	}
+	
+	/* 
+	* Проверяет параметры запроса
+	* Расширяемый метод.
+	*/
+	protected function check() {
+		$res = 0;
+		foreach($this->fields as $fieldID => $field) {
+			if($field['type'] == 'amount') {
+				// проверка на обязательность
+				$res |= $this->checkBasicRequire($field);
+				
+				$res |= $this->checkBasicAmount($field);
+			}
+			else if($field['type'] == 'email') {
+				// проверка на обязательность
+				$res |= $this->checkBasicRequire($field);
+				
+				$res |= $this->checkBasicEmail($field);
+			}
+			else if($field['type'] == 'text' || $field['type'] == 'textarea') {
+				// проверка на обязательность
+				$res |= $this->checkBasicRequire($field);
+				
+				$res |= $this->checkBasicText($field);
+			}
+			else if($field['type'] == 'bool') {
+				// проверка на обязательность
+				$res |= $this->checkBasicRequire($field);
+				
+				//$res |= $this->checkBasicText($field);
+			}
+			else if($field['type'] == 'period') {
+				// проверка на обязательность
+				$res |= $this->checkBasicRequire($field);
+				
+				$res |= $this->checkBasicPeriod($field);
+			}
+			else if($field['type'] == 'select') {
+				if(isset($field['style']) && $field['style'] == 'id') {
+					$res |= $this->checkBasicLink($field);
+				}
+				else {
+					$res |= $this->checkBasicSelectName($field);
+				}
+			}
+			else if($field['type'] == 'link') {
+				$res |= $this->checkBasicLink($field);
+			}
+		}
+		return $res;
+	}
+	
+	protected function checkBasicRequire($field) {
+		$res = 0;
+		if(isset($field['required']) && $field['required'] == 1 && (!isset($field['value']) || $field['value'] == null || $field['value'] == '')) {
+			$this->checkResult[] = [
+				'type' => "warning",
+				'msg' => 'Поле "' .  $field['name'] . '" обязательно для указания',
+			];
+			$res |=1 ;
+		}
+		else if(isset($field['required']) && $field['required'] == 2 && (!isset($field['value']) || $field['value'] == null || $field['value'] == '')) {
+			$this->checkResult[] = [
+				'type' => "error",
+				'msg' => 'Поле "' .  $field['name'] . '" обязательно для указания',
+			];
+			$res |= 2;
+		}
+		return $res;
+	}
+	
+	protected function checkBasicAmount($field) {
+		$res = 0;
+		if(isset($field['min']) && $field['value'] < $field['min']) {
+			$this->checkResult[] = [
+				'type' => "error",
+				'msg' => 'Поле "' . $field['name'] . '" содержит значение меньше допустимого',
+			];
+			$res |= 2;
+		}
+		if(isset($field['max']) && $field['value'] > $field['max']) {
+			$this->checkResult[] = [
+				'type' => "error",
+				'msg' => 'Поле "' .$field['name'] . '" содержит значение больше допустимого',
+			];
+			$res |= 2;
+		}
+		return $res;
+	}
+	
+	protected function checkBasicEmail($field) {
+		$res = 0;
+		if($field['value']!=null && strpos($field['value'], "@") === false) {
+			$this->checkResult[] = [
+				'type' => "error",
+				'msg' => 'Поле "' . $field['name'] . '" содержит значение, не соответствущее адресу электронной почты',
+			];
+			$res |= 2;
+		}
+		return $res;
+	}
+	
+	protected function checkBasicText($field) {
+		$res = 0;
+		if(isset($field['min']) && $field['value'] < $field['min']) {
+			$this->checkResult[] = [
+				'type' => "error",
+				'msg' => 'Поле "' . $field['name'] . '" содержит слишком короткое значение (должно быть не менее ' . $field['min'] . ' символов)',
+			];
+			$res |= 2;
+		}
+		if(isset($field['max']) && $field['value'] > $field['max']) {
+			$this->checkResult[] = [
+				'type' => "error",
+				'msg' => 'Поле "' . $field['name'] . '" содержит слишком длинное значение (должно быть не более ' . $field['max'] . ' символов)',
+			];
+			$res |= 2;
+		}
+		return $res;
+	}
+	
+	protected function checkBasicPeriod($field) {
+		$res = 0;
+		if(isset($this->fields['target_date']['required'])) {
+			$reqMode = $this->fields['target_date']['required'];
+			if($reqMode == 1 && $val1 == null) {
+				$this->checkResult[] = [
+					'type' => "error",
+					'msg' => 'Поле "' . $this->fields['target_date']['name'] . '". Дата "' . $this->fields['target_date']['name1'] . '" обязательна для заполнения',
+				];
+				$res |= 2;
+			}
+			else if($reqMode == 2 && $val2 == null) {
+				$this->checkResult[] = [
+					'type' => "error",
+					'msg' => 'Поле "' . $this->fields['target_date']['name'] . '". Дата "' . $this->fields['target_date']['name2'] . '" обязательна для заполнения',
+				];
+				$res |= 2;
+			}
+			else if($reqMode == 3 && $val1 == null && $val2 == null) {
+				$this->checkResult[] = [
+					'type' => "error",
+					'msg' => 'Поле "' . $this->fields['target_date']['name'] . '". Должна быть заполнена хотя бы одна дата',
+				];
+				$res |= 2;
+			}
+			else if($reqMode == 4 && ($val1 == null || $val2 == null)) {
+				$this->checkResult[] = [
+					'type' => "error",
+					'msg' => 'Поле "' . $this->fields['target_date']['name'] . '". Период должен быть заполнен полностью',
+				];
+				$res |= 2;
+			}
+		
+			if($val1 != null && $val2 != null) {
+				$d1 = new dateTime ($val1); //(new DateTime('now'))->format("Y-m-d")
+				$d2 = new dateTime ($val2);
+				if($d1 > $d2) {
+					$this->checkResult[] = [
+						'type' => "error",
+						'msg' => 'В поле "'. $this->fields['target_date']['name'] .'" дата окончания периода не может быть меньше даты начала периода',
+					];
+					$res |= 2;
+				}
+			}
+		}
+		return $res;
+	}
+	
+	protected function checkBasicLink($field) {
+		$res = 0;
+		// сперва определяем, что вприниципе присутствет id
+		if(isset($field['required'])) {
+			if($field['required'] == 1 && $field['value_id'] == null) {
+				$this->checkResult[] = [
+					'type' => "warning",
+					'msg' => 'Поле "'. $field['name'] .'" обязательно для указания',
+				];
+				$res |= 1;
+			}
+			else if($field['required'] == 2 && $field['value_id'] == null) {
+				$this->checkResult[] = [
+					'type' => "error",
+					'msg' => 'Поле "'. $field['name'] .'" обязательно для указания',
+				];
+				$res |= 2;
+			}
+		}
+		// если id есть, то надо найти запись в БД
+		if($field['value_id'] != null) {
+			$linkEntityName = $field['linkEntityName'];
+			$entity = $linkEntityName::findFirst(["conditions" => "id = ?1", "bind" => [1 => $field['value_id']]]);
+			if(!$entity) {
+				$this->checkResult[] = [
+					'type' => "error",
+					'msg' => 'Поле "'. $field['name'] .'". По переданому идентификатору не найдена запись в БД (id=' . $field['value_id'] . ')',
+				];
+				$res |= 2;
+			}
+		}
+		return $res;
+	}
+	
+	protected function checkBasicSelectName($field) {
+		$res = 0;
+		// сперва определяем, что вприниципе присутствет id
+		if(isset($field['required'])) {
+			if($field['required'] == 1 && $field['value_id'] == null) {
+				$this->checkResult[] = [
+					'type' => "warning",
+					'msg' => 'Поле "'. $field['name'] .'" обязательно для указания',
+				];
+				$res |= 1;
+			}
+			else if($field['required'] == 2 && $field['value_id'] == null) {
+				$this->checkResult[] = [
+					'type' => "error",
+					'msg' => 'Поле "'. $field['name'] .'" обязательно для указания',
+				];
+				$res |= 2;
+			}
+		}
+		// если id есть, то надо найти запись в перечне возможных значений
+		if($field['value_id'] != null) {
+			if(isset($field['values']) && isset($field['values'][$field['value_id']])) {
+				$field['value'] = $field['values'][$field['value_id']];
+			}
+			else {
+				$this->checkResult[] = [
+					'type' => "error",
+					'msg' => 'Поле "'. $field['name'] .'". Передано значение не из списка',
+				];
+				$res |= 2;
+			}
+		}
+		return $res;
+	}
+	
 }

@@ -522,12 +522,12 @@ function apply_filter(container_id) {
 			}
 		}
 	}
-	// TODO. Доп. фильтры не используются с клиента. Надо удалить
-	// доп. фильтры
-	/*if(data.add_filter) {
+	
+	// доп. фильтры, используются при фильтрации скроллеров в сущностях для передачи id сущности
+	if(data.add_filter) {
 		rq.add_filter = {};
 		for (var key in data.add_filter) rq.add_filter[key] = data.add_filter[key];
-	}*/
+	}
 	// исключение айдишников
 	if(data.filter_values.exclude_ids) {
 		rq.exclude_ids = data.filter_values.exclude_ids;

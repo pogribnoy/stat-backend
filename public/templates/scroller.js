@@ -84,5 +84,19 @@ $.views.helpers({
 	toJSON: function(obj) {
 		return JSON.stringify(obj);
 	},
+	isFieldRequired: function(field) {
+		//console.log(field);
+		if(field.type == "period" && field.required && field.required > 0) return true;
+		else if(field.required && field.required == 2) return true;
+		return false;
+	},
+	checksHasError: function(checkResult) {
+		var checkResultLength = checkResult.length;
+		for(var i=0; i< checkResultLength; i++) {
+			//console.log(checkResult[i].type);
+			if(checkResult[i].type == "error") return true;
+		}
+		return false;
+	},
   }
 });

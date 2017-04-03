@@ -16,6 +16,7 @@ class ControllerBase extends Controller {
 	
 	// фильтр
 	public $filter;
+	// описатель
 	public $descriptor;
 
 	public function initialize() {
@@ -25,7 +26,7 @@ class ControllerBase extends Controller {
 		// отключаем кеширование представлений
 		//$this->view->cache(false);
 		// инициализируем лог
-		$this->logger = new FileAdapter(APP_PATH . '/app/logs/' . $this->controllerName /*. "_" . $this->actionName*/ . ".log", array('mode' => 'a'));
+		$this->logger = new FileAdapter(APP_PATH . '/app/logs/' . $this->controllerNameLC /*. "_" . $this->actionName*/ . ".log", array('mode' => 'a'));
 		//$this->logger->log("asd".$this->logger);
 		// данные пользователя
 		$this->userData = $this->security->getUserData();

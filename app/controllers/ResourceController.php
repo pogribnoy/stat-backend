@@ -26,22 +26,22 @@ class ResourceController extends ControllerEntity {
 				'type' => 'select',
 				'style' => 'name', //id,
 				'values' => ['base', 'acl'], // порядок имеет значение!!! С клиента при сохранении получается индекс выбранного значения и по нему сохраняется нужное значение из массива
-				'newEntityValue' => null,
-				'required' => 1,
+				'newEntityValue' => 'acl',
+				'required' => 2,
 			), 
 			'controller' =>	array(
 				'id' => 'controller',
 				'name' => $this->t->_("text_resource_controller"),
 				'type' => 'text',
 				'newEntityValue' => null,
-				'required' => 1,
+				'required' => 2,
 			), 
 			'action' => array(
 				'id' => 'action',
 				'name' => $this->t->_("text_resource_action"),
 				'type' => 'text',
 				'newEntityValue' => null,
-				'required' => 1,
+				'required' => 2,
 			), 
 			// модули
 			'module' => array(
@@ -50,14 +50,14 @@ class ResourceController extends ControllerEntity {
 				'type' => 'select',
 				'style' => 'name', //id,
 				'values' => ['backend', 'frontend'], // порядок имеет значение!!! С клиента при сохранении получается индекс выбранного значения и по нему сохраняется нужное значение из массива
-				'newEntityValue' => null,
-				'required' => 1,
+				'newEntityValue' => 'backend',
+				'required' => 2,
 			), 
 			'description' => array(
 				'id' => 'description',
 				'name' => $this->t->_("text_entity_property_description"),
 				'type' => 'text',
-				'newEntityValue' => '',
+				'newEntityValue' => null,
 			)
 		];
 		// наполняем поля данными
@@ -95,56 +95,61 @@ class ResourceController extends ControllerEntity {
 	* Расширяемый метод.
 	*/
 	protected function sanitizeSaveRqData($rq) {
+		$res = 0;
 		// id, //select, link
-		if(!parent::sanitizeSaveRqData($rq)) return false;
+		$res |= parent::sanitizeSaveRqData($rq);
+		
+		//$this->error['messages'][] = ['title' => "Debug. " . __METHOD__, 'msg' => "id=" . $this->fields['id']['value']];
+		
 		// controller
+		$this->fields['controller']['value'] = null;
 		if(isset($rq->fields->controller) && isset($rq->fields->controller->value)) {
-			$val = $this->filter->sanitize(urldecode($rq->fields->controller->value), ["trim", "string"]);
-			if($val != '') $this->fields['controller']['value'] = $val;
-			else {
-				$this->error['messages'][] = [
-					'title' => "Ошибка",
-					'msg' => 'Поле "' . $this->fields['controller']['name'] . '" обязательно для указания'
-				];
-				return false;
-			}
-		}
-		else {
-			$this->error['messages'][] = [
-				'title' => "Ошибка",
-				'msg' => 'Поле "' . $this->fields['action']['name'] . '" обязательно для указания'
-			];
-			return false;
+			$this->fields['controller']['value'] = $this->filter->sanitize(urldecode($rq->fields->controller->value), ["trim", "string"]);
+			if($this->fields['controller']['value'] == '') $this->fields['controller']['value'] = null;
 		}
 		
 		// action
+		$this->fields['action']['value'] = null;
 		if(isset($rq->fields->action) && isset($rq->fields->action->value)) {
-			$val = $this->filter->sanitize(urldecode($rq->fields->action->value), ["trim", "string"]);
-			if($val != '') $this->fields['action']['value'] = $val;
-			else {
-				$this->error['messages'][] = [
-					'title' => "Ошибка",
-					'msg' => 'Поле "' . $this->fields['action']['name'] . '" обязательно для указания'
-				];
-				return false;
-			}
-		}
-		else {
-			$this->error['messages'][] = [
-				'title' => "Ошибка",
-				'msg' => 'Поле "' . $this->fields['action']['name'] . '" обязательно для указания'
-			];
-			return false;
+			$this->fields['action']['value'] = $this->filter->sanitize(urldecode($rq->fields->action->value), ["trim", "string"]);
+			if($this->fields['action']['value'] == '') $this->fields['action']['value'] = null;
 		}
 		
 		// description
+		$this->fields['description']['value'] = null;
 		if(isset($rq->fields->description) && isset($rq->fields->description->value)) {
-			$val = $this->filter->sanitize(urldecode($rq->fields->description->value), ["trim", "string"]);
-			$this->fields['description']['value'] = $val;
+			$this->fields['description']['value'] = $this->filter->sanitize(urldecode($rq->fields->action->value), ["trim", "string"]);
+			if($this->fields['description']['value'] == '') $this->fields['description']['value'] = null;
 		}
-		else $this->fields['description']['value'] = $this->fields['description']['newEntityValue'];
 		
-		return true;
+		$res |= $this->check();
+		
+		return $res;
+	}
+	
+	protected function check() {
+		$res = 0;
+		$res |= parent::check();
+		
+		// controller
+		if($this->fields['controller']['value'] == '*') {
+			$this->fields['controller']['value'] = null;
+			$this->checkResult[] = [
+				'type' => "error",
+				'msg' => 'Поле "' . $this->fields['controller']['name'] . '" не может содержать значение "*"',
+			];
+			$res |= 2;
+		}
+		// action
+		if($this->fields['action']['value'] == '*') {
+			$this->fields['action']['value'] = null;
+			$this->checkResult[] = [
+				'type' => "error",
+				'msg' => 'Поле "' . $this->fields['action']['name'] . '" не может содержать значение "*"'
+			];
+			$res |= 2;
+		}
+		return $res;
 	}
 	
 	/* 

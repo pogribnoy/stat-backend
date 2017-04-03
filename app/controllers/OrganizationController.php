@@ -37,7 +37,7 @@ class OrganizationController extends ControllerEntity {
 				'id' => 'name',
 				'name' => $this->t->_("text_entity_property_name"),
 				'type' => 'text',
-				'required' => 1,
+				'required' => 2,
 				'newEntityValue' => null,
 			), 
 			'region' =>	array(
@@ -46,7 +46,7 @@ class OrganizationController extends ControllerEntity {
 				'type' => 'select',
 				'style' => 'id', //name
 				'linkEntityName' => 'Region',
-				'required' => 1,
+				'required' => 2,
 				'newEntityValue' => null,
 			), 
 			'contacts' => array(
@@ -129,7 +129,7 @@ class OrganizationController extends ControllerEntity {
 			$scroller_expense_list["add_style"] = "entity";
 			$scroller_expense_list["edit_style"]  = "modal";
 			
-			$this->scrollers[$controller_expense_list->controllerName] = $scroller_expense_list;
+			$this->scrollers[$controller_expense_list->controllerNameLC] = $scroller_expense_list;
 		}
 		else unset($this->scrollers['expenselist']);
 		
@@ -143,7 +143,7 @@ class OrganizationController extends ControllerEntity {
 			$scroller_user_list["add_style"] = "scroller";
 			$scroller_user_list['edit_style']  = "modal";
 			
-			$this->scrollers[$controller_user_list->controllerName] = $scroller_user_list;
+			$this->scrollers[$controller_user_list->controllerNameLC] = $scroller_user_list;
 		}
 		else unset($this->scrollers['userlist']);
 		
@@ -154,40 +154,91 @@ class OrganizationController extends ControllerEntity {
 	* Очищает параметры запроса
 	* Расширяемый метод.
 	*/
-	protected function sanitizeSaveRqData($rq) {
+	/*protected function sanitizeSaveRqData($rq) {
+		$res = 0;
 		// id, //select, link
 		if(!parent::sanitizeSaveRqData($rq)) return false;
+		//if(!$this->sanitizeSaveRqData2($rq)) return false;
+		
+		//$this->error['messages'][] = ['title' => "Debug. " . __METHOD__, 'msg' => "id=" . $this->fields['id']['value']];
+		
 		// name
+		$this->fields['name']['value'] = null;
 		if(isset($rq->fields->name) && isset($rq->fields->name->value)) {
-			$val = $this->filter->sanitize(urldecode($rq->fields->name->value), ["trim", "string"]);
-			if($val != '') $this->fields['name']['value'] = $val;
-			else {
-				$this->error['messages'][] = [
-					'title' => "Ошибка",
-					'msg' => 'Поле "' . $this->fields['name']['name'] . '" обязательно для указания'
-				];
-				return false;
-			}
+			$this->fields['name']['value'] = $this->filter->sanitize(urldecode($rq->fields->name->value), ["trim", "string"]);
+			if($this->fields['name']['value'] == '') $this->fields['name']['value'] = null;
 		}
 		
 		// email
+		$this->fields['email']['value'] = null;
 		if(isset($rq->fields->email) && isset($rq->fields->email->value)) {
-			$val = $this->fields['email']['value'] = $this->filter->sanitize(urldecode($rq->fields->email->value), ["trim", "string"]);
-			$this->fields['email']['value'] = $val;
+			$this->fields['email']['value'] = $this->filter->sanitize(urldecode($rq->fields->email->value), ["trim", "string"]);
+			if($this->fields['email']['value'] == '') $this->fields['email']['value'] = null;
 		}
+		
 		// contacts
+		$this->fields['contacts']['value'] = null;
 		if(isset($rq->fields->contacts) && isset($rq->fields->contacts->value)) {
 			$val = $this->filter->sanitize(urldecode($rq->fields->contacts->value), ["trim", "string"]);
-			$this->fields['contacts']['value'] = $val;
+			if($this->fields['contacts']['value'] == '') $this->fields['contacts']['value'] = null;
 		}
+		
 		// phone
+		$this->fields['phone']['value'] = null;
 		if(isset($rq->fields->phone) && isset($rq->fields->phone->value)) {
 			$val = $this->filter->sanitize(urldecode($rq->fields->phone->value), ["trim", "string"]);
-			$this->fields['phone']['value'] = $val;
+			if($this->fields['phone']['value'] == '') $this->fields['phone']['value'] = null;
 		}
+		
+		$res |= $this->check();
+		
+		if($res != 0) return false;
 		
 		// userlist, expenselist
 		return $this->sanitizeSaveRqDataCheckRelations($rq);
+	}*/
+	
+	protected function sanitizeSaveRqData($rq) {
+		$res = 0;
+		// id, //select, link
+		$res |= parent::sanitizeSaveRqData($rq);
+		
+		//$this->error['messages'][] = ['title' => "Debug. " . __METHOD__, 'msg' => "id=" . $this->fields['id']['value']];
+		
+		// name
+		$this->fields['name']['value'] = null;
+		if(isset($rq->fields->name) && isset($rq->fields->name->value)) {
+			$this->fields['name']['value'] = $this->filter->sanitize(urldecode($rq->fields->name->value), ["trim", "string"]);
+			if($this->fields['name']['value'] == '') $this->fields['name']['value'] = null;
+		}
+		
+		// email
+		$this->fields['email']['value'] = null;
+		if(isset($rq->fields->email) && isset($rq->fields->email->value)) {
+			$this->fields['email']['value'] = $this->filter->sanitize(urldecode($rq->fields->email->value), ["trim", "string"]);
+			if($this->fields['email']['value'] == '') $this->fields['email']['value'] = null;
+		}
+		
+		// contacts
+		$this->fields['contacts']['value'] = null;
+		if(isset($rq->fields->contacts) && isset($rq->fields->contacts->value)) {
+			$val = $this->filter->sanitize(urldecode($rq->fields->contacts->value), ["trim", "string"]);
+			if($this->fields['contacts']['value'] == '') $this->fields['contacts']['value'] = null;
+		}
+		
+		// phone
+		$this->fields['phone']['value'] = null;
+		if(isset($rq->fields->phone) && isset($rq->fields->phone->value)) {
+			$val = $this->filter->sanitize(urldecode($rq->fields->phone->value), ["trim", "string"]);
+			if($this->fields['phone']['value'] == '') $this->fields['phone']['value'] = null;
+		}
+		
+		// userlist, expenselist
+		if(!$this->sanitizeSaveRqDataCheckRelations($rq)) $res |= 2;
+		
+		$res |= $this->check();
+		
+		return $res;
 	}
 	
 	/* 

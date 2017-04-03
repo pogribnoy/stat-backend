@@ -22,21 +22,23 @@ class NewsController extends ControllerEntity {
 				'id' => 'name',
 				'name' => $this->t->_("text_entity_property_name"),
 				'type' => 'text',
-				'required' => 1,
+				'required' => 2,
 				'newEntityValue' => null,
 			), 
 			'description' => array(
 				'id' => 'description',
 				'name' => $this->t->_("text_entity_property_description"),
 				'type' => 'textarea',
-				'required' => 1,
+				'required' => 2,
 				'newEntityValue' => null,
+				//'newEntityValue2' => function() { return $this->userData["id"]; },
+				//'newEntityValue2' => null,
 			), 
 			'publication_date' => array(
 				'id' => 'publication_date',
 				'name' => $this->t->_("text_news_publication_date"),
 				'type' => 'date',
-				'required' => 1,
+				'required' => 2,
 				'newEntityValue' => (new DateTime('now'))->format("Y-m-d"),
 			), 
 			'created_by' => array(
@@ -46,12 +48,23 @@ class NewsController extends ControllerEntity {
 				'style' => 'id', //name
 				//'values' => $expense_types
 				'linkEntityName' => 'User',
-				'required' => 1,
-				'newEntityValue' => null,
+				'linkEntityDataField' => 'name',
+				'required' => 2,
+				//'newEntityValue' => null,
+				'newEntityValue' => function() { return $this->userData["id"]; },
 			)
 		];
 		// наполняем поля данными
 		parent::initFields();
+	}
+	
+	protected function fillNewEntityFields() {
+		parent::fillNewEntityFields();
+		/*if(isset($this->fields["description"]["newEntityValue2"])) {
+			if(is_object($this->fields["description"]["newEntityValue2"])) $this->fields["description"]["value"] = $this->fields["description"]["newEntityValue2"]();
+			else $this->fields["description"]["value"] = $this->fields["description"]["newEntityValue2"];
+		}*/
+		//$this->fields["description"]["value"] = is_object($this->fields["description"]["newEntityValue2"]) ? $this->fields["description"]["newEntityValue2"]() : $this->fields["description"]["newEntityValue2"];
 	}
 	
 	/* 
@@ -94,50 +107,38 @@ class NewsController extends ControllerEntity {
 	* Расширяемый метод.
 	*/
 	protected function sanitizeSaveRqData($rq) {
-		// id, select, link
-		if(!parent::sanitizeSaveRqData($rq)) return false;
-		// name
-		if(isset($rq->fields->name) && isset($rq->fields->name->value)) {
-			$val = $this->filter->sanitize(urldecode($rq->fields->name->value), ["trim", "string"]);
-			if($val != '') $this->fields['name']['value'] = $val;
-			else {
-				$this->error['messages'][] = [
-					'title' => "Ошибка",
-					'msg' => 'Поле "'. $this->fields['name']['name'] .'" обязательно для указания'
-				];
-				return false;
-			}
-		}
-		else return false;
-		//publication_date
-		if(isset($rq->fields->publication_date) && isset($rq->fields->publication_date->value)) {
-			$val = $this->filter->sanitize(urldecode($rq->fields->publication_date->value), ["trim", "string"]);
-			if($val != '') $this->fields['publication_date']['value'] = $val;
-			else {
-				$this->error['messages'][] = [
-					'title' => "Ошибка",
-					'msg' => 'Поле "'. $this->fields['publication_date']['name'] .'" обязательно для указания'
-				];
-				return false;
-			}
-			//$this->logger->log('val = ' . $val);
-		}
-		else return false;
-		//description
-		if(isset($rq->fields->description) && isset($rq->fields->description->value)) {
-			$val = $this->filter->sanitize(urldecode($rq->fields->description->value), ["trim", "string"]);
-			if($val != '') $this->fields['description']['value'] = $val;
-			else {
-				$this->error['messages'][] = [
-					'title' => "Ошибка",
-					'msg' => 'Поле "'. $this->fields['description']['name'] .'" обязательно для указания'
-				];
-				return false;
-			}
-			//$this->logger->log('val = ' . $this->fields['description']['value']);
-		}
-		else return false;
+		$res = 0;
+		// id, //select, link
+		$res |= parent::sanitizeSaveRqData2($rq);
 		
-		return true;
+		//$this->error['messages'][] = ['title' => "Debug. " . __METHOD__, 'msg' => "id=" . $this->fields['id']['value']];
+		
+		// name
+		$this->fields['name']['value'] = null;
+		if(isset($rq->fields->name) && isset($rq->fields->name->value)) {
+			$this->fields['name']['value'] = $this->filter->sanitize(urldecode($rq->fields->name->value), ["trim", "string"]);
+			if($this->fields['name']['value'] == '') $this->fields['name']['value'] = null;
+		}
+		
+		// publication_date
+		$this->fields['publication_date']['value'] = null;
+		if(isset($rq->fields->publication_date) && isset($rq->fields->publication_date->value)) {
+			$this->fields['publication_date']['value'] = $this->filter->sanitize(urldecode($rq->fields->publication_date->value), ["trim", "string"]);
+			if($this->fields['publication_date']['value'] == '') $this->fields['publication_date']['value'] = null;
+		}
+		
+		// description
+		$this->fields['description']['value'] = null;
+		if(isset($rq->fields->description) && isset($rq->fields->description->value)) {
+			$this->fields['description']['value'] = $this->filter->sanitize(urldecode($rq->fields->description->value), ["trim", "string"]);
+			if($this->fields['description']['value'] == '') $this->fields['description']['value'] = null;
+		}
+		
+		// userlist, expenselist
+		//if(!$this->sanitizeSaveRqDataCheckRelations($rq)) $res |= 2;
+		
+		$res |= $this->check();
+		
+		return $res;
 	}
 }
