@@ -108,7 +108,7 @@
 												{{else filter==="email"}} <input type="email" name="filter_{{:id}}" value="{{:filter_value}}" class="form-control input-sm"/>
 												{{else filter==="select"}}
 													{{if filter_values.length>10}}<div class="input-group-sm">{{/if}}
-														<select name="filter_{{if filter_id }}{{:filter_id}}{{else}}{{:id}}{{/if}}" class="form-control input-sm {{if filter_values.length>2}}extended{{/if}}" style="width:100%;">
+														<select name="filter_{{if filter_id }}{{:filter_id}}{{else}}{{:id}}{{/if}}" class="form-control input-sm {{if filter_values.length>15}}extended{{/if}}" style="width:100%;">
 															<option value="*" {{if filter_value===""}} selected="selected"{{/if}}></option>
 															{{if nullSubstitute && nullSubstitute != "undefined"}}<option value="**" {{if filter_value=='**'}} selected="selected"{{/if}}>{{:nullSubstitute}}</option>{{/if}}
 															{{if style === "id"}}
@@ -268,6 +268,13 @@ function initScrollerScripts(container_id) {
 		$.fn.select2.defaults.set( "theme", "bootstrap");
 		$("select.extended").select2();
 	}
+	
+	// для полей select делаем автоприменение фильтра после выбора значения
+	container.jqobj.find("select[name^='filter_']").each(function(indx, element) {
+		$(this).bind('change', function(e) {
+			apply_filter(container_id);
+		});
+	});
 }
 
 /* Переход к просмотру строки
