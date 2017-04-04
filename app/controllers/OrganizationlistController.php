@@ -3,6 +3,12 @@ class OrganizationlistController extends ControllerList {
 	public $entityName = 'Organization';
 	public $controllerName = "Organizationlist";
 	
+	// информация о поле и направлении сортировки по умолчанию
+	public $defaultSort = [
+		"column" => "name",
+		"order" => "asc",
+	];
+	
 	public function initialize() {
 		parent::initialize();
 	}

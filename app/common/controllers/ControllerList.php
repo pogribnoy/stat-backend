@@ -23,6 +23,12 @@ class ControllerList extends ControllerBase {
 	// настройки, доступные для скроллера
 	public $settings;
 	
+	// информация о поле и направлении сортировки по умолчанию
+	public $defaultSort = [
+		"column" => "id",
+		"order" => "desc",
+	];
+	
 	// максимальное количество записей на странице
 	public $max_page_size = 100;
 	// количество страниц для скроллеров
@@ -157,18 +163,6 @@ class ControllerList extends ControllerBase {
 	* Расширяемый метод.
 	*/
 	public function getSettings() {
-		/*$this->settings = Setting::find([
-			"code IN ({codes:array})",
-			"bind" => ["codes" => ["admin_table_limit", "admin_table_page_sizes"]],
-			"limit" => 2
-		]);
-		//, admin_table_page_sizes
-		
-		// Обход в foreach
-		foreach ($this->settings as $set) {
-			if($set->code == 'admin_table_limit') $this->max_page_size = $set->value;
-			else if($set->code == 'admin_table_page_sizes') $this->pager['page_sizes'] = json_decode($set->value);
-		}*/
 		$this->max_page_size = $this->config->application->tableMaxPageSize;
 		$this->pager['page_sizes'] = json_decode($this->config->application->tablePageSizes);
 		// если для админа настроено отдельно максимальное значение, то используем его
@@ -176,7 +170,6 @@ class ControllerList extends ControllerBase {
 			if(!in_array($this->max_page_size, $this->pager['page_sizes'])) $this->pager['page_sizes'][] = $this->max_page_size;
 			sort($this->pager['page_sizes']);
 		}
-		
 		//$this->logger->log(json_encode($this->settings));
 		//$this->logger->log($this->max_page_size);
 	}
@@ -498,6 +491,7 @@ class ControllerList extends ControllerBase {
 	public function addSortLimitToPhql($phql) {
 		$filter_values = $this->filter_values;
 		$start = ((integer)$filter_values['page'] - 1) * (integer)$filter_values["page_size"] ;
+		
 		if($filter_values['sort'] == 'region' || $filter_values['sort'] == 'region_name') $phql .= ' ORDER BY Region.name ' . $filter_values['order'];
 		else if($filter_values['sort'] == 'user_role' || $filter_values['sort'] == 'region_name') $phql .= ' ORDER BY UserRole.name ' . $filter_values['order'];
 		else if($filter_values['sort'] == 'region_name') $phql .= ' ORDER BY Region.name ' . $filter_values['order'];
@@ -505,7 +499,8 @@ class ControllerList extends ControllerBase {
 		else if($filter_values['sort'] == 'street_type') $phql .= ' ORDER BY StreetType.name ' . $filter_values['order'];
 		//else if($filter_values['sort'] == 'street') $phql .= ' ORDER BY <TableName>.street ' . $filter_values['order'];
 		//else if($filter_values['sort'] == 'house') $phql .= ' ORDER BY <TableName>.house ' . $filter_values['order'];
-		else $phql .= ' ORDER BY <TableName>.' . $filter_values['sort'] . ' ' . $filter_values['order'];
+		else $phql .= ' ORDER BY <TableName>.' .$this->defaultSort['column'] . ' ' . $this->defaultSort['order'];
+		//else $phql .= ' ORDER BY <TableName>.' . $filter_values['sort'] . ' ' . $filter_values['order'];
 		$phql .= ' LIMIT '. $start . ', ' . $filter_values["page_size"];
 		return $phql;
 	}
