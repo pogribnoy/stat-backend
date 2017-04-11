@@ -173,7 +173,7 @@ function saveScrollerItems(descriptor) {
 	if(descriptor.items) {
 		var itemsLength = descriptor.items.length;
 		for (var i = 0; i<itemsLength; i++) {
-			descriptor.items[i] = copyServerEntityDataToEntities(descriptor.items[i], descriptor.entity);
+			descriptor.items[i] = copyServerEntityDataToEntities(descriptor.items[i], descriptor.entityNameLC);
 			//if(descriptor.relationType) descriptor.items[i].local_data.relationType = descriptor.relationType;
 		}
 	}
@@ -197,7 +197,7 @@ function saveFullServerEntity(descriptor) {
 			if(scroller.items) {
 				var len = scroller.items.length;
 				for (var i = 0; i<len; i++) {
-					scroller.items[i] = copyServerEntityDataToEntities(scroller.items[i], scroller.entity);
+					scroller.items[i] = copyServerEntityDataToEntities(scroller.items[i], scroller.entityNameLC);
 					if(scroller.relationType) scroller.items[i].local_data.relationType = scroller.relationType;
 				}
 			}
@@ -209,10 +209,10 @@ function saveFullServerEntity(descriptor) {
 
 /* Разбираем информацию из объекта descriptor
 * @descriptor - описатель, полученный с сервера (описатель м.б. полный для полной сущности, или упрощенный - для сущности из скроллера)
-* @entityName - наименование сущности, полученной с сервера; название сущности передается, когда определить сущность нельзя из описателя, т.е. при разборе сущности скроллера
+* @entityNameLC - наименование сущности, полученной с сервера; название сущности передается, когда определить сущность нельзя из описателя, т.е. при разборе сущности скроллера
 */
-/*function copyServerEntityDataToEntities(descriptor, entityName) {
-	if(!entityName) entityName = descriptor.entity;
+/*function copyServerEntityDataToEntities(descriptor, entityNameLC) {
+	if(!entityNameLC) entityNameLC = descriptor.entityNameLC;
 	
 	var eid;
 	// если получена пустая сущность
@@ -220,36 +220,36 @@ function saveFullServerEntity(descriptor) {
 	else eid = descriptor.fields.id.value;
 	
 	// создаем класс в массиве entities
-	if(!entities[entityName]) entities[entityName] = {};
-	if(!entities[entityName][eid]) entities[entityName][eid] = {};
+	if(!entities[entityNameLC]) entities[entityNameLC] = {};
+	if(!entities[entityNameLC][eid]) entities[entityNameLC][eid] = {};
 	
 	var entity;
 	
 	// если локально не редактировали, то обновляем
-	if(!entities[entityName][eid].local_data || (entities[entityName][eid].local_data && entities[entityName][eid].local_data.status != 'edited')) {
+	if(!entities[entityNameLC][eid].local_data || (entities[entityNameLC][eid].local_data && entities[entityNameLC][eid].local_data.status != 'edited')) {
 		// копируем то, что есть в объекте
-		copyDescriptor(descriptor, entities[entityName][eid]);
+		copyDescriptor(descriptor, entities[entityNameLC][eid]);
 		
 		// переносим local_data, если сущность была сохранена локально или создаем новый local_data, если сущность создается
-		if(!entities[entityName][eid].local_data) {
-			entities[entityName][eid].type = 'entity';
-			entities[entityName][eid].entity = entityName;
-			entities[entityName][eid].controllerName = entityName;
-			entities[entityName][eid].local_data = {
+		if(!entities[entityNameLC][eid].local_data) {
+			entities[entityNameLC][eid].type = 'entity';
+			entities[entityNameLC][eid].entityNameLC = entityNameLC;
+			entities[entityNameLC][eid].controllerName = entityNameLC;
+			entities[entityNameLC][eid].local_data = {
 				status: 'actual',
 				udid: createID(),
 				eid:eid
 			};
-			createUDID(entities[entityName][eid]);
+			createUDID(entities[entityNameLC][eid]);
 		}
-		else entities[entityName][eid].local_data.status = 'actual';
+		else entities[entityNameLC][eid].local_data.status = 'actual';
 	}
 	
-	return entities[entityName][eid];
+	return entities[entityNameLC][eid];
 }*/
 
-function copyServerEntityDataToEntities(descriptor, entityName) {
-	if(!entityName) entityName = descriptor.entity;
+function copyServerEntityDataToEntities(descriptor, entityNameLC) {
+	if(!entityNameLC) entityNameLC = descriptor.entityNameLC;
 	
 	var eid;
 	// если получена пустая сущность
@@ -257,32 +257,30 @@ function copyServerEntityDataToEntities(descriptor, entityName) {
 	else eid = descriptor.fields.id.value;
 	
 	// создаем класс в массиве entities
-	if(!entities[entityName]) entities[entityName] = {};
-	if(!entities[entityName][eid]) entities[entityName][eid] = {};
-	
-	var entity;
+	if(!entities[entityNameLC]) entities[entityNameLC] = {};
+	if(!entities[entityNameLC][eid]) entities[entityNameLC][eid] = {};
 	
 	// если локально не редактировали, то обновляем
-	if(!entities[entityName][eid].local_data || (entities[entityName][eid].local_data && entities[entityName][eid].local_data.status != 'edited')) {
+	if(!entities[entityNameLC][eid].local_data || (entities[entityNameLC][eid].local_data && entities[entityNameLC][eid].local_data.status != 'edited')) {
 		// копируем то, что есть в объектах
-		copyDescriptor(descriptor, entities[entityName][eid]);
+		copyDescriptor(descriptor, entities[entityNameLC][eid]);
 		
 		// переносим local_data, если сущность была сохранена локально или создаем новый local_data, если сущность создается
-		if(!entities[entityName][eid].local_data) {
-			entities[entityName][eid].type = 'entity';
-			entities[entityName][eid].entity = entityName;
-			entities[entityName][eid].controllerName = descriptor.controllerName;
-			entities[entityName][eid].local_data = {
+		if(!entities[entityNameLC][eid].local_data) {
+			entities[entityNameLC][eid].type = 'entity';
+			entities[entityNameLC][eid].entityNameLC = entityNameLC;
+			entities[entityNameLC][eid].controllerName = descriptor.controllerName;
+			entities[entityNameLC][eid].local_data = {
 				status: 'actual',
 				udid: createID(),
 				eid:eid
 			};
-			createUDID(entities[entityName][eid]);
+			createUDID(entities[entityNameLC][eid]);
 		}
-		else entities[entityName][eid].local_data.status = 'actual';
+		else entities[entityNameLC][eid].local_data.status = 'actual';
 	}
 	
-	return entities[entityName][eid];
+	return entities[entityNameLC][eid];
 }
 
 /* Копирует информацию из одного descriptor в другой
@@ -607,19 +605,19 @@ function link_entity(container_id, controllerName, field_id, select_style) {
 }
 
 /* Возвращает ссылку на объект из entities по наименованию сущности и ее id
-* @entityName - наименование сущности
+* @entityNameLC - наименование сущности
 * @eid - id сущности в массиве entities
 */
-function getEntity(entityName, eid) {
-	return entities[entityName][eid];
+function getEntity(entityNameLC, eid) {
+	return entities[entityNameLC][eid];
 }
 
 /* Возвращает ссылку на скроллер по наименованию сущности и ее id и названию скроллера
-* @entityName - наименование сущности
+* @entityNameLC - наименование сущности
 * @eid - id сущности в массиве entities
 */
-function getScroller(entityName, eid, scrollerName) {
-	return entities[entityName][eid][scrollers][scrollerName];
+function getScroller(entityNameLC, eid, scrollerName) {
+	return entities[entityNameLC][eid][scrollers][scrollerName];
 }
 
 /* Добавляет item  в скроллер
@@ -788,7 +786,7 @@ function initEntityScripts(container_id) {
 			
 			var extraData = {
 				parent_entity_id: entity.local_data.eid,
-				parent_entity_name: entity.entity,
+				parent_entity_name: entity.entityName,
 				files:[],
 			};
 			
@@ -921,6 +919,7 @@ function initEntityScripts(container_id) {
 				file.db.detach();
 			});
 			
+			// удаляем стандартные кнопки удаления
 			$('.file-preview .file-initial-thumbs button.kv-file-remove').each(function () {
 				var rb = $(this);
 				var zb = rb.next();
@@ -943,6 +942,8 @@ function initEntityScripts(container_id) {
 					// помещаем ID файла в массив
 					entity.local_data.fields[entityField].deletedFiles.push(fileID);
 				}
+				
+				//TODO. Надо увеличивать количество приложенных файлов, чтобы можно было взамен приложить другой (а этот остается счислиться в плагине)
 				
 				// убираем изображение из просмотра
 				var thumb = btn.parents('.file-preview-frame');
@@ -1091,71 +1092,6 @@ function confirmDelete(container, id) {
 * @container_id - идентифкатор контейнера (скроллера, формы)
 * @id - id удаляемой сущности
 */
-/*function entity_delete(container_id, id) {
-	// родительский контейнер (скроллер/грид), с элементом которого работаем
-	var container = containers[container_id];
-	var data = container.data;
-	var local_entity = entities[data.entity][id];
-	
-	// если удаляем из скроллера, для которого предусмотрено добавление через скролер, то удаляем удаляем связь с родительской сущностью (переносим удаленную запись в удаленные),  ареальное удаление произойдет при сохранении сущности
-	var isLocal = false;
-	if(data.type == 'scroller' && data.add_style == 'scroller') {
-		isLocal = true;
-		deleteItemFromScroller(local_entity, data);
-		// перерисовываем скроллер
-		renderScroller(data);
-	}
-	if(!isLocal) {
-		$.ajax({
-			url: '/' + local_entity.entity + '/delete?id=' + id,
-			dataType: 'json',
-			method: 'get',
-			beforeSend: function() {
-					// показываем прогрессбар
-			},
-			complete: function() {
-				// скрываем прогрессбар
-			},			
-			success: function(json) {
-				if(!handleAjaxError(json.error)) {
-					// удаляем локальную сущность
-					entities[data.entity][id].local_data.status = 'deleted';
-					
-					handleAjaxSuccess(json.success)
-					//console.log("С сервера получены полные данные сущности скроллера:");
-					console.log(json);
-					
-					// TODO. Уведомить открытые скролеры и сущности, что сущность удалена
-					
-					if(data.type == 'entity') {
-						// закрываем модалку или переходим к скроллеру сущностей
-						if(container.parent_container_id) {
-							//var parent_container = containers[container.parent_container_id)
-							hideModal(container.parent_container_id);
-						}
-						else if(json.redirectURL){
-							document.location = json.redirectURL;
-						}
-					}
-					else if(data.type == 'scroller') {
-						deleteItemFromScroller(local_entity, data, {confirmFromServer:1});
-						// перерисовываем скроллер
-						renderScroller(data);
-					}
-				}
-			},
-			error: function(xhr, ajaxOptions, thrownError) {
-				console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
-				handleAjaxError({
-					messages: [{
-						title: 'Ошибка обмена данными',
-						msg: 'Ошибка обработки запроса на стороне сервера. Обратитесь в службу поддержки',
-					}],
-				});
-			}
-		});
-	}
-}*/
 
 function checkPasswordStrength(ctrl, fieldID) {
 	var input = $(ctrl);

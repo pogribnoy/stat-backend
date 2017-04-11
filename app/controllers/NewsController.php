@@ -109,7 +109,7 @@ class NewsController extends ControllerEntity {
 	protected function sanitizeSaveRqData($rq) {
 		$res = 0;
 		// id, //select, link
-		$res |= parent::sanitizeSaveRqData2($rq);
+		$res |= parent::sanitizeSaveRqData($rq);
 		
 		//$this->error['messages'][] = ['title' => "Debug. " . __METHOD__, 'msg' => "id=" . $this->fields['id']['value']];
 		

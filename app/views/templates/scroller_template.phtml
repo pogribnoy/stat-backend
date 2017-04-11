@@ -285,7 +285,7 @@ function row_show(container_id, id) {
 	// родительский контейнер (скроллер), элемент которого открываем
 	var container = containers[container_id];
 	var scroller = container.data;
-	url = '/'+scroller.entity + '/show' + (id ? '?id=' + id : '');
+	url = '/'+scroller.entityNameLC + '/show' + (id ? '?id=' + id : '');
 	
 	if(scroller.edit_style=="url") {
 		//console.log("row_edit_entity=" + url);
@@ -293,16 +293,16 @@ function row_show(container_id, id) {
 	}
 	else if(scroller.edit_style=="modal") {
 		// если сущность открыта в другой модалке или на родительской форме, то сообщаем об этом
-		if(entities[scroller.entity] && entities[scroller.entity][id]) {
-			if(containers[entities[scroller.entity][id].local_data.container_id]) {
+		if(entities[scroller.entityNameLC] && entities[scroller.entityNameLC][id]) {
+			if(containers[entities[scroller.entityNameLC][id].local_data.container_id]) {
 				// TODO. такие уведомлялки делать в виде Popup на кнопке, исчезающего через несколько секунд
 				alert("Сущность уже открыта на редактирование в другой экранной форме. Завершите работу с диалогами и вернитесь к редактированию сущности");
 				return;
 			}
 			// если сущность не сохранена на сервере или сущность сохранена на сервере, но она отредактирована / удалена локально
-			if(entities[scroller.entity][id].fields.id.value == -1 || (entities[scroller.entity][id].fields.id.value != -1 && entities[scroller.entity][id].local_data.status != 'actual')) {
+			if(entities[scroller.entityNameLC][id].fields.id.value == -1 || (entities[scroller.entityNameLC][id].fields.id.value != -1 && entities[scroller.entityNameLC][id].local_data.status != 'actual')) {
 				// рисуем модалку
-				var modal_container_id = renderModal(entities[scroller.entity][id], container);
+				var modal_container_id = renderModal(entities[scroller.entityNameLC][id], container);
 				
 				// показываем модалку
 				showModal(modal_container_id);
@@ -367,7 +367,7 @@ function row_edit(container_id, id) {
 	// родительский контейнер (скроллер), элемент которого открываем
 	var container = containers[container_id];
 	var scroller = container.data;
-	url = '/'+scroller.entity + '/edit' + (id ? '?id=' + id : '');
+	url = '/'+scroller.entityNameLC + '/edit' + (id ? '?id=' + id : '');
 	
 	if(scroller.edit_style=="url") {
 		//console.log("row_edit_entity=" + url);
@@ -375,16 +375,16 @@ function row_edit(container_id, id) {
 	}
 	else if(scroller.edit_style=="modal") {
 		// если сущность открыта в другой модалке или на родительской форме, то сообщаем об этом
-		if(entities[scroller.entity] && entities[scroller.entity][id]) {
-			if(containers[entities[scroller.entity][id].local_data.container_id]) {
+		if(entities[scroller.entityNameLC] && entities[scroller.entityNameLC][id]) {
+			if(containers[entities[scroller.entityNameLC][id].local_data.container_id]) {
 				// TODO. такие уведомлялки делать в виде Popup на кнопке, исчезающего через несколько секунд
 				alert("Сущность уже открыта на редактирование в другой экранной форме. Завершите работу с диалогами и вернитесь к редактированию сущности");
 				return;
 			}
 			// если сущность не сохранена на сервере или сущность сохранена на сервере, но она отредактирована / удалена локально
-			if(entities[scroller.entity][id].fields.id.value == -1 || (entities[scroller.entity][id].fields.id.value != -1 && entities[scroller.entity][id].local_data.status != 'actual')) {
+			if(entities[scroller.entityNameLC][id].fields.id.value == -1 || (entities[scroller.entityNameLC][id].fields.id.value != -1 && entities[scroller.entityNameLC][id].local_data.status != 'actual')) {
 				// рисуем модалку
-				var modal_container_id = renderModal(entities[scroller.entity][id], container);
+				var modal_container_id = renderModal(entities[scroller.entityNameLC][id], container);
 				
 				// показываем модалку
 				showModal(modal_container_id);
@@ -450,7 +450,7 @@ function row_delete(container_id, id) {
 	// родительский скроллер/грид, с элементом которого работаем
 	var scroller = containers[container_id].data;
 	// описатель удаляемой сущности
-	var entity = entities[scroller.entity][id];
+	var entity = entities[scroller.entityNameLC][id];
 	
 	// удаляем с запросом, если этот скроллер открыт на отдельной странице или в ммодеальном окне,т.е. не предусмотрена кнопка "Сохранить" или "Применить"
 	if((!container.parent_container_id)){// ||
@@ -464,7 +464,7 @@ function row_delete(container_id, id) {
 	}
 	// помечаем удаленными в скроллере
 	else {
-		deleteItemFromScroller(entities[scroller.entity][id], scroller, {confirmFromServer:false})
+		deleteItemFromScroller(entities[scroller.entityNameLC][id], scroller, {confirmFromServer:false})
 		renderScroller(scroller);
 	}
 }

@@ -9,10 +9,15 @@ class ControllerBase extends Controller {
 	public $controllerName;
 	// наименование контроллера в нижнем регистре
 	public $controllerNameLC;
-	// наименование действия в нижнем регистре
+	// наименование действия
 	public $actionName;
 	// наименование действия в нижнем регистре
 	public $actionNameLC;
+	// наименование сущности
+	public $entityName;
+	// наименование сущности в нижнем регистре
+	public $entityNameLC;
+
 	
 	// фильтр
 	public $filter;
@@ -51,6 +56,7 @@ class ControllerBase extends Controller {
 		$this->controllerNameLC = strtolower($this->controllerName);
 		$this->actionName = $dispatcher->getActionName();
 		$this->actionNameLC = strtolower($this->actionName);
+		$this->entityNameLC = strtolower($this->entityName);
 		
 		//var_dump(__METHOD__ . ". actionName: " . json_encode($this->actionName));
 		//$this->dispatcher = $dispatcher;

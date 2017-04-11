@@ -125,7 +125,7 @@ class OrganizationController extends ControllerEntity {
 		if($action) {
 			$controller_expense_list = new ExpenselistController();
 			$scroller_expense_list = $controller_expense_list->createDescriptor($this, array("organization_id" => $this->fields["id"]["value"]), $action);
-			$scroller_expense_list['relationType'] = $this->scrollers[$controller_expense_list->controllerName]['relationType'];
+			$scroller_expense_list['relationType'] = $this->scrollers[$controller_expense_list->controllerNameLC]['relationType'];
 			$scroller_expense_list["add_style"] = "entity";
 			$scroller_expense_list["edit_style"]  = "modal";
 			
@@ -154,50 +154,6 @@ class OrganizationController extends ControllerEntity {
 	* Очищает параметры запроса
 	* Расширяемый метод.
 	*/
-	/*protected function sanitizeSaveRqData($rq) {
-		$res = 0;
-		// id, //select, link
-		if(!parent::sanitizeSaveRqData($rq)) return false;
-		//if(!$this->sanitizeSaveRqData2($rq)) return false;
-		
-		//$this->error['messages'][] = ['title' => "Debug. " . __METHOD__, 'msg' => "id=" . $this->fields['id']['value']];
-		
-		// name
-		$this->fields['name']['value'] = null;
-		if(isset($rq->fields->name) && isset($rq->fields->name->value)) {
-			$this->fields['name']['value'] = $this->filter->sanitize(urldecode($rq->fields->name->value), ["trim", "string"]);
-			if($this->fields['name']['value'] == '') $this->fields['name']['value'] = null;
-		}
-		
-		// email
-		$this->fields['email']['value'] = null;
-		if(isset($rq->fields->email) && isset($rq->fields->email->value)) {
-			$this->fields['email']['value'] = $this->filter->sanitize(urldecode($rq->fields->email->value), ["trim", "string"]);
-			if($this->fields['email']['value'] == '') $this->fields['email']['value'] = null;
-		}
-		
-		// contacts
-		$this->fields['contacts']['value'] = null;
-		if(isset($rq->fields->contacts) && isset($rq->fields->contacts->value)) {
-			$val = $this->filter->sanitize(urldecode($rq->fields->contacts->value), ["trim", "string"]);
-			if($this->fields['contacts']['value'] == '') $this->fields['contacts']['value'] = null;
-		}
-		
-		// phone
-		$this->fields['phone']['value'] = null;
-		if(isset($rq->fields->phone) && isset($rq->fields->phone->value)) {
-			$val = $this->filter->sanitize(urldecode($rq->fields->phone->value), ["trim", "string"]);
-			if($this->fields['phone']['value'] == '') $this->fields['phone']['value'] = null;
-		}
-		
-		$res |= $this->check();
-		
-		if($res != 0) return false;
-		
-		// userlist, expenselist
-		return $this->sanitizeSaveRqDataCheckRelations($rq);
-	}*/
-	
 	protected function sanitizeSaveRqData($rq) {
 		$res = 0;
 		// id, //select, link
@@ -224,13 +180,6 @@ class OrganizationController extends ControllerEntity {
 		if(isset($rq->fields->contacts) && isset($rq->fields->contacts->value)) {
 			$val = $this->filter->sanitize(urldecode($rq->fields->contacts->value), ["trim", "string"]);
 			if($this->fields['contacts']['value'] == '') $this->fields['contacts']['value'] = null;
-		}
-		
-		// phone
-		$this->fields['phone']['value'] = null;
-		if(isset($rq->fields->phone) && isset($rq->fields->phone->value)) {
-			$val = $this->filter->sanitize(urldecode($rq->fields->phone->value), ["trim", "string"]);
-			if($this->fields['phone']['value'] == '') $this->fields['phone']['value'] = null;
 		}
 		
 		// userlist, expenselist

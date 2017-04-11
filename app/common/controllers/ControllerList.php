@@ -3,9 +3,6 @@ use Phalcon\Logger\Adapter\File as FileAdapter;
 use Phalcon\DI;
 
 class ControllerList extends ControllerBase {
-	// наименование сущности
-	public $entityName;
-	
 	// перечень полей для фильтра (уникальные для разных таблиц)
 	public $filter_values = array();
 	// дополнительные фильтры, устанавливаемые другими контроллерами
@@ -102,6 +99,8 @@ class ControllerList extends ControllerBase {
 			if($action) $this->actionName = $action;
 			else $this->actionName = $controller->actionName;
 			$this->actionNameLC = strtolower($this->actionName);
+			$this->entityNameLC = strtolower($this->entityName);
+			
 			$this->namespace = __NAMESPACE__;
 			//$this->controller->t = $this->controller->translator->addTranslation($this->controllerNameLC);
 			// фильтр для значений
@@ -215,7 +214,7 @@ class ControllerList extends ControllerBase {
 		// получаем действия, доступные пользователю
 		if(!isset($this->controller->tools)) $this->controller->tools = DI::getDefault()->getTools();
 		//var_dump($this->controller->tools);
-		$this->operations = $this->controller->tools->getScrollerOperations($this->controller, $this->entityName, $this->actionName);
+		$this->operations = $this->controller->tools->getScrollerOperations($this->controller, $this->entityNameLC, $this->actionNameLC);
 	}
 	
 	/* 
@@ -224,7 +223,7 @@ class ControllerList extends ControllerBase {
 	public function createDescriptorObject() {
 		$this->descriptor = array(
 			"controllerName" => $this->controllerNameLC,
-			"entity" => strtolower($this->entityName),
+			"entityNameLC" => $this->entityNameLC,
 			"type" => "scroller",
 			"columns" => $this->columns,
 			"item_operations" => $this->operations["item_operations"], // действия над строками

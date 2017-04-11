@@ -13,14 +13,14 @@ class Tools extends Component {
 	}
 	
 	// операции
-	public function getEntityFormOperations($role_id, $entity, $acl, $t, $exludeOps = null, $actionName="show", $scrollers = null){
-		$entity = strtolower($entity);
+	public function getEntityFormOperations($role_id, $entityNameLC, $acl, $t, $exludeOps = null, $actionName="show", $scrollers = null){
+		//$entity = strtolower($entity);
 		$operations = array();
 		if(!$exludeOps) $exludeOps = array();
 		
 		// массив операций на основе разрешений
 		//if($actionName == "edit" || ($scrollers!=null)) {
-			if($acl->isAllowed($role_id, $entity, 'save') && !in_array('save', $exludeOps)) {
+			if($acl->isAllowed($role_id, $entityNameLC, 'save') && !in_array('save', $exludeOps)) {
 				$operations[] = array(
 					'id' => 'save',
 					'name' => $t->_('button_save'),
@@ -28,26 +28,26 @@ class Tools extends Component {
 			}
 		//}
 		
-		if($acl->isAllowed($role_id, $entity, 'check') && !in_array('check', $exludeOps)) {
+		if($acl->isAllowed($role_id, $entityNameLC, 'check') && !in_array('check', $exludeOps)) {
 			$operations[] = array(
 				'id' => 'check',
 				'name' => $t->_('button_check'),
 			);
 		}
 			
-		if($acl->isAllowed($role_id, $entity, 'delete') && !in_array('delete', $exludeOps)) {
+		if($acl->isAllowed($role_id, $entityNameLC, 'delete') && !in_array('delete', $exludeOps)) {
 			$operations[] = array(
 				'id' => 'delete',
 				'name' => $t->_('button_delete'),
 			);
 		}
-		/*if($acl->isAllowed($role_id, $entity, 'back') && !in_array('back', $exludeOps)) {
+		/*if($acl->isAllowed($role_id, $entityNameLC, 'back') && !in_array('back', $exludeOps)) {
 			$operations[] = array(
 				'id' => 'back',
 				'name' => $t->_('button_back'),
 			);
 		}*/
-		if($acl->isAllowed($role_id, $entity, 'scroller') && !in_array('scroller', $exludeOps)) {
+		if($acl->isAllowed($role_id, $entityNameLC, 'scroller') && !in_array('scroller', $exludeOps)) {
 			$operations[] = array(
 				'id' => 'scroller',
 				'name' => $t->_('button_scroller'),
@@ -57,8 +57,8 @@ class Tools extends Component {
 		return $operations;
 	}
 	
-	public function getScrollerOperations($controller, $entityName, $actionName="show") {
-		$entityName = strtolower($entityName);
+	public function getScrollerOperations($controller, $entityNameLC, $actionName="show") {
+		//$entityName = strtolower($entityName);
 		$role_id = $controller->userData['role_id'];
 		$acl = $controller->acl;
 		$t = $controller->t;
@@ -69,25 +69,25 @@ class Tools extends Component {
 		$deleteOp = null;
 		$addOp = null;
 		
-		if($acl->isAllowed($role_id, $entityName, 'show')) {
+		if($acl->isAllowed($role_id, $entityNameLC, 'show')) {
 			$showOp = array(
 				'id' => 'show',
 				'name' => $t->_('button_show'),
 			);
 		}
-		if($acl->isAllowed($role_id, $entityName, 'edit') /*&& $this->isHasEditAccess($role_id, $controller)*/) {
+		if($acl->isAllowed($role_id, $entityNameLC, 'edit') /*&& $this->isHasEditAccess($role_id, $controller)*/) {
 			$editOp = array(
 				'id' => 'edit',
 				'name' => $t->_('button_edit'),
 			);
 		}
-		if($acl->isAllowed($role_id, $entityName, 'delete')) {
+		if($acl->isAllowed($role_id, $entityNameLC, 'delete')) {
 			$deleteOp = array(
 				'id' => 'delete',
 				'name' => $t->_('button_delete'),
 			);
 		}
-		if($acl->isAllowed($role_id, $entityName, 'add')) {
+		if($acl->isAllowed($role_id, $entityNameLC, 'add')) {
 			$addOp = array(
 				'id' => 'add',
 				'name' => $t->_('button_add'),

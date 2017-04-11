@@ -490,7 +490,8 @@ class ControllerEntity extends ControllerBase {
 		//$this->logger->log(json_encode($this->fields["name"]));
 		$this->descriptor = array(
 			"controllerName" => $this->controllerNameLC,
-			"entity" => $this->entityNameLC,
+			"entityNameLC" => $this->entityNameLC,
+			"entityName" => $this->entityName,
 			"type" => "entity",
 			"fields" => $this->fields,
 			"scrollers" => $this->scrollers,
@@ -1004,149 +1005,6 @@ class ControllerEntity extends ControllerBase {
 	* Очищает параметры запроса
 	* Расширяемый метод.
 	*/
-	/*protected function sanitizeSaveRqData($rq) {
-		// id
-		if(isset($rq->fields->id) && isset($rq->fields->id->value)) {
-			$val = $this->filter->sanitize(urldecode($rq->fields->id->value), ["trim", "int"]);
-			if($val == '') {
-				$this->error['messages'][] = [
-					'title' => "Ошибка",
-					'msg' => "Не получен идентификатор сущности"
-				];
-				return false;
-			}
-			$this->fields['id']['value'] = $val;
-		}
-		else {
-			$this->error['messages'][] = [
-				'title' => "Ошибка",
-				'msg' => "Не получен идентификатор сущности"
-			];
-			return false;
-		}
-		
-		// ссылочные поля (select, link)
-		foreach($this->fields as $fieldID => &$field) {
-			if($field['type'] == 'select' || $field['type'] == 'link') {
-				// ожидается поле типа 'id'
-				if((isset($field['style']) && $field['style'] == 'id') || $field['type'] == 'link') {
-					// поле есть в запросе
-					if(isset($rq->fields->$fieldID)) {
-						// поле содержит id значения
-						if(isset($rq->fields->$fieldID->value_id)) {
-							$id = $this->filter->sanitize(urldecode($rq->fields->$fieldID->value_id), ['trim', "string"]);
-							//$this->logger->log(__METHOD__ . ". fieldID = " . $fieldID . ". id = " . $id);
-							// выбрано пустое значение и поле необязательное
-							if(($id == '*' || $id == '' || $id == null) && !isset($field['required'])) {
-								$field['value_id'] = null;
-								$field['value'] = null;
-							}
-							else {
-								$id = $this->filter->sanitize(urldecode($rq->fields->$fieldID->value_id), ['trim', "int"]);
-								if($id != '') {
-									$linkEntityName = $field['linkEntityName'];
-									$entity = false;
-									$entity = $linkEntityName::findFirst(["conditions" => "id = ?1", "bind" => [1 => $id]]);
-									if(!$entity) {
-										$this->error['messages'][] = [
-											'title' => "Ошибка",
-											'msg' => $fieldID . ". Передан некорректный идентификатор (не найден  БД)"
-										];
-										return false;
-									}
-									$field['value_id'] = $id;
-								}
-								else if(!isset($field['required'])) {
-									$field['value_id'] = null;
-									$field['value'] = null;
-								}
-								else {
-									$this->error['messages'][] = [
-										'title' => "Ошибка",
-										'msg' => 'Поле "' . $field['name'] . '" обязательно для указания'
-									];
-									return false;
-								}
-								
-							}
-						}
-						// поле не содержит id значения, и оно не обязательное
-						else if(!isset($field['required'])) {
-							$field['value_id'] = null;
-							$field['value'] = null;
-						}
-						// поле не содержит id значения
-						else {
-							$this->error['messages'][] = [
-								'title' => "Ошибка",
-								'msg' => 'Поле "' . $field['name'] . '" обязательно для указания'
-							];
-							return false;
-						}
-					}
-					// поля нет в запросе
-					else {
-						// но оно обязательное
-						if(isset($field['required'])) {
-							$this->error['messages'][] = [
-								'title' => "Ошибка",
-								'msg' => 'Поле "' . $field['name'] . '" обязательно для указания'
-							];
-							return false;
-						}
-					}
-				}
-				else if(isset($field['style']) && $field['style'] == 'name') {
-					// поле есть в запросе
-					if(isset($rq->fields->$fieldID)) {
-						// поле содержит id значения
-						if(isset($rq->fields->$fieldID->value_id)) {
-							$id = $this->filter->sanitize(urldecode($rq->fields->$fieldID->value_id), ['trim', "string"]);
-							// выбрано пустое значение и поле необязательное
-							if($id == '*' && !isset($field['required'])) {
-								$field['value_id'] = null;
-								$field['value'] = null;
-							}
-							else {
-								$val = $this->filter->sanitize(urldecode($rq->fields->$fieldID->value_id), ['trim', "int"]);
-								// значение не пустое или пустое, но поле не обязательное
-								if(($val != '') || ($val == '' && !isset($field['required'])) || ($val == '' && isset($field['required']) && $field['required'] == 0)) {
-									$field['value'] = $field['values'][$val];
-								}
-								else {
-									$this->error['messages'][] = [
-										'title' => "Ошибка",
-										'msg' => 'Поле "' . $field['name'] . '" обязательно для указания'
-									];
-									return false;
-								}
-							}
-						}
-						else {
-							$this->error['messages'][] = [
-								'title' => "Ошибка",
-								'msg' => 'Поле "' . $field['name'] . '" обязательно для указания'
-							];
-							return false;
-						}
-					}
-					// поля нет в запросе
-					else {
-						// но оно обязательное
-						if(isset($field['required']) && $field['required'] == 1) {
-							$this->error['messages'][] = [
-								'title' => "Ошибка",
-								'msg' => 'Поле "' . $field['name'] . '" обязательно для указания'
-							];
-							return false;
-						}
-					}
-				}
-			}
-		}
-		return true;
-	}*/
-	
 	protected function sanitizeSaveRqData($rq) {
 		$res = 0;
 		// id
@@ -1223,7 +1081,9 @@ class ControllerEntity extends ControllerBase {
 	*/
 	protected function check() {
 		$res = 0;
+		//$this->data["asd"] = [];
 		foreach($this->fields as $fieldID => $field) {
+			//$this->data["asd"][$fieldID] = $field["type"];
 			if($field['type'] == 'amount') {
 				// проверка на обязательность
 				$res |= $this->checkBasicRequire($field);

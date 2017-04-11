@@ -120,7 +120,7 @@ function linkSelectedRows(source_container_id){
 			// находим сущность
 			var name = rows[0].id;
 			var entity_id = name.substring(4, name.length);
-			entity = entities[sContainer.data.entity][entity_id];		
+			entity = entities[sContainer.data.entityNameLC][entity_id];		
 			console.log(entity);
 			
 			// обновляем значение поля
@@ -161,10 +161,10 @@ function linkSelectedRows(source_container_id){
 				var name = rows[i].id;
 				var entity_id = name.substring(4, name.length);
 				
-				console.log(entities[sContainer.data.entity][entity_id]);
+				console.log(entities[sContainer.data.entityNameLC][entity_id]);
 				tScroller = tContainer.data;
 				
-				addItemToScroller(entities[sContainer.data.entity][entity_id], tScroller, {confirmFromServer:false});
+				addItemToScroller(entities[sContainer.data.entityNameLC][entity_id], tScroller, {confirmFromServer:false});
 			}
 			// перерисовываем грид/скроллер, для которого выполнено добавление
 			var tmpl = $.templates("#"+getTemplateName(tScroller));

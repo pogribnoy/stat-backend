@@ -386,21 +386,20 @@ function entityCheck(container_id, item) {
 */
 function entityDelete(container_id, id) {
 	var scroller;
-	var entity;
 	// родительский контейнер: скроллер/грид, с элементом которого работаем, или сущность
 	var container = containers[container_id];
 	// описатель сущности, которую надо удалить
-	var entity = entities[container.data.entity][id];
+	var entity = entities[container.data.entityNameLC][id];
 	
 	var def = $.Deferred();
 	if(entity.fields.id.value==-1) {
-		delete entities[container.data.entity][id];
+		delete entities[container.data.entityNameLC][id];
 		def.resolve();
 	}
 	else {
 		confirmDelete(container, id).done(function (){ 
 			$.ajax({
-				url: '/' + entity.entity + '/delete?id=' + id,
+				url: '/' + entity.entityNameLC + '/delete?id=' + id,
 				dataType: 'json',
 				method: 'get',
 				beforeSend: function() {
@@ -802,8 +801,8 @@ function entitySaveToServer(descriptor){
 			if(!handleAjaxError(json.error)) {
 				if(json.newID) {
 					descriptor.fields.id.value = json.newID;
-					entities[descriptor.entity][json.newID] = entities[descriptor.entity][descriptor.local_data.eid];
-					delete entities[descriptor.entity][descriptor.local_data.eid];
+					entities[descriptor.entityNameLC][json.newID] = entities[descriptor.entityNameLC][descriptor.local_data.eid];
+					delete entities[descriptor.entityNameLC][descriptor.local_data.eid];
 					descriptor.local_data.eid = json.newID;
 				}
 				descriptor.local_data.status = 'actual';
@@ -923,7 +922,7 @@ function deleteEntityFiles(descriptor, fieldName) {
 	var data = {
 		files: dfiles,
 		parent_entity_id: descriptor.local_data.eid,
-		parent_entity_name: descriptor.entity,
+		parent_entity_name: descriptor.entityName,
 		parent_entity_field: fieldName,
 	}
 

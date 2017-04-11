@@ -206,24 +206,13 @@ class FileController extends ControllerBase {
 		
 		
 			// проверяем, имеет ли право пользователь загружать изображения для данной сущности
-			if(!$this->acl->isAllowed($this->userData['role_id'], $pe_name, 'upload')) {
+			if(!$this->acl->isAllowed($this->userData['role_id'], strtolower($pe_name), 'upload')) {
 				$this->error['messages'][] = [
 					'title' => "Ошибка",
-					'msg' => "Вы не имеете права загружать файлы данной сущности (" . $pe_name . ")"
+					'msg' => "Вы не имеете права загружать файлы данной сущности (" . strtolower($pe_name) . ")"
 				];
 			}
 			else {
-				// читаем настройки из БД
-				/*$this->settings = Setting::find(array(
-					"code IN ({codes:array})",
-					"bind" => ["codes" => ["files_upload_directory",  mb_strtolower($pe_name) . "_upload_directory"]],
-					"limit" => 2
-				));
-				// заводим переменные для настроек
-				foreach ($this->settings as $set) {
-					if($set->code == 'files_upload_directory') $this->files_upload_directory = $set->value;
-					else if($set->code == (mb_strtolower($pe_name) . '_upload_directory')) $this->entity_upload_directory = $set->value;
-				}*/
 				$this->files_upload_directory = $this->config->application->filesUploadDirectory . mb_strtolower($pe_name) . '/';
 				//$this->entity_upload_directory = ;
 				

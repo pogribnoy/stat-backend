@@ -154,6 +154,7 @@ class UserController extends ControllerEntity{
 		// грид организаций
 		$controller_organization_list = new OrganizationlistController();
 		$scroller_organization_list = $controller_organization_list->createDescriptor($this, array("user_id" => $this->fields["id"]["value"]));
+		//$scroller_expense_list['relationType'] = $this->scrollers[$controller_expense_list->controllerNameLC]['relationType'];
 		$scroller_organization_list['edit_style']  = "modal";
 		$scroller_organization_list["add_style"] = "scroller";
 		
