@@ -27,34 +27,42 @@ $messages = array(
 
 // Scrollers and pages
 // Password recover
-"text_password_recover_title"		=> "Укажите адрес электронной почты",
-"text_password_recover_annotation"	=> "На указанный адрес электронной почты будет направлено письмо с Вашим текущим паролем. Поменять пароль всегда можно вличном кабинете сайта",
-"text_password_recover_success"		=> "Письмо с Вашим паролем поставлено в очередь на отправку",
+"text_password_recover_title"			=> "Укажите адрес электронной почты",
+"text_password_recover_annotation"		=> "На указанный адрес электронной почты будет направлено письмо с Вашим текущим паролем. Поменять пароль всегда можно вличном кабинете сайта",
+"text_password_recover_success"			=> "Письмо с Вашим паролем поставлено в очередь на отправку",
 
 // Page. Login
-"text_login_authorization"			=> "Авторизация", // page title
-"text_login_password_placeholder"	=> "Пароль", // page title
+"text_login_authorization"				=> "Авторизация", // page title
+"text_login_password_placeholder"		=> "Пароль", // page title
 
 // Page. Index
-"text_index_title"				=> 'Административная панель сайта "Расходы города"', // page title
-"index_index_my_organizations"	=> "Мои муниципалитеты",
+"text_index_title"						=> 'Административная панель сайта "Расходы города"', // page title
+"index_index_my_organizations"			=> "Мои муниципалитеты",
 
 // Page. Error
-"text_errors_title"			=> "Ошибка",  // page title
-"text_page_unauthorized"	=> "Доступ запрещен",
-"text_page_not_found"		=> "Страница не найдена",
-"text_page_system_error"	=> "Системная ошибка",
-"text_unauthorized"			=>  "У Вас нет доступа к данному функционалу. Обратитесь в службу поддержки",
-"text_not_found"			=> "Вы ообратились к несуществующей (удаленной) странице. Обратитесь в службу поддержки",
-"text_system_error"			=> "Возникла непредвиденная ошибка. Если она повторяется, пожалуйста, свяжитесь с нами",
-"text_home"					=> "Перейти к главной странице",
+"text_errors_title"						=> "Ошибка",  // page title
+"text_page_unauthorized"				=> "Доступ запрещен",
+"text_page_not_found"					=> "Страница не найдена",
+"text_page_system_error"				=> "Системная ошибка",
+"text_unauthorized"						=> "У Вас нет доступа к данному функционалу. Обратитесь в службу поддержки",
+"text_not_found"						=> "Вы ообратились к несуществующей (удаленной) странице. Обратитесь в службу поддержки",
+"text_system_error"						=> "Возникла непредвиденная ошибка. Если она повторяется, пожалуйста, свяжитесь с нами",
+"text_home"								=> "Перейти к главной странице",
 
 // Page. Profile
-"text_profile_title"	=> "Профиль пользователя",
+"text_profile_title"					=> "Профиль пользователя",
+
+// Page. Tasks
+"text_tasks_title"						=> "Задачи", // page title
+"text_tasks_index_schedule"				=> "Расписание",
+"text_tasks_index_enabled"				=> "Включена",
+"name_tasks_index_clear"				=> "Удаление непривязанных расходов",
+"name_tasks_index_backup"				=> "Резервное копирование БД",
+"name_tasks_index_backup_files"			=> "Резервное копирование файлов",
 
 // Scroller. Organization list
-"text_organizationlist_title"	=> "Муниципалитеты", // scroller|page title
-"text_organizationlist_region"	=> "Регион",
+"text_organizationlist_title"			=> "Муниципалитеты", // scroller|page title
+"text_organizationlist_region"			=> "Регион",
 
 // Entity. Organization
 "text_organization_title"				=> "Муниципалитет", // form|page title
@@ -157,6 +165,7 @@ $messages = array(
 "main_menu_expensetypelist"		=> "Типы расходов",
 "main_menu_regionlist"			=> "Регионы",
 "main_menu_expensestatuslist"	=> "Статусы расходов",
+"main_menu_tasks"				=> "Задачи",
 "main_menu_profile"				=> "Профиль пользователя",
 "main_menu_exit_link"			=> "выход",
 
@@ -185,7 +194,7 @@ $messages = array(
 "text_entity_property_id"				=> "ID",
 "text_entity_property_image"			=> "Изображение",
 "text_entity_property_images"			=> "Изображения",
-"text_entity_property_house_building"	=> "Дом, строение",
+"text_entity_property_house_building"	=> "Дом, стр.",
 "text_entity_property_login"			=> "Логин",
 "text_entity_property_n"				=> "№",
 "text_entity_property_name"				=> "Наименование",

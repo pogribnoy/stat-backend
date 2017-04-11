@@ -844,25 +844,57 @@ class ControllerEntity extends ControllerBase {
 					}
 				}
 			}
-			else if(isset($field["newEntityValue"]) && $field["newEntityValue"] != '') {
+			else if(isset($field["newEntityValue"])) {
 				if(is_object($field["newEntityValue"])) $field["value"] = $field["newEntityValue"]();
 				else $field["value"] = $field["newEntityValue"];
 			}
 			// если предусмотрена выборка по ID, то надо запросить значение в связанной таблице
-			else if(isset($field["newEntityID"]) && $field["newEntityID"] != '' && $field["newEntityID"] != null && 
-					isset($this->filter_values[$field["id"] . "_id"]) && $this->filter_values[$field["id"] . "_id"] != '' && $this->filter_values[$field["id"] . "_id"] != null) {
-				$linkEntityName = $field["linkEntityName"];
-				$linkEntityField = $field["linkEntityField"];
-				$entities = $linkEntityName::find([
-					"conditions" => "id = ?1", "bind" => [
-						1 => $this->filter_values[$field["id"] . "_id"],
-					],
-					'limit' => 1,
-				]);
-				if($entities && count($entities) == 1) $field["value"] = $entities[0]->$linkEntityField;
-				else $field["value"] = null;
+			else if(isset($field["newEntityID"]) && $field["newEntityID"] != '' && $field["newEntityID"] != null) {
+				$field["value"] = null;
+				$field["value_id"] = null;
+				if(is_object($field["newEntityID"])) $field["value"] = $field["newEntityID"]();
+				else if(is_int($field["newEntityID"])) {
+					$this->logger->log(__METHOD__ . '. field_id = ' . $field["id"] . " ||| newEntityID=" . $field["newEntityID"] . " ||| is_int=" . is_int($field["newEntityID"]) . " ||| is_bool=" . is_bool($field["newEntityID"]) . " ||| is_object=" . is_object($field["newEntityID"]));
+					$linkEntityName = $field["linkEntityName"];
+					$linkEntityField = $field["linkEntityField"];
+					$entities = $linkEntityName::find([
+						"conditions" => "id = ?1", 
+						"bind" => [
+							1 => $field["newEntityID"],
+						],
+						'limit' => 1,
+					]);
+					if($entities && count($entities) == 1) {
+						$field["value"] = $entities[0]->$linkEntityField;
+						$field["value_id"] = $entities[0]->id;
+					}
+				}
+				else if(is_bool($field["newEntityID"]) && $field["newEntityID"] != false) {
+					$this->logger->log(__METHOD__ . '. newEntityID = ' . $field["newEntityID"] . " gettype=" . gettype($field["newEntityID"]));
+					$filterValueID = strtolower($field["linkEntityName"] . "_id");
+					if(isset($this->filter_values[$filterValueID]) && $this->filter_values[$filterValueID] != '' && $this->filter_values[$filterValueID] != null) {
+						$linkEntityName = $field["linkEntityName"];
+						$linkEntityField = $field["linkEntityField"];
+						$entities = $linkEntityName::find([
+							"conditions" => "id = ?1", 
+							"bind" => [
+								1 => $this->filter_values[$filterValueID],
+							],
+							'limit' => 1,
+						]);
+						if($entities && count($entities) == 1) {
+							$field["value"] = $entities[0]->$linkEntityField;
+							$field["value_id"] = $entities[0]->id;
+						}
+					}
+				}
+				else $this->logger->log(__METHOD__ . '. asd = ');
 			}
-			else $field["value"] = null;
+			else {
+				$field["value"] = null;
+				$field["value_id"] = null;
+			}
+			//$this->logger->log(__METHOD__ . '. field_id = ' . $field["id"] . " ||| newEntityID=" . $field["newEntityID"] . " ||| is_int=" . is_int($field["newEntityID"]) . " ||| is_bool=" . is_bool($field["newEntityID"]) . " ||| is_object=" . is_object($field["newEntityID"]));
 		}
 	}
 	
@@ -1149,19 +1181,24 @@ class ControllerEntity extends ControllerBase {
 						$field['value_id'] = $this->filter->sanitize($rq->fields->$fieldID->value_id, "int");
 						if($field['value_id']=='') $field['value_id'] = null;
 						else {
-							if(isset($field['values']) && isset($field['values'][$field['value_id']])) {
+							// если style=id
+							if(isset($field['style']) && $field['style'] == "id") {
+								// ничего делать не надо
+							}
+							// если style=name
+							else if(isset($field['values']) && isset($field['values'][$field['value_id']])) {
 								$field['value'] = $field['values'][$field['value_id']];
 							}
 							else $this->error['messages'][] = [
 								'title' => "Ошибка",
-								'msg' => 'Поле "'. $field['name'] .'". Передано некорректное значение 2. value_id=' . $field['value_id'] . ', rq_id=' . $this->filter->sanitize($rq->fields->$fieldID->value_id, "int"),
+								'msg' => 'Поле "'. $field['name'] .'". Передано некорректное значение 2. value_id=' . $field['value_id'] . ', rq_id=' . $rq->fields->$fieldID->value_id,
 							];
 						}
 					}
 					else {
 						$this->error['messages'][] = [
 							'title' => "Ошибка",
-							'msg' => 'Поле "'. $field['name'] .'". Передано некорректное значение. value_id=' . $field['value_id'] . ', rq_id=' . $this->filter->sanitize($rq->fields->$fieldID->value_id, "int"),
+							'msg' => 'Поле "'. $field['name'] .'". Передано некорректное значение. value_id=' . $field['value_id'] . ', rq_id=' . $rq->fields->$fieldID->value_id,
 						];
 					}
 					
@@ -1213,7 +1250,7 @@ class ControllerEntity extends ControllerBase {
 			}
 			else if($field['type'] == 'period') {
 				// проверка на обязательность
-				$res |= $this->checkBasicRequire($field);
+				//$res |= $this->checkBasicRequire($field);
 				
 				$res |= $this->checkBasicPeriod($field);
 			}
@@ -1253,14 +1290,14 @@ class ControllerEntity extends ControllerBase {
 	
 	protected function checkBasicAmount($field) {
 		$res = 0;
-		if(isset($field['min']) && $field['value'] < $field['min']) {
+		if(isset($field['min']) && $field['value'] != null && $field['value'] < $field['min']) {
 			$this->checkResult[] = [
 				'type' => "error",
 				'msg' => 'Поле "' . $field['name'] . '" содержит значение меньше допустимого',
 			];
 			$res |= 2;
 		}
-		if(isset($field['max']) && $field['value'] > $field['max']) {
+		if(isset($field['max']) && $field['value'] != null && $field['value'] > $field['max']) {
 			$this->checkResult[] = [
 				'type' => "error",
 				'msg' => 'Поле "' .$field['name'] . '" содержит значение больше допустимого',
@@ -1303,33 +1340,37 @@ class ControllerEntity extends ControllerBase {
 	
 	protected function checkBasicPeriod($field) {
 		$res = 0;
-		if(isset($this->fields['target_date']['required'])) {
-			$reqMode = $this->fields['target_date']['required'];
+		if(isset($field['required'])) {
+			$reqMode = $field['required'];
+			$val1 = $field["value1"];
+			$val2 = $field["value2"];
+			//$this->logger->log(__METHOD__ . '. val1=' . $val1 . '. val2=' . $val2);
 			if($reqMode == 1 && $val1 == null) {
 				$this->checkResult[] = [
 					'type' => "error",
-					'msg' => 'Поле "' . $this->fields['target_date']['name'] . '". Дата "' . $this->fields['target_date']['name1'] . '" обязательна для заполнения',
+					'msg' => 'Поле "' . $field['name'] . '". Дата "' . $field['name1'] . '" обязательна для заполнения',
 				];
 				$res |= 2;
 			}
 			else if($reqMode == 2 && $val2 == null) {
 				$this->checkResult[] = [
 					'type' => "error",
-					'msg' => 'Поле "' . $this->fields['target_date']['name'] . '". Дата "' . $this->fields['target_date']['name2'] . '" обязательна для заполнения',
+					'msg' => 'Поле "' . $field['name'] . '". Дата "' . $field['name2'] . '" обязательна для заполнения',
 				];
 				$res |= 2;
 			}
 			else if($reqMode == 3 && $val1 == null && $val2 == null) {
 				$this->checkResult[] = [
 					'type' => "error",
-					'msg' => 'Поле "' . $this->fields['target_date']['name'] . '". Должна быть заполнена хотя бы одна дата',
+					'msg' => 'Поле "' . $field['name'] . '". Должна быть заполнена хотя бы одна дата',
 				];
 				$res |= 2;
+				//$this->logger->log(__METHOD__ . '. QQQ val1=' . $val1 . '. val2=' . $val2);
 			}
 			else if($reqMode == 4 && ($val1 == null || $val2 == null)) {
 				$this->checkResult[] = [
 					'type' => "error",
-					'msg' => 'Поле "' . $this->fields['target_date']['name'] . '". Период должен быть заполнен полностью',
+					'msg' => 'Поле "' . $field['name'] . '". Период должен быть заполнен полностью',
 				];
 				$res |= 2;
 			}
@@ -1340,12 +1381,13 @@ class ControllerEntity extends ControllerBase {
 				if($d1 > $d2) {
 					$this->checkResult[] = [
 						'type' => "error",
-						'msg' => 'В поле "'. $this->fields['target_date']['name'] .'" дата окончания периода не может быть меньше даты начала периода',
+						'msg' => 'В поле "'. $field['name'] .'" дата окончания периода не может быть меньше даты начала периода',
 					];
 					$res |= 2;
 				}
 			}
 		}
+		
 		return $res;
 	}
 	

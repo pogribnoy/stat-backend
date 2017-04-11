@@ -21,6 +21,7 @@ class ExpenselistController extends ControllerList {
 				'filter' => 'number',
 				'filter_value' => isset($this->filter_values['id']) ? $this->filter_values['id'] : '',
 				"sortable" => "DESC",
+				'hideble' => 1,
 			),
 			'name' => array(
 				'id' => 'name',
@@ -37,13 +38,6 @@ class ExpenselistController extends ControllerList {
 				'filter_value' => isset($this->filter_values['amount']) ? $this->filter_values['amount'] : '',
 				"sortable" => "DESC",
 			),
-			/*'date' => array(
-				'id' => 'date',
-				'name' => $this->controller->t->_("text_entity_property_date"),
-				'filter' => 'text',
-				'filter_value' => isset($this->filter_values['date']) ? $this->filter_values['date'] : '',
-				"sortable" => "DESC",
-			),*/
 			'settlement' => array(
 				'id' => 'settlement',
 				'name' => $this->controller->t->_("text_expenselist_settlement"),

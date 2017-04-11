@@ -91,10 +91,12 @@ $.views.helpers({
 		return false;
 	},
 	checksHasError: function(checkResult) {
-		var checkResultLength = checkResult.length;
-		for(var i=0; i< checkResultLength; i++) {
-			//console.log(checkResult[i].type);
-			if(checkResult[i].type == "error") return true;
+		if(checkResult) {
+			var checkResultLength = checkResult.length;
+			for(var i=0; i< checkResultLength; i++) {
+				//console.log(checkResult[i].type);
+				if(checkResult[i].type == "error") return true;
+			}
 		}
 		return false;
 	},

@@ -16,6 +16,7 @@ class Expense extends Model{
 	public $settlement;
 	public $target_date_from;
 	public $target_date_to;
+	public $created_at;
 		
 	public function initialize() {
 		$this->belongsTo("expense_type_id", "ExpenseType", "id");

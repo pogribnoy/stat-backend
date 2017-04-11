@@ -65,7 +65,7 @@ class OrganizationController extends ControllerEntity {
 				'id' => 'img',
 				'name' => $this->t->_("text_entity_property_image"),
 				'type' => 'img',
-				'max_count' => 6,
+				'max_count' => 2,
 				'min_count' => 0,
 				'newEntityValue' => null,
 			)

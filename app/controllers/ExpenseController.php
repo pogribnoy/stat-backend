@@ -25,7 +25,7 @@ class ExpenseController extends ControllerEntity {
 				'style' => 'id', //name
 				//'values' => $expense_types
 				'linkEntityName' => 'ExpenseType',
-				'required' => 1,
+				'required' => 2,
 				'newEntityValue' => null,
 			),
 			'expense_status' => array(
@@ -35,32 +35,25 @@ class ExpenseController extends ControllerEntity {
 				'style' => 'id', //name
 				//'values' => $expense_types
 				'linkEntityName' => 'ExpenseStatus',
-				'required' => 1,
+				'required' => 2,
 				'newEntityValue' => null,
 			),
 			'name' => array(
 				'id' => 'name',
 				'name' => $this->t->_("text_entity_property_name"),
 				'type' => 'text',
-				'required' => 1,
+				'required' => 2,
 				'newEntityValue' => null,
 			), 
 			'amount' => array(
 				'id' => 'amount',
 				'name' => $this->t->_("text_entity_property_amount"),
-				'type' => 'number',
-				'required' => 1,
+				'type' => 'amount',
+				'required' => 2,
 				'min' => 1,
 				'max' => 99999999,
 				'newEntityValue' => null,
 			), 
-			/*'date' => array(
-				'id' => 'date',
-				'name' => $this->t->_("text_entity_property_date"),
-				'type' => 'date',
-				'required' => 1,
-				'newEntityValue' => (new DateTime('now'))->format("Y-m-d"),
-			),*/
 			'settlement' =>	array(
 				'id' => 'settlement',
 				'name' => $this->t->_("text_expense_settlement"),
@@ -110,6 +103,13 @@ class ExpenseController extends ControllerEntity {
 				]; },
 				'required' => 3,	// 1-обязательно value1, 2-обязательно value2, 3-обязательно value1 ИЛИ value2, 4-обязательно value1 И value2
 			),
+			'created_at' =>	array(
+				'id' => 'created_at',
+				'name' => $this->t->_("text_entity_property_created_at"),
+				'type' => 'date',
+				'newEntityValue' => null,
+				'visible' =>false,
+			),
 		];
 		// наполняем поля данными
 		parent::initFields();
@@ -133,6 +133,7 @@ class ExpenseController extends ControllerEntity {
 		$this->entity->executor = $this->fields['executor']['value'];
 		$this->entity->target_date_from = $this->fields['target_date']['value1'];
 		$this->entity->target_date_to = $this->fields['target_date']['value2'];
+		$this->entity->created_at = $this->fields['created_at']['value'];
 	}
 	
 	/* 
@@ -156,8 +157,6 @@ class ExpenseController extends ControllerEntity {
 		$this->fields["expense_status"]["value_id"] = $row->expense_status_id;
 		$this->fields["id"]["value"] = $row->expense->id;
 		$this->fields["name"]["value"] = $row->expense->name;
-		/*$this->fields["date"]["value"] = $row->expense->date;*/
-		//$this->fields["amount"]["value"] = $row->expense->amount!=null ? number_format($row->expense->amount / 100, 2, '.', '') : '';
 		$this->fields["amount"]["value"] = $row->expense->amount;
 		$this->fields["settlement"]["value"] = $row->expense->settlement;
 		$this->fields["street_type"]["value"] = $row->street_type_name;
@@ -167,6 +166,7 @@ class ExpenseController extends ControllerEntity {
 		$this->fields["executor"]["value"] = $row->expense->executor;
 		$this->fields["target_date"]["value1"] = $row->expense->target_date_from;
 		$this->fields["target_date"]["value2"] = $row->expense->target_date_to;
+		$this->fields["created_at"]["value"] = $row->expense->created_at;
 	}
 		
 	/* 
@@ -174,78 +174,28 @@ class ExpenseController extends ControllerEntity {
 	* Расширяемый метод.
 	*/
 	protected function sanitizeSaveRqData($rq) {
-		// id, select, link
-		if(!parent::sanitizeSaveRqData($rq)) return false;
+		$res = 0;
+		// id, //select, link
+		$res |= parent::sanitizeSaveRqData($rq);
+		
 		// name
 		if(isset($rq->fields->name) && isset($rq->fields->name->value)) {
 			$val = $this->filter->sanitize(urldecode($rq->fields->name->value), ["trim", "string"]);
 			if($val != '') $this->fields['name']['value'] = $val;
-			else {
-				$this->error['messages'][] = [
-					'title' => "Ошибка",
-					'msg' => 'Поле "'. $this->fields['name']['name'] .'" обязательно для указания',
-				];
-				return false;
-			}
+			else $this->fields['name']['value'] = null;
+			//$this->logger->log('val = ' . $this->fields['name']['value']);
 		}
-		else return false;
-		//date
-		/*if(isset($rq->fields->date) && isset($rq->fields->date->value)) {
-			$val = $this->filter->sanitize(urldecode($rq->fields->date->value), ["trim", "string"]);
-			if($val != '') $this->fields['date']['value'] = $val;
-			else {
-				$this->error['messages'][] = [
-					'title' => "Ошибка",
-					'msg' => 'Поле "'. $this->fields['date']['name'] .'" обязательно для указания',
-				];
-				return false;
-			}
-			//$this->logger->log('val = ' . $val);
-		}
-		else return false;*/
+		else $this->fields['name']['value'] = null;
+		
 		//amount
 		if(isset($rq->fields->amount) && isset($rq->fields->amount->value)) {
 			$val = $this->filter->sanitize(urldecode($rq->fields->amount->value), ["trim", "string"]);
-			//$this->logger->log('1val = ' . $val);
-			//$val = str_replace([",", "-"], ".", $val);
-			//$this->logger->log('2val = ' . $val);
-			if($val != '') {
-				$val = 1 * $val;
-				if(isset($this->fields['amount']['min']) && $val < (int)$this->fields['amount']['min']) {
-					$this->error['messages'][] = [
-						'title' => "Ошибка",
-						'msg' => 'Поле "'. $this->fields['amount']['name'] .'" содержит значение меньше допустимого',
-					];
-					return false;
-				}
-				if(isset($this->fields['amount']['max']) && $val > (int)$this->fields['amount']['max']) {
-					$this->error['messages'][] = [
-						'title' => "Ошибка",
-						'msg' => 'Поле "'. $this->fields['amount']['name'] .'" содержит значение больше допустимого',
-					];
-					return false;
-				}
-				//$this->logger->log('3val = ' . $val);
-				$this->fields['amount']['value'] = $val;
-			}
-			else if($val == '' && isset($this->fields['amount']['required'])) {
-				$this->error['messages'][] = [
-					'title' => "Ошибка",
-					'msg' => 'Поле "'. $this->fields['amount']['name'] .'" обязательно для указания',
-				];
-				return false;
-			}
-			else {
-				$this->fields['amount']['value'] = null;
-			}
+			if($val != '') $this->fields['amount']['value'] = $val;
+			else $this->fields['amount']['value'] = null;
+			//$this->logger->log('val = ' . $this->fields['amount']['value']);
 		}
-		else {
-			$this->error['messages'][] = [
-				'title' => "Ошибка",
-				'msg' => 'В поле "'. $this->fields['amount']['name'] .'" обязательно для указания',
-			];
-			return false;
-		}
+		else $this->fields['amount']['value'] = null;
+		
 		
 		//settlement
 		if(isset($rq->fields->settlement) && isset($rq->fields->settlement->value)) {
@@ -285,76 +235,31 @@ class ExpenseController extends ControllerEntity {
 		
 		//target_date
 		if(isset($rq->fields->target_date)) {
-			$val1 = null;
-			$val2 = null;
-			if(isset($rq->fields->target_date->value1) && $rq->fields->target_date->value1 != null)	$val1 = $this->filter->sanitize(urldecode($rq->fields->target_date->value1), ["trim", "string"]);
-			if(isset($rq->fields->target_date->value2) && $rq->fields->target_date->value2 != null)	$val2 = $this->filter->sanitize(urldecode($rq->fields->target_date->value2), ["trim", "string"]);
-			if($val1 == '') $val1 = null;
-			if($val2 == '') $val2 = null;
-			
-			$this->logger->log(__METHOD__ . '. val1 = ' . $val1 . '. val2 = ' . $val2);
-			
-			
-			if(isset($this->fields['target_date']['required'])) {
-				$reqMode = $this->fields['target_date']['required'];
-				if($reqMode == 1 && $val1 == null) {
-					$this->error['messages'][] = [
-						'title' => "Ошибка",
-						'msg' => 'Поле "' . $this->fields['target_date']['name'] . '". Дата "' . $this->fields['target_date']['name1'] . '" обязательна для заполнения',
-					];
-					return false;
-				}
-				else if($reqMode == 2 && $val2 == null) {
-					$this->error['messages'][] = [
-						'title' => "Ошибка",
-						'msg' => 'Поле "' . $this->fields['target_date']['name'] . '". Дата "' . $this->fields['target_date']['name2'] . '" обязательна для заполнения',
-					];
-					return false;
-				}
-				else if($reqMode == 3 && $val1 == null && $val2 == null) {
-					$this->error['messages'][] = [
-						'title' => "Ошибка",
-						'msg' => 'Поле "' . $this->fields['target_date']['name'] . '". Должна быть заполнена хотя бы одна дата',
-					];
-					return false;
-				}
-				else if($reqMode == 4 && ($val1 == null || $val2 == null)) {
-					$this->error['messages'][] = [
-						'title' => "Ошибка",
-						'msg' => 'Поле "' . $this->fields['target_date']['name'] . '". Период должен быть заполнен полностью',
-					];
-					return false;
-				}
-			
-				if($val1 != null && $val2 != null) {
-					$d1 = new dateTime ($val1); //(new DateTime('now'))->format("Y-m-d")
-					$d2 = new dateTime ($val2);
-					if($d1 > $d2) {
-						$this->error['messages'][] = [
-							'title' => "Ошибка",
-							'msg' => 'В поле "'. $this->fields['target_date']['name'] .'" дата окончания периода не может быть меньше даты начала периода',
-						];
-						return false;
-					}
-				}
+			//$this->logger->log(__METHOD__ . '. 1');
+			if(isset($rq->fields->target_date->value1)) {
+				$val = $this->filter->sanitize(urldecode($rq->fields->target_date->value1), ["trim", "string"]);
+				if($val == '') $this->fields['target_date']['value1'] = null;
+				else $this->fields['target_date']['value1'] = $val;
+				//$this->logger->log(__METHOD__ . '. value1=' . $val);
+				//$this->logger->log('val = ' . $this->fields['target_date']['value1']);
 			}
-			$this->fields['target_date']['value1'] = $val1;
-			$this->fields['target_date']['value2'] = $val2;
-			$this->logger->log(__METHOD__ . '. value1 = ' . $this->fields['target_date']['value1'] . '. value2 = ' . $this->fields['target_date']['value2']);
-			//$this->logger->log('val1 = ' . $this->fields['target_date']['value1']);
-			//$this->logger->log('val2 = ' . $this->fields['target_date']['value2']);
+			if(isset($rq->fields->target_date->value2)) {
+				$val = $this->filter->sanitize(urldecode($rq->fields->target_date->value2), ["trim", "string"]);
+				if($val == '') $this->fields['target_date']['value2'] = null;
+				else $this->fields['target_date']['value2'] = $val;
+				//$this->logger->log(__METHOD__ . '. value2=' . $val);
+				//$this->logger->log('val = ' . $this->fields['target_date']['value2']);
+			}
 		}
 		else {
-			//$this->logger->log('target_date = ' . json_encode($rq->fields->target_date));
-			//$this->fields['target_date']['value1'] = null;
-			//$this->fields['target_date']['value2'] = null;
-			$this->error['messages'][] = [
-				'title' => "Системная ошибка",
-				'msg' => 'Поле "' . $this->fields['target_date']['name'] . '". Не получены данные о периоде',
-			];
-			return false;
+			//$this->logger->log(__METHOD__ . '. 3' . $val);
+			$this->fields['target_date']['value1'] = null;
+			$this->fields['target_date']['value2'] = null;
 		}
+		//$this->logger->log(__METHOD__ . '. target_date=' . json_encode($this->fields['target_date']));
 		
-		return true;
+		$res |= $this->check();
+		
+		return $res;
 	}
 }

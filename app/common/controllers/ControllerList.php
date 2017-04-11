@@ -369,6 +369,10 @@ class ControllerList extends ControllerBase {
 			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_target_date"]), ['trim',"string"]);
 			if($val != '') $this->filter_values["target_date"] =  $val;
 		}
+		if(isset($_REQUEST["filter_created_at"])) {
+			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_created_at"]), ['trim',"string"]);
+			if($val != '') $this->filter_values["created_at"] =  $val;
+		}
 		
 		// фильтры по справочникам
 		if(isset($_REQUEST["filter_region"])) {
@@ -440,6 +444,7 @@ class ControllerList extends ControllerBase {
 			else $phql .= " AND <TableName>.amount LIKE '%" . str_replace([".", ",", "-"], "", $this->filter_values["amount"]) . "%'";
 		}
 		if(isset($this->filter_values["date"]) && isset($this->columns['date'])) $phql .= " AND <TableName>.date LIKE '%" . $this->filter_values["date"] . "%'";
+		if(isset($this->filter_values["created_at"]) && isset($this->columns['created_at'])) $phql .= " AND <TableName>.created_at LIKE '%" . $this->filter_values["created_at"] . "%'";
 		
 		if(isset($this->filter_values["group"]) && isset($this->columns['group'])) $phql .= " AND <TableName>.[group] LIKE '%" . $this->filter_values["group"] . "%'";
 		if(isset($this->filter_values["target_date"]) && isset($this->columns['target_date'])) {
@@ -480,6 +485,7 @@ class ControllerList extends ControllerBase {
 		if(isset($this->filter_values["organization_name"])) $phql .= " AND Organization.name LIKE '%" . $this->filter_values["organization_name"] . "%'";
 		if(isset($this->filter_values["user_role"])) $phql .= " AND UserRole.id = '" . $this->filter_values["user_role"] . "'";
 		if(isset($this->filter_values["created_by_id"])) $phql .= " AND User.id = '" . $this->filter_values["created_by_id"] . "'";
+		
 		
 		//$this->logger->log(json_encode($phql));
 		return $phql;

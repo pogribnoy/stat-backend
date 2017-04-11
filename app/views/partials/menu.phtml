@@ -23,6 +23,7 @@
 		if($controller->acl->isAllowed($controller->userData['role_id'], 'expensetypelist', 'index')) $access['expensetypelist_index'] = 1;
 		if($controller->acl->isAllowed($controller->userData['role_id'], 'regionlist', 'index')) $access['regionlist_index'] = 1;
 		if($controller->acl->isAllowed($controller->userData['role_id'], 'expensestatuslist', 'index')) $access['expensestatuslist_index'] = 1;
+		if($controller->acl->isAllowed($controller->userData['role_id'], 'tasks', 'index')) $access['tasks_index'] = 1;
 		//var_dump($access);
 		?>
 		<!-- Collect the nav links, forms, and other content for toggling -->
@@ -38,7 +39,7 @@
 						</ul>
 					</li>
 				<?php } ?>
-				<?php if(isset($access['userlist_index']) || isset($access['userrolelist_index']) || isset($access['resourcelist_index']) || isset($access['streettypelist_index']) || isset($access['expensetypelist_index']) || isset($access['regionlist_index']) || isset($access['expensestatuslist_index'])) { ?>
+				<?php if(isset($access['userlist_index']) || isset($access['userrolelist_index']) || isset($access['resourcelist_index']) || isset($access['streettypelist_index']) || isset($access['expensetypelist_index']) || isset($access['regionlist_index']) || isset($access['expensestatuslist_index']) || isset($access['tasks_index'])) { ?>
 					<li>
 						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><?php echo $t->_("main_menu_settings"); ?> <span class="caret"></span></a>
 						<ul class="dropdown-menu">
@@ -49,6 +50,7 @@
 							<?php if(isset($access['expensetypelist_index'])) { ?><li><a href="/expensetypelist"><?php echo $t->_("main_menu_expensetypelist"); ?></a></li><?php } ?>
 							<?php if(isset($access['regionlist_index'])) { ?><li><a href="/regionlist"><?php echo $t->_("main_menu_regionlist"); ?></a></li><?php } ?>
 							<?php if(isset($access['expensestatuslist_index'])) { ?><li><a href="/expensestatuslist"><?php echo $t->_("main_menu_expensestatuslist"); ?></a></li><?php } ?>
+							<?php if(isset($access['tasks_index'])) { ?><li><a href="/tasks"><?php echo $t->_("main_menu_tasks"); ?></a></li><?php } ?>
 						</ul>
 					</li>
 				<?php } ?>
