@@ -854,40 +854,48 @@ class ControllerEntity extends ControllerBase {
 				$field["value"] = null;
 				$field["value_id"] = null;
 				if(is_object($field["newEntityID"])) $field["value"] = $field["newEntityID"]();
-				else if(is_int($field["newEntityID"])) {
-					$this->logger->log(__METHOD__ . '. field_id = ' . $field["id"] . " ||| newEntityID=" . $field["newEntityID"] . " ||| is_int=" . is_int($field["newEntityID"]) . " ||| is_bool=" . is_bool($field["newEntityID"]) . " ||| is_object=" . is_object($field["newEntityID"]));
-					$linkEntityName = $field["linkEntityName"];
-					$linkEntityField = $field["linkEntityField"];
-					$entities = $linkEntityName::find([
-						"conditions" => "id = ?1", 
-						"bind" => [
-							1 => $field["newEntityID"],
-						],
-						'limit' => 1,
-					]);
-					if($entities && count($entities) == 1) {
-						$field["value"] = $entities[0]->$linkEntityField;
-						$field["value_id"] = $entities[0]->id;
-					}
-				}
+				//else if(is_numeric($field["newEntityID"])) {
 				else if(is_bool($field["newEntityID"]) && $field["newEntityID"] != false) {
-					$this->logger->log(__METHOD__ . '. newEntityID = ' . $field["newEntityID"] . " gettype=" . gettype($field["newEntityID"]));
+					//$this->logger->log(__METHOD__ . '. newEntityID = ' . $field["newEntityID"] . " gettype=" . gettype($field["newEntityID"]));
+					$this->logger->log(__METHOD__ . '. BOOL field_id = ' . $field["id"] . " gettype=" . gettype(ctype_digit($field["newEntityID"])) . " ||| newEntityID=" . $field["newEntityID"] . " ||| is_int=" . ctype_digit($field["newEntityID"]) . " ||| is_bool=" . is_bool($field["newEntityID"]) . " ||| is_object=" . is_object($field["newEntityID"]));
 					$filterValueID = strtolower($field["linkEntityName"] . "_id");
 					if(isset($this->filter_values[$filterValueID]) && $this->filter_values[$filterValueID] != '' && $this->filter_values[$filterValueID] != null) {
 						$linkEntityName = $field["linkEntityName"];
 						$linkEntityField = $field["linkEntityField"];
-						$entities = $linkEntityName::find([
+						$entity = false;
+						$entity = $linkEntityName::findFirst([
 							"conditions" => "id = ?1", 
 							"bind" => [
 								1 => $this->filter_values[$filterValueID],
 							],
-							'limit' => 1,
 						]);
-						if($entities && count($entities) == 1) {
-							$field["value"] = $entities[0]->$linkEntityField;
-							$field["value_id"] = $entities[0]->id;
+						if($entity) {
+							$field["value"] = $entity->$linkEntityField;
+							$field["value_id"] = $entity->id;
 						}
 					}
+				}
+				else if(ctype_digit($field["newEntityID"])) {
+					$this->logger->log(__METHOD__ . '. INT field_id = ' . $field["id"] . " gettype=" . gettype(ctype_digit($field["newEntityID"])) . " ||| newEntityID=" . $field["newEntityID"] . " ||| is_int=" . ctype_digit($field["newEntityID"]) . " ||| is_bool=" . is_bool($field["newEntityID"]) . " ||| is_object=" . is_object($field["newEntityID"]));
+					$linkEntityName = $field["linkEntityName"];
+					$linkEntityField = $field["linkEntityField"];
+					$entity = false;
+					$entity = $linkEntityName::findFirst([
+						"conditions" => "id = ?1", 
+						"bind" => [
+							1 => (int)$field["newEntityID"],
+						],
+					]);					
+					if($entity) {
+						$this->logger->log(__METHOD__ . '. entity = ' . count($entity) . " id=" . $entity->id . " linkEntityField=" . $linkEntityField . " entity_linkEntityField=" . $entity->$linkEntityField);
+						$field["value_id"] = $entity->id;
+						$search = "_code";
+						$val = $linkEntityField;
+						$this->logger->log(__METHOD__ . '. substr = ' . substr($val, strlen($val) - strlen($search)));
+						if(substr($val, strlen($val) - strlen($search)) == $search) $field["value"] = $this->t->_("code_" . $entity->$linkEntityField);
+						else $field["value"] = $entity->$linkEntityField;
+					}
+					else $this->logger->log(__METHOD__ . '. qwe = ');
 				}
 				else $this->logger->log(__METHOD__ . '. asd = ');
 			}

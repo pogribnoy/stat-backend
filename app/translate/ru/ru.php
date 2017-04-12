@@ -81,6 +81,26 @@ $messages = array(
 "text_user_title"				=> "Пользователь", // form|page title
 "text_user_new_entity_title"	=> "Новый пользователь", // new entity form|page title
 
+// Scroller. Organization request
+"text_userlist_title"		=> "Вопросы", // scroller|page title
+
+"text_organizationrequest_topic" => "Тема",
+"text_organizationrequest_request" => "Вопрос",
+"text_organizationrequest_response" => "Ответ",
+"text_organizationrequest_response_email" => "Email для ответа",
+
+// Entity. Organization request
+"text_organizationrequest_title"			=> "Задайте вопрос", //entity|page title
+"text_organizationrequest_topic"			=> "Тема",
+"text_organizationrequest_request"			=> "Вопрос",
+"text_organizationrequest_response"			=> "Ответ",
+"text_organizationrequest_response_email"	=> "Email для ответа",
+
+"code_status_new"			=> "Новый",
+"code_status_processed"		=> "Готов",
+"code_status_in_progress"	=> "В обработке",
+"code_status_declined"		=> "Отказан",
+
 // Scroller. User role list
 "text_userrolelist_title"			=> "Роли пользователей", // scroller|page title
 "text_userrole_new_entity_title"	=> "Новая роль пользователя",

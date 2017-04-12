@@ -29,16 +29,16 @@ $loader->register();
 // Загружаем файл конфигурации, если он есть
 
 $configFile = APP_PATH . "app/config/config.php";
-echo "DIR=" . __DIR__ . PHP_EOL;
-echo "APP_PATH=" . APP_PATH . PHP_EOL;
-echo "configFile=" . $configFile . PHP_EOL;
+//echo "DIR=" . __DIR__ . PHP_EOL;
+//echo "APP_PATH=" . APP_PATH . PHP_EOL;
+//echo "configFile=" . $configFile . PHP_EOL;
 
 if (file_exists(APP_PATH . 'app/config/config.php')) require APP_PATH . 'app/config/config.php';
 else echo "Config file not found: " . APP_PATH . 'app/config/config.php';
 
 $di->set("config", $config);
 
-echo "config=" . json_encode($di["config"]) . PHP_EOL . PHP_EOL;
+//echo "config=" . json_encode($di["config"]) . PHP_EOL . PHP_EOL;
 
 // Соединение с БД создается на основе параметров из конфигурационного файла
 $di->setShared('db', function() use ($config) {
@@ -61,7 +61,7 @@ $di->setShared('db', function() use ($config) {
 		"charset"	=> $config["database"]["charset"]
 	));
 	
-	echo "connection=" . json_encode($connection) . PHP_EOL;
+	//echo "connection=" . json_encode($connection) . PHP_EOL;
 	
 	 // Привзываем eventsManager к адаптеру БД
     //$connection->setEventsManager($eventsManager);
@@ -71,7 +71,7 @@ $di->setShared('db', function() use ($config) {
 
 //var_dump($di);
 
-echo "db=" . json_encode($di["db"]) . PHP_EOL;
+//echo "db=" . json_encode($di["db"]) . PHP_EOL;
 
 // Создаем консольное приложение
 $console = new ConsoleApp();
@@ -95,7 +95,7 @@ foreach ($argv as $k => $arg) {
         $arguments["params"][] = $arg;
     }
 }
-echo "arguments=" . json_encode($arguments) . PHP_EOL;
+//echo "arguments=" . json_encode($arguments) . PHP_EOL;
 
 try {
     // обрабатываем входящие аргументы
