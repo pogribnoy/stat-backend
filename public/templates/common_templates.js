@@ -51,13 +51,8 @@ show_entity_field_select: '<p id="field_{{:id}}_value" class="form-control-stati
 // entity_field_select_text_style_options - список заполняется текстовыми значениями и не имеет идентификаторов
 edit_entity_field_select_id_style_options: '{{for values ~value_id=value_id}}<option value="{{:id}}" {{if id==~value_id}}selected="selected"{{/if}}>{{:name}}</option>{{/for}}',
 edit_entity_field_select_text_style_options: '{{for values ~value=value}}<option value="{{:#index}}" {{if #data==~value}}selected="selected"{{/if}}>{{:#data}}</option>{{/for}}',
-edit_entity_field_img: '<input id="field_{{:id}}" class="file" type="file" {{if max_count && max_count > 1}} name="file[]" multiple="true"{{else}}name="file"{{/if}}{{if min_count && min_count > 0}} mandatory{{/if}}> \
-<input hidden="" id="eid" value="{{:~descriptor.local_data.eid}}"> \
-<input hidden="" id="entity" value="{{:~descriptor.entityNameLC}}"> \
-<input hidden="" id="field" value="{{:id}}"> \
-<input hidden="" id="min_count" value="{{:min_count}}"> \
-<input hidden="" id="max_count" value="{{:max_count}}">',
-show_entity_field_img: '{{if files && files.length > 0 }}<div class="row">{{for files}}<div class="col-lg-6"><a href="#" class="thumbnail"><img src="{{:url}}" alt="{{if ~descriptor.entityNameLC && ~descriptor.entity.fields && ~descriptor.entity.fields.name}}{{:~descriptor.entityNameLC.fields.name.value}}{{/if}}"/></a></div>{{/for}}</div><!-- /.row -->{{/if}}',
+edit_entity_field_img: '<form action="/file/upload" class="dropzone" id="field_{{:id}}_{{:~descriptor.fields.id.value}}"></form>',
+show_entity_field_img: '{{if files && files.length > 0 }}<div class="row">{{for files}}<div class="col-lg-6"><a href="#" class="thumbnail"><img src="{{:url}}" alt="{{if ~descriptor.entityNameLC && ~descriptor.fields && ~descriptor.fields.name}}{{:~descriptor.fields.name.value}}{{/if}}"/></a></div>{{/for}}</div><!-- /.row -->{{/if}}',
 
 edit_entity_field_link: '<div class="input-group"><input type="text" class="form-control" id="field_{{:id}}_value" placeholder="" value="{{:value}}" readonly><span class="input-group-btn"><button class="btn btn-default" type="button"  aria-label="{{:name}}"  name="{{:id}}" onclick="link_entity(\'{{:(~descriptor ? ~descriptor.local_data.container_id : entity.local_data.container_id)}}\', \'{{:controllerName}}\', \'{{:id}}\', \'radio\');"><span class="glyphicon glyphicon-link" aria-hidden="true"></span></button></span></div>',
 show_entity_field_link: '<p id="field_{{:id}}_value" class="form-control-static">{{:value}}</p>',

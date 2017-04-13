@@ -11,20 +11,20 @@ $.templates({
 	item_operation: '{{if id==="delete" tmpl="button_delete"}} {{else id=="edit" tmpl="button_edit"}} {{else id=="show" tmpl="button_show"}} {{/if}}\n',
 	
 	// общие кнопки скроллера
-	button_add: '<button type="button" class="btn btn-xs" aria-label="{{:name}}" name="{{:id}}" onclick="row_edit(\'{{:~descriptor.local_data.container_id}}\', null);">{{:name}}</button>\n',	
-	button_select: '<button type="button" class="btn btn-xs" aria-label="{{:name}}" name="{{:id}}" onclick="link_entity(\'{{:~descriptor.local_data.container_id}}\', \'{{:~descriptor.controllerName}}\', null, \'checkbox\');">{{:name}}</button>\n',	
+	button_add: '<button type="button" class="btn btn-success btn-xs" aria-label="{{:name}}" name="{{:id}}" onclick="row_edit(\'{{:~descriptor.local_data.container_id}}\', null);">{{:name}}</button>\n',	
+	button_select: '<button type="button" class="btn btn-success btn-xs" aria-label="{{:name}}" name="{{:id}}" onclick="link_entity(\'{{:~descriptor.local_data.container_id}}\', \'{{:~descriptor.controllerName}}\', null, \'checkbox\');">{{:name}}</button>\n',	
 	
 	// групповые операции
 	button_group_delete: '<li><a href="#" aria-label="{{:name}}" name="{{:id}}" onclick="group_delete(\'{{:~descriptor.local_data.container_id}}\');">{{:name}}</a></li>',
 
 	// кнопки для строк
-	button_edit: '<button type="button" class="btn btn-xs" aria-label="{{:name}}" name="{{:id}}" onclick="row_edit(\'{{:~descriptor.local_data.container_id}}\', \'{{:~entity.local_data.eid}}\');"><span class="glyphicon glyphicon-pencil" aria-hidden="true"></span></button>',
-	button_show: '<button type="button" class="btn btn-xs" aria-label="{{:name}}" name="{{:id}}" onclick="row_show(\'{{:~descriptor.local_data.container_id}}\', \'{{:~entity.local_data.eid}}\');"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>',
-	button_delete: '<button type="button" class="btn btn-xs" aria-label="{{:name}}" name="{{:id}}{{:~entity.local_data.eid}}" onclick="row_delete(\'{{:~descriptor.local_data.container_id}}\', \'{{:~entity.local_data.eid}}\');"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>\n',
+	button_edit: '<button type="button" class="btn btn-success btn-xs" aria-label="{{:name}}" name="{{:id}}" onclick="row_edit(\'{{:~descriptor.local_data.container_id}}\', \'{{:~entity.local_data.eid}}\');"><span class="glyphicon glyphicon-pencil" aria-hidden="true"></span></button>',
+	button_show: '<button type="button" class="btn btn-default btn-xs" aria-label="{{:name}}" name="{{:id}}" onclick="row_show(\'{{:~descriptor.local_data.container_id}}\', \'{{:~entity.local_data.eid}}\');"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>',
+	button_delete: '<button type="button" class="btn btn-danger btn-xs" aria-label="{{:name}}" name="{{:id}}{{:~entity.local_data.eid}}" onclick="row_delete(\'{{:~descriptor.local_data.container_id}}\', \'{{:~entity.local_data.eid}}\');"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>\n',
 	
 	// кнопки фильтра
-	button_apply: '<button type="button" class="btn btn-xs" aria-label="{{:name}}" name="{{:id}}" onclick="apply_filter(\'{{:~descriptor.local_data.container_id}}\');"><span class="glyphicon glyphicon-filter" aria-hidden="true"></span></button>\n',
-	button_clear: '<button type="button" class="btn btn-xs" aria-label="{{:name}}" name="{{:id}}" onclick="clear_filter(\'{{:~descriptor.local_data.container_id}}\');"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>\n',
+	button_apply: '<button type="button" class="btn btn-default btn-xs" aria-label="{{:name}}" name="{{:id}}" onclick="apply_filter(\'{{:~descriptor.local_data.container_id}}\');"><span class="glyphicon glyphicon-filter" aria-hidden="true"></span></button>\n',
+	button_clear: '<button type="button" class="btn btn-default btn-xs" aria-label="{{:name}}" name="{{:id}}" onclick="clear_filter(\'{{:~descriptor.local_data.container_id}}\');"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>\n',
 	
 	// колонки скроллера
 	scroller_row: '{{if ~descriptor.group_operations.length > 0}}{{include tmpl="scroller_data_cell_ckeckbox"/}}{{/if}}{{for ~columns ~entity=#data}}{{if id=="operations"}}{{include tmpl="scroller_data_cell_operations"/}}{{else id=="active"}}{{include tmpl="scroller_data_cell_active"/}}{{else id=="id"}}{{include tmpl="scroller_data_cell_id"/}}{{else}}{{include tmpl="scroller_data_cell"/}}{{/if}}{{/for}}',

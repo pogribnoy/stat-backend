@@ -169,11 +169,10 @@ function entitySave(container_id, item) {
 		
 		var def = $.Deferred();
 		res.done(function() {
-			var asd;
 			// текущую сущность сохраняем на сервер, если она не открыта на редактирование или не 
 			if((!descriptor.local_data.relationType || descriptor.local_data.relationType != 'n' || !container_id) && descriptor.local_data.status == 'edited') {
 			//if((descriptor.local_data.relationType && descriptor.local_data.relationType == 'n' )|| !container_id && descriptor.local_data.status == 'edited') {
-				asd = $.when(entitySaveToServer(descriptor)).done(function() {
+				$.when(entitySaveToServer(descriptor)).done(function() {
 					def.resolve();
 				});
 			}
@@ -182,9 +181,28 @@ function entitySave(container_id, item) {
 			}
 		});
 		def.done(function() {
+			descriptor.local_data.status = "actual";
+			/*if(descriptor.local_data.target_container_id) {
+				//var container = containers[descriptor.local_data.container_id];
+				// перерисовываем скроллер
+				var tContainerData = containers[descriptor.local_data.target_container_id].data;
+				
+				// добавляем сущность в скроллер
+				if(tContainerData.type == 'scroller') addItemToScroller(descriptor, tContainerData, {confirmFromServer:true});
+				
+				// перерисовываем грид/скроллер
+				renderScroller(tContainerData, false);
+				
+				if(container) hideModal(container.parent_container_id);
+			}
+			filesDef.resolve();*/
+			
+			
+			
 			// если сущность открывалась на редактирование для другого контейнера, то надо его обновить и закрыть модалку
 			if(descriptor.local_data.target_container_id) {
 				//var container = containers[descriptor.local_data.container_id];
+				
 				// перерисовываем скроллер
 				var tContainerData = containers[descriptor.local_data.target_container_id].data;
 				
@@ -739,48 +757,82 @@ function entitySaveToLocalFromHTML(container_id) {
 * @descriptor - описатель сущности, которую надо сохранить
 */
 function entitySaveToServer(descriptor){
-	var def = $.Deferred();
+	var def = $.Deferred();	// полный результат сохранения
+	var deferreds = [];	// массив результатов, после успешного завершения которых получаем полный результат сохранения
+	var entityDef = $.Deferred();	// результат сохранения сущности
 	var container = containers[descriptor.local_data.container_id];
 	
-	// сохраняем сущность на сервер
-	var clearFields = {};
-	for (var key in descriptor.fields) {
-		clearFields[key] = {
-			id: descriptor.fields[key]['id'],
-			value: descriptor.fields[key]['value'],
-			value1: descriptor.fields[key]['value1'],
-			value2: descriptor.fields[key]['value2'],
-			value_id: descriptor.fields[key]['value_id'],
-		};
-	}
+	$.when.apply($, deferreds).done(function(){	
+		def.resolve();
+	});
 	
-	var data = {
-		//fields: descriptor.fields
-		fields: clearFields,
+	// сохраняем сущность на сервер
+	var fields = {};
+	for (var fieldID in descriptor.fields) {
+		var field = descriptor.fields[fieldID];
+		if(field.type == "img") {
+			// если сохранение данных на сервер успешно, то сохраняем файлы
+			entityDef.done(function(data) {
+				var descriptor = data.descriptor;
+				
+				// загружаем и удаляем файлы
+				for (var fieldID in descriptor.fields) {
+					var field = descriptor.fields[fieldID];
+					if(descriptor.fields[fieldID].type == "img") {
+						if(descriptor.local_data.fields && descriptor.local_data.fields[fieldID]) {
+							var localField = descriptor.local_data.fields[fieldID];
+							
+							deferreds.push(localField.deferredUpload);
+							if(localField.deletedFiles) {
+								deferreds.push(localField.deferredDelete);
+							}
+							if(localField.uploader.getQueuedFiles().length>0) {
+								localField.uploader.processQueue();
+							}
+							else localField.deferredUpload.resolve();
+						}
+					}
+				}
+			});
+		}
+		else {
+			fields[fieldID] = {
+				id: field['id'],
+				value: field['value'],
+				value1: field['value1'],
+				value2: field['value2'],
+				value_id: field['value_id'],
+			};
+		}
 	}
 	
 	// готовим записи скроллеров
 	if(descriptor.scrollers) {
-		data.scrollers = {};
-		for (var key in descriptor.scrollers) {
-			var scroller = descriptor.scrollers[key];
-			data.scrollers[key] = {};
+		var scrollers = {};
+		for (var fieldID in descriptor.scrollers) {
+			var scroller = descriptor.scrollers[fieldID];
+			scrollers[fieldID] = {};
 			// сохраняем добавленные сущности
 			if(scroller.local_data.added_items) {
-				data.scrollers[key].added_items = [];
+				scrollers[fieldID].added_items = [];
 				var len = scroller.local_data.added_items.length;
 				for (var i = 0; i<len; i++) {
-					data.scrollers[key].added_items.push(scroller.local_data.added_items[i].fields.id.value);
+					scrollers[fieldID].added_items.push(scroller.local_data.added_items[i].fields.id.value);
 				}
 			}
 			// удаляем удаленные сущности
 			if(scroller.local_data.deleted_items) {
-				data.scrollers[key].deleted_items = [];
+				scrollers[fieldID].deleted_items = [];
 				var len = scroller.local_data.deleted_items.length;
-				for (var i = 0; i<len; i++) data.scrollers[key].deleted_items.push(scroller.local_data.deleted_items[i].fields.id.value);
+				for (var i = 0; i<len; i++) scrollers[fieldID].deleted_items.push(scroller.local_data.deleted_items[i].fields.id.value);
 			}
 		}
 	}
+	
+	var data = {
+		fields: fields,
+	}
+	if(scrollers) data.scrollers = scrollers;
 	
 	$.ajax({
 		url: '/' + descriptor.controllerName + '/save?id=' + descriptor.fields.id.value,
@@ -829,9 +881,9 @@ function entitySaveToServer(descriptor){
 					}
 				}
 				
-				def.resolve({descriptor: descriptor, container: container});
+				entityDef.resolve({descriptor: descriptor, container: container});
 			}
-			else def.reject();
+			else entityDef.reject();
 		},
 		error: function(xhr, ajaxOptions, thrownError) {
 			console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
@@ -841,67 +893,11 @@ function entitySaveToServer(descriptor){
 					msg: 'Ошибка обработки запроса на стороне сервера. Обратитесь в службу поддержки',
 				}],
 			});
-			def.reject();
-		}
-	});
-	
-	// если сохранение данных на сервер успешно, то сохраняем файлы
-	var filesDef = $.Deferred();
-	def.done(function(data) {
-		var container = data.container;
-		var descriptor = data.descriptor;
-		
-		// загружаем и удаляем файлы
-		var deferreds = [];
-		for(var key in descriptor.fields) {
-			var field = descriptor.fields[key];
-			if(field.type == 'img' && descriptor.local_data.fields && descriptor.local_data.fields[key]) {
-				// создаем отложенное уведомление о завершении загрузки
-				var deferredUpload = $.Deferred();
-				var deferredDelete = $.Deferred();
-				// помещаем уведомление в сущность, чтобы вызвать из событий загрузки файла
-				descriptor.local_data.fields[key].deferredUpload = deferredUpload;
-				descriptor.local_data.fields[key].deferredDelete = deferredDelete;
-				// после загрузки всех файлов одного поля сущности запускаем отложенное удаление файлов
-				deferredUpload.done(function(){
-					deleteEntityFiles(descriptor, key);
-				});
-				// помещаем в общий массив полей сущности с файлами
-				deferreds.push(deferredUpload);
-				deferreds.push(deferredDelete);
-				
-				descriptor.local_data.fields[key].settings.uploadExtraData.parent_entity_id = descriptor.local_data.eid;
-				descriptor.local_data.fields[key].inputJQ.fileinput('refresh',descriptor.local_data.fields[key].settings).fileinput('upload');
-				//descriptor.local_data.fields[key].inputJQ.fileinput('upload');
-				//$("input[type='file'][id='field_" + field.id + "']").fileinput('upload');
-			}
-		}
-		$.when.apply($, deferreds).done(function(){
-			// загрузка и удаление файлов выполнены
-			filesDef.resolve();
-		});
-		// если загрузка файлов не требуется, то обновляем целевой скроллер здесь
-		if(deferreds.length==0) {
-			descriptor.local_data.status = 'actual';
-		
-			if(descriptor.local_data.target_container_id) {
-				//var container = containers[descriptor.local_data.container_id];
-				// перерисовываем скроллер
-				var tContainerData = containers[descriptor.local_data.target_container_id].data;
-				
-				// добавляем сущность в скроллер
-				if(tContainerData.type == 'scroller') addItemToScroller(descriptor, tContainerData, {confirmFromServer:true});
-				
-				// перерисовываем грид/скроллер
-				renderScroller(tContainerData, false);
-				
-				if(container) hideModal(container.parent_container_id);
-			}
-			filesDef.resolve();
+			entityDef.reject();
 		}
 	});
     
-	return filesDef;
+	return def;
 }
 
 /* Удаляет файл из поля после успешной загрузки
@@ -942,7 +938,7 @@ function deleteEntityFiles(descriptor, fieldName) {
 		success: function(json) {
 			//console.log("Сущность сохранена на сервер");
 			console.log(json);
-			handleAjaxSuccess(json.success);
+			//handleAjaxSuccess(json.success);
 			// если нет ошибок
 			if(!handleAjaxError(json.error)) {
 				delete descriptor.local_data.fields[fieldName].deletedFiles;

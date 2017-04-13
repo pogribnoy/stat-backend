@@ -26,7 +26,7 @@ $config = new Config(array(
 		"filesUploadDirectory" => "upload/files/", //Каталог, в который должны загружаться файлы сущностей. В конце обязательно указание символа "/";
 		"tablePageSizes" => "[30,50,100]", // Ограничение количества строк для таблиц
 		"tableMaxPageSize" => "100", // Максимальное количество строк для таблиц
-		"sessionTimeout" => "1200", // Время жизни сессии в минутах
+		"sessionTimeout" => "3600", // Время жизни сессии в секундах
 		
 		"controllersDir" => "app/controllers/",
 		"viewsDir" => "app/views/",

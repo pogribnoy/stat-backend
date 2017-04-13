@@ -92,6 +92,18 @@ $(document).ready(function() {
 		'</div>'
 	});
 	*/
+	Dropzone.autoDiscover = false;
+	/*Dropzone.options.field_img2 = {
+	paramName: "file", // The name that will be used to transfer the file
+	maxFilesize: 2, // MB
+	clickable: true,
+	accept: function(file, done) {
+		if (file.name == "justinbieber.jpg") {
+			done("Naha, you don't.");
+		}
+		else { done(); }
+	  }
+	};*/
 });
 
 /* Инициализирует скроллеры сущности
@@ -769,199 +781,114 @@ function saveCustomTemplate(descriptor){
 
 function initEntityScripts(container_id) {
 	var container = containers[container_id];
-	// инициализируем все поля для загрузки изображений
-	if(container.data.actionName == 'edit') {
-		var imgs = container.jqobj.find("input[type='file']");
-		imgs.each(function(index, element){
-			var ctrl = $(this);
-			
-			//var eid = ctrl.nextAll("#eid").val();
-			var entityName = ctrl.nextAll("#entity").val();
-			var entityField = ctrl.nextAll("#field").val();
-			var minCount = ctrl.nextAll("#min_count").val();
-			var maxCount = ctrl.nextAll("#max_count").val();
-			var entity = container.data; //entities[entityName][eid];
-			if(!minCount) minCount = 0;
-			if(!maxCount) maxCount = 1;
-			
-			var extraData = {
-				parent_entity_id: entity.local_data.eid,
-				parent_entity_name: entity.entityName,
-				files:[],
-			};
-			
-			if(entityField && entityField.length>0) {
-				extraData.parent_entity_field = entityField;
-			}
-			else {
-				entityField = 'img';
-				extraData.parent_entity_field = entityField;
-			}
-			
-			var settings = {
-				language: "ru",
-				uploadAsync: false,
-				uploadUrl: '/file/upload',
-				deleteUrl: '/file/delete',
-				minFileCount: minCount,
-				maxFileCount: maxCount,
-				showClose: false,
-				showUpload: false,
-				overwriteInitial: false,
-				initialPreviewAsData: true,
-				validateInitialCount: true,
-				//allowedFileTypes: ['image', 'html', 'text', 'video', 'audio', 'flash', 'object'],
-				allowedFileExtensions: ['jpg', 'gif', 'png'],//, 'txt'],
-				//allowedPreviewTypes: ['image', 'html', 'text', 'video', 'audio', 'flash', 'object'],
-				dropZoneEnabled: false,
-				browseOnZoneClick: true,
-				showCaption: false,
-				elErrorContainer: '#' + entityName + '_' + entity.local_data.eid + '_' + entityField,
+	var entity = container.data;
+	
+	for(var fieldID in entity.fields) {
+		var field = entity.fields[fieldID];
+		// инициализируем все поля для загрузки изображений
+		if(field.type == 'img') {
+			// если форма открыта на редактирование
+			if(entity.actionName == 'edit') {
+				// создаем контейнер для хранения локальных изменений
+				if(!entity.local_data.fields) entity.local_data.fields = {};
+				if(!entity.local_data.fields[fieldID]) entity.local_data.fields[fieldID] = {};
+				//сразу создаем отложенное уведомление о завершении загрузки и помещаем уведомление в сущность
+				entity.local_data.fields[fieldID].deferredUpload = $.Deferred();
+				entity.local_data.fields[fieldID].deferredDelete = $.Deferred();
 				
-				//layoutTemplates: {main2: '{browse}&nbsp;{upload}&nbsp;{cancel}<div class="kv-upload-progress hide"></div><div id="' + entityName + '_' + entity.local_data.eid + '_' + entityField + '"></div>{preview}'},
-				layoutTemplates: {main2: '{browse}&nbsp;{upload}&nbsp;{cancel}<div id="' + entityName + '_' + entity.local_data.eid + '_' + entityField + '"></div>{preview}'},
-				otherActionButtons: '<button type="button" class="kv-file-delete btn btn-xs btn-default" title="Удалить" {dataKey} hidden="hidden"><i class="glyphicon glyphicon-trash text-danger"></i></button>',
-				uploadExtraData: extraData,
-				previewSettings: {
-					image: {
-						width: '200px',
-				}},
-				fileActionSettings: {showDrag:false},
-				showAjaxErrorDetails: false,
-			};
-			//console.log(settings.elErrorContainer);
-			
-			if(entity.fields[entityField].files) {
-				var files = entity.fields[entityField].files;
-				var filesLength = files.length;
-				settings.initialPreviewConfig = [];
-				settings.initialPreviewCount = filesLength;
-				if(filesLength == maxCount) {
-					//settings.showUpload = false;
-					//settings.showBrowse = false;
-				}
-				settings.initialPreview = [];
-				for(var i = 0; i < filesLength; i++) {
-					var file = files[i];
-					extraData.file_id = file.id;
-					settings.initialPreviewConfig.push({
-						caption: file.name, 
-						key: file.id, 
-						extra: extraData,
-					});
-					settings.initialPreview.push(file.url);
-				}
-			}
-			
-			if(!entity.local_data.fields) entity.local_data.fields = {};
-			if(!entity.local_data.fields[entityField]) entity.local_data.fields[entityField] = {};
-			entity.local_data.fields[entityField].inputJQ = $(this);
-			
-			entity.local_data.fields[entityField].settings = settings;
-			
-			entity.local_data.fields[entityField].inputJQ.fileinput(settings).on('filezoomshow', function(event, params) {
-				// устанавливаем контейнер модалок в качестве родительского контейнера модалки
-				m = $(params.modal[0]);
-				m.detach();
-				m.appendTo('#container_modals');
-			})/*.on('filebatchpreupload', function(event, data, previewId, index) {
-				var form = data.form, files = data.files, extra = data.extra, response = data.response, reader = data.reader;
-				console.log('File batch pre upload');
-				//extra.parent_entity_id = entity.local_data.eid;
-			})*/.on('filebatchuploadsuccess', function(event, data, previewId, index) {
-				var form = data.form, files = data.files, extra = data.extra, response = data.response, reader = data.reader;
-				console.log('File batch upload success');
+				// после загрузки всех файлов текущего поля сущности запускаем отложенное удаление файлов этого поля
+				entity.local_data.fields[fieldID].deferredUpload.done(function(){
+					deleteEntityFiles(entity, fieldID);
+				});
 				
-				//handleAjaxSuccess(response.success);
-				//handleAjaxError(response.error);
-				// подаем сигнал, что загрузка завершена
-				entity.local_data.fields[entityField].deferredUpload.resolve();
+				// доп. атрибуты для загружаемых на сервер файлов
+				var extraData = {
+					parent_entity_id: entity.local_data.eid,
+					parent_entity_name: entity.entityName,
+					parent_entity_field: fieldID,
+				};
+				var opts = {
+					maxFiles: field.max_count ? field.max_count : 1,
+					acceptedFiles: "image/*", // ".jpeg,.jpg,.png,.gif",
+					thumbnailWidth: 200, // pixels
+					maxFilesize: 2, // Mb
+					clickable: true,
+					addRemoveLinks: true,
+					autoProcessQueue: false,
+					uploadMultiple: true,
+					dictDefaultMessage: "Перетащите файлы в данную область или кликните для выбора файлов",
+					dictFallbackMessage: "Ваш браузер не поддерживает загрузку файлов методом перетаскивания",
+					dictFallbackText: "Пожалуйста, используйте стандартную форму для загрузки файлов, как в старые добрые времена",
+					dictInvalidFileType: "Не поддерживаемый тип файла",
+					dictFileTooBig: "Файл имеет размер: {{filesize}}. Максимально допустимый размер: {{maxFilesize}}",
+					dictRemoveFile: "Удалить",
+					dictMaxFilesExceeded: "Выбрано максимальное количество фалов",
+					previewTemplate: '<div class="dz-preview dz-file-preview">   <div class="dz-details">     <div class="dz-filename"><span data-dz-name></span></div>     <div class="dz-size" data-dz-size></div>     <img data-dz-thumbnail />   </div>   <div class="dz-progress"><span class="dz-upload" data-dz-uploadprogress></span></div>   <div class="dz-success-mark"><span>?</span></div>   <div class="dz-error-mark"><span>?</span></div>   <div class="dz-error-message"><span data-dz-errormessage></span></div> </div>',
+				};
 				
-				// добавляем данные о файлах в сущность для дальнейшей нормально обработки
-				if(data.response.files) {
-					var filesLength = data.response.files.length;
-					if(!entity.fields[entityField].files) entity.fields[entityField].files = [];
-					for(var i = 0; i < filesLength; i++){
-						entity.fields[entityField].files.push({
-							id: response.files[i].id,
-							name: response.files[i].name,
-							url: response.files[i].url,
-						});
-						files[i].db.data.id = response.files[i].id;
-						files[i].name = response.files[i].name;
-						var footer = files[i].db.parents('.file-thumbnail-footer');
-						footer.find('div.file-footer-caption').attr('title', files[i].name);
-						footer.find('div.file-footer-caption').text(files[i].name);
-						// подменяем кнопки у загруженных файлов
-						files[i].rb.after(files[i].db);
-						files[i].rb.detach();
-						files[i].db.attr('data-key', response.files[i].id);
-					}
-				}
-				//console.log(response);
-			}).on('filebatchuploaderror', function(event, data, msg) {
-				var form = data.form, files = data.files, extra = data.extra, response = data.response, reader = data.reader;
-				console.log('File batch upload error');
-				// хоть фалы и не загрузили, но надо подать сигнал, что загрузка завершена
-				entity.local_data.fields[entityField].deferredUpload.resolve();
-			   // get message
-			   console.log(msg);
-			   //handleAjaxSuccess(response.success);
-			   //handleAjaxError(response.error);
-			}).on('fileloaded', function(event, file, previewId, index, reader) {
-				console.log("fileloaded");
-				file.key = previewId;
-				file.jq = $('#'+previewId);
-				file.rb = file.jq.find("button.kv-file-remove");
-				//file.rb.attr('data-key', index);
-				file.db = file.jq.find("button.kv-file-delete");
-				//file.db.attr('data-key', index);
-				file.db.detach();
-			});
-			
-			// удаляем стандартные кнопки удаления
-			$('.file-preview .file-initial-thumbs button.kv-file-remove').each(function () {
-				var rb = $(this);
-				var zb = rb.next();
-				var db = zb.next();
-				db.detach();
-				rb.after(db);
-				rb.detach();
-			});
-			
-			// добавляем свою кнопку удаления на файлы, агруженные с сервера (файлы помечаются к удалению, но не удаляются)
-			$('.file-preview').on('click', 'button.kv-file-delete', function (e) {
-				var btn = $(this);
-				var fileID = $(this).attr('data-key');
-				console.log('My button pressed for key = ' + fileID);
-				
-				// если при получении с сервера в поле были файлы
-				if(entity.fields[entityField].files && entity.fields[entityField].files.length>0) {
-					// добавляем массив с пометками, если его нет
-					if(!entity.local_data.fields[entityField].deletedFiles) entity.local_data.fields[entityField].deletedFiles = [];
-					// помещаем ID файла в массив
-					entity.local_data.fields[entityField].deletedFiles.push(fileID);
-				}
-				
-				//TODO. Надо увеличивать количество приложенных файлов, чтобы можно было взамен приложить другой (а этот остается счислиться в плагине)
-				
-				// убираем изображение из просмотра
-				var thumb = btn.parents('.file-preview-frame');
-				thumb.fadeOut('slow', function () {
-					thumb.remove();
-					console.log('Refreshed ' + entity.local_data.fields[entityField].deletedFiles.length);
-					if(entity.local_data.fields[entityField].inputJQ.fileinput('getFilesCount')==entity.local_data.fields[entityField].deletedFiles.length) {
-						//input.fileinput('refresh');
+				var myDropzone = new Dropzone("#field_"+fieldID+"_"+entity.fields.id.value, opts);
+				myDropzone.on("processing", function(file) {
+					this.options.params.parent_entity_id = extraData.parent_entity_id;
+					this.options.params.parent_entity_name = extraData.parent_entity_name;
+					this.options.params.parent_entity_field = extraData.parent_entity_field;
+				});
+				myDropzone.on("removedfile", function(file) {
+					console.log('removedfile: id = ' + file.id);
+					
+					// если при получении с сервера в поле были файлы
+					if(entity.fields[fieldID].files && entity.fields[fieldID].files.length>0) {
+						// добавляем массив с пометками, если его нет
+						if(!entity.local_data.fields[fieldID].deletedFiles) entity.local_data.fields[fieldID].deletedFiles = [];
+						// помещаем ID файла в массив для удаления
+						entity.local_data.fields[fieldID].deletedFiles.push(file.id);
 					}
 				});
-			});
-		});
-	}
-	
-	// для полей с суммой разрешаем ввод только цифр и "."
-	for (var key in container.data.fields) {
-		if(container.data.fields[key].type == 'amount') {
-			var jqField = container.jqobj.find('#field_'+key+'_value');
+				myDropzone.on("completemultiple", function(files) {
+					var response = null;
+					var filesLength = files.length;
+					if(filesLength > 0){
+						response = JSON.parse(files[0].xhr.response);
+						console.log(response);
+					
+						if(!response.error) {
+							// добавляем данные о файлах в сущность для дальнейшей нормально обработки
+							if(!entity.fields[fieldID].files) entity.fields[fieldID].files = [];
+							for(var i = 0; i < filesLength; i++){
+								var file = files[i];
+								entity.fields[fieldID].files.push({
+									id: file.id,
+									name: file.name,
+									url: file.url,
+								});
+							}
+						}
+						else console.log(response.error);
+					}
+					if(this.getQueuedFiles().length==0) entity.local_data.fields[fieldID].deferredUpload.resolve();
+				});
+				
+				if(entity.fields[fieldID].files) {
+					var files = entity.fields[fieldID].files;
+					var filesLength = files.length;
+					for(var i = 0; i < filesLength; i++) {
+						var file = files[i];
+						var mockFile = {id: file.id, name: file.name, size: "", url: file.url};
+						myDropzone.emit("addedfile", mockFile);
+						myDropzone.createThumbnailFromUrl(mockFile, file.url);
+						myDropzone.emit("complete", mockFile);
+					}
+					myDropzone.options.maxFiles = myDropzone.options.maxFiles - filesLength;
+				}
+				
+				if(!entity.local_data.fields) entity.local_data.fields = {};
+				if(!entity.local_data.fields[fieldID]) entity.local_data.fields[fieldID] = {};
+				entity.local_data.fields[fieldID].uploader = myDropzone;
+			}
+		}
+		
+		// для полей с суммой разрешаем ввод только цифр и "."
+		else if(field.type == 'amount') {
+			var jqField = container.jqobj.find('#field_'+fieldID+'_value');
 			jqField.keypress(function(e) {
 				var val = $(this).val();
 				var pos = val.indexOf('.');
