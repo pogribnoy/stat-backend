@@ -365,8 +365,10 @@ function entityCheck(container_id, item) {
 		
 		$.ajax({
 			url: '/' + descriptor.controllerName + '/check?id=' + descriptor.fields.id.value,
+			url: '/' + descriptor.controllerName + '/save?id=' + descriptor.fields.id.value + '&check_only=1',
 			dataType: 'json',
-			data:  $.toJSON(data),
+			//data:  $.toJSON(data),
+			data:  JSON.stringify(data),
 			method: 'post',
 			beforeSend: function() {
 				// показываем прогрессбар
@@ -837,7 +839,8 @@ function entitySaveToServer(descriptor){
 	$.ajax({
 		url: '/' + descriptor.controllerName + '/save?id=' + descriptor.fields.id.value,
 		dataType: 'json',
-		data:  $.toJSON(data),
+		//data:  $.toJSON(data),
+		data:  JSON.stringify(data),
 		method: 'post',
 		beforeSend: function() {
 			// показываем прогрессбар

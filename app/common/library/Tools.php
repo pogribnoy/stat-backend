@@ -25,15 +25,12 @@ class Tools extends Component {
 					'id' => 'save',
 					'name' => $t->_('button_save'),
 				);
+				$operations[] = array(
+					'id' => 'check',
+					'name' => $t->_('button_check'),
+				);
 			}
 		//}
-		
-		if($acl->isAllowed($role_id, $entityNameLC, 'check') && !in_array('check', $exludeOps)) {
-			$operations[] = array(
-				'id' => 'check',
-				'name' => $t->_('button_check'),
-			);
-		}
 			
 		if($acl->isAllowed($role_id, $entityNameLC, 'delete') && !in_array('delete', $exludeOps)) {
 			$operations[] = array(

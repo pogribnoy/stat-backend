@@ -177,8 +177,9 @@ class ControllerEntity extends ControllerBase {
 			$this->initFields();
 			
 			$res = $this->sanitizeSaveRqData($rq);
-			$this->logger->log(__METHOD__ . ". res: " . $res);
-			if($res<2) {
+			
+			//$this->logger->log(__METHOD__ . ". res: " . $res);
+			if($res<2 && !isset($_REQUEST["check_only"])) {
 				//$this->logger->log(__METHOD__ . ". sanitizeSaveRqData: " . json_encode($this->fields));
 				$id = $this->fields['id']['value'];
 				//$this->error['messages'][] = ['title' => "Debug. " . __METHOD__, 'msg' => "id=" . $this->fields['id']['value']];
@@ -245,12 +246,6 @@ class ControllerEntity extends ControllerBase {
 					else $this->db->rollback();
 				}
 			}
-			/*else {
-				$this->error['messages'][] = [
-					'title' => "Ошибка",
-					'msg' => "Не получены необходимые параметры сущности"
-				];
-			}*/
 		}
 		else {
 			$this->error['messages'][] = [
@@ -264,40 +259,6 @@ class ControllerEntity extends ControllerBase {
 		if(isset($this->error['messages']) && count($this->error['messages'])>0) $this->data['error'] = $this->error;
 		else if(isset($this->success['messages']) && count($this->success['messages'])>0) $this->data['success'] = $this->success;
 		if(count($this->checkResult)>0) $this->data['checkResult'] = $this->checkResult;
-		echo json_encode($this->data);
-	}
-	
-	/* 
-	* Проверяет запись
-	*/
-	public function checkAction() {
-		$this->view->disable();
-		$this->response->setContentType('application/json', 'UTF-8');
-		
-		if ($this->request->isPost()) {
-			$rq = $this->request->getJsonRawBody();
-			$id = null;
-			
-			$this->initFields();
-			
-			$this->sanitizeSaveRqData($rq);
-			//$this->logger->log(__METHOD__ . ". sanitizeSaveRqData: " . json_encode($this->fields));
-			//$this->error['messages'][] = ['title' => "Debug. " . __METHOD__, 'msg' => "id=" . $this->fields['id']['value']];
-		}
-		else {
-			$this->error['messages'][] = [
-				'title' => "Ошибка",
-				'msg' => "Запрошено сохранение данных методом GET. Ожидается метод POST"
-			];
-		}
-		
-		$this->data['item'] = $this->entity;	
-		$this->data['rq'] = $rq; // исходные параметры запроса для отладки
-		
-		if(isset($this->error['messages']) && count($this->error['messages'])>0) $this->data['error'] = $this->error;
-		else if(isset($this->success['messages']) && count($this->success['messages'])>0) $this->data['success'] = $this->success;
-		if(count($this->checkResult)>0) $this->data['checkResult'] = $this->checkResult;
-		
 		echo json_encode($this->data);
 	}
 	

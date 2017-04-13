@@ -810,10 +810,13 @@ function initEntityScripts(container_id) {
 				var opts = {
 					maxFiles: field.max_count ? field.max_count : 1,
 					acceptedFiles: "image/*", // ".jpeg,.jpg,.png,.gif",
-					thumbnailWidth: 200, // pixels
+					thumbnailWidth: 500, // pixels
+					thumbnailHeight: 300,
+					previewsContainer: "#field_" + fieldID + "_" + entity.local_data.eid + "_preview",
 					maxFilesize: 2, // Mb
-					clickable: true,
-					addRemoveLinks: true,
+					//clickable: true,
+					clickable: "#field_" + fieldID + "_" + entity.local_data.eid + "_addbutton",
+					//addRemoveLinks: true,
 					autoProcessQueue: false,
 					uploadMultiple: true,
 					dictDefaultMessage: "Перетащите файлы в данную область или кликните для выбора файлов",
@@ -823,7 +826,7 @@ function initEntityScripts(container_id) {
 					dictFileTooBig: "Файл имеет размер: {{filesize}}. Максимально допустимый размер: {{maxFilesize}}",
 					dictRemoveFile: "Удалить",
 					dictMaxFilesExceeded: "Выбрано максимальное количество фалов",
-					previewTemplate: '<div class="dz-preview dz-file-preview">   <div class="dz-details">     <div class="dz-filename"><span data-dz-name></span></div>     <div class="dz-size" data-dz-size></div>     <img data-dz-thumbnail />   </div>   <div class="dz-progress"><span class="dz-upload" data-dz-uploadprogress></span></div>   <div class="dz-success-mark"><span>?</span></div>   <div class="dz-error-mark"><span>?</span></div>   <div class="dz-error-message"><span data-dz-errormessage></span></div> </div>',
+					previewTemplate: '<div class="dz-preview dz-file-preview col-lg-3"><img data-dz-thumbnail class="img-thumbnail"/><div class="text-center"><!--<span data-dz-name>--></span><button data-dz-remove class="btn btn-danger delete btn-xs"><i class="glyphicon glyphicon-trash"></i></button></div><div class="bg-danger"><span data-dz-errormessage></span></div></div>',
 				};
 				
 				var myDropzone = new Dropzone("#field_"+fieldID+"_"+entity.fields.id.value, opts);
@@ -835,18 +838,21 @@ function initEntityScripts(container_id) {
 				myDropzone.on("removedfile", function(file) {
 					console.log('removedfile: id = ' + file.id);
 					
-					// если при получении с сервера в поле были файлы
-					if(entity.fields[fieldID].files && entity.fields[fieldID].files.length>0) {
-						// добавляем массив с пометками, если его нет
-						if(!entity.local_data.fields[fieldID].deletedFiles) entity.local_data.fields[fieldID].deletedFiles = [];
-						// помещаем ID файла в массив для удаления
-						entity.local_data.fields[fieldID].deletedFiles.push(file.id);
+					// если удаляем серверный файл
+					if(file.id) {
+						// если при получении с сервера в поле были файлы
+						if(entity.fields[fieldID].files && entity.fields[fieldID].files.length>0) {
+							// добавляем массив с пометками, если его нет
+							if(!entity.local_data.fields[fieldID].deletedFiles) entity.local_data.fields[fieldID].deletedFiles = [];
+							// помещаем ID файла в массив для удаления
+							entity.local_data.fields[fieldID].deletedFiles.push(file.id);
+						}
 					}
 				});
 				myDropzone.on("completemultiple", function(files) {
 					var response = null;
 					var filesLength = files.length;
-					if(filesLength > 0){
+					if(filesLength > 0 && files[0].xhr){
 						response = JSON.parse(files[0].xhr.response);
 						console.log(response);
 					

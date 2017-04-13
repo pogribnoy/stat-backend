@@ -16,7 +16,7 @@
 						<div class="pull-right">
 							{{if descriptor.type == "entity"}}
 								{{if descriptor.operations ~descriptor=descriptor}}
-									{{for descriptor.operations tmpl="operation" /}}
+									{{for descriptor.operations tmpl="operation" /}}									
 								{{/if}}
 								<button type="button" class="btn btn-default" data-dismiss="modal" onclick="hideModal('{{:modal_container_id}}');">Отмена</button>
 							{{else}}

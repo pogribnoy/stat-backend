@@ -19,7 +19,7 @@ $.templates({
 
 	// кнопки для строк
 	button_edit: '<button type="button" class="btn btn-success btn-xs" aria-label="{{:name}}" name="{{:id}}" onclick="row_edit(\'{{:~descriptor.local_data.container_id}}\', \'{{:~entity.local_data.eid}}\');"><span class="glyphicon glyphicon-pencil" aria-hidden="true"></span></button>',
-	button_show: '<button type="button" class="btn btn-default btn-xs" aria-label="{{:name}}" name="{{:id}}" onclick="row_show(\'{{:~descriptor.local_data.container_id}}\', \'{{:~entity.local_data.eid}}\');"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>',
+	button_show: '<button type="button" class="btn btn-xs" aria-label="{{:name}}" name="{{:id}}" onclick="row_show(\'{{:~descriptor.local_data.container_id}}\', \'{{:~entity.local_data.eid}}\');"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>',
 	button_delete: '<button type="button" class="btn btn-danger btn-xs" aria-label="{{:name}}" name="{{:id}}{{:~entity.local_data.eid}}" onclick="row_delete(\'{{:~descriptor.local_data.container_id}}\', \'{{:~entity.local_data.eid}}\');"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>\n',
 	
 	// кнопки фильтра
@@ -81,9 +81,9 @@ $.views.helpers({
 	getOjectKeysCount: function(array) {
 		return Object.keys(array).length;
 	},
-	toJSON: function(obj) {
+	/*toJSON: function(obj) {
 		return JSON.stringify(obj);
-	},
+	},*/
 	isFieldRequired: function(field) {
 		//console.log(field);
 		if(field.type == "period" && field.required && field.required > 0) return true;
