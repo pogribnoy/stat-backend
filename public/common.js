@@ -801,13 +801,9 @@ function initEntityScripts(container_id) {
 					deleteEntityFiles(entity, fieldID);
 				});
 				
-				// доп. атрибуты для загружаемых на сервер файлов
-				var extraData = {
-					parent_entity_id: entity.local_data.eid,
-					parent_entity_name: entity.entityName,
-					parent_entity_field: fieldID,
-				};
 				var opts = {
+					action: '/file/upload',
+					url: '/file/upload',
 					maxFiles: field.max_count ? field.max_count : 1,
 					acceptedFiles: "image/*", // ".jpeg,.jpg,.png,.gif",
 					thumbnailWidth: 500, // pixels
@@ -815,7 +811,8 @@ function initEntityScripts(container_id) {
 					previewsContainer: "#field_" + fieldID + "_" + entity.local_data.eid + "_preview",
 					maxFilesize: 2, // Mb
 					//clickable: true,
-					clickable: "#field_" + fieldID + "_" + entity.local_data.eid + "_addbutton",
+					clickable: "#field_" + fieldID + "_" + entity.local_data.eid + ", " + "#field_" + fieldID + "_" + entity.local_data.eid + "_addbutton",
+					//clickable: "#addBtn123",
 					//addRemoveLinks: true,
 					autoProcessQueue: false,
 					uploadMultiple: true,
@@ -826,16 +823,21 @@ function initEntityScripts(container_id) {
 					dictFileTooBig: "Файл имеет размер: {{filesize}}. Максимально допустимый размер: {{maxFilesize}}",
 					dictRemoveFile: "Удалить",
 					dictMaxFilesExceeded: "Выбрано максимальное количество фалов",
-					previewTemplate: '<div class="dz-preview dz-file-preview col-lg-3"><img data-dz-thumbnail class="img-thumbnail"/><div class="text-center"><!--<span data-dz-name>--></span><button data-dz-remove class="btn btn-danger delete btn-xs"><i class="glyphicon glyphicon-trash"></i></button></div><div class="bg-danger"><span data-dz-errormessage></span></div></div>',
+					previewTemplate: '<div class="dz-preview dz-file-preview col-lg-3"><img data-dz-thumbnail class="img-thumbnail"/><div class="text-center"><!--<span data-dz-name>--></span><button data-dz-remove class="btn btn-danger delete btn-xs"><i class="glyphicon glyphicon-trash"></i><span> Удалить</span></button></div><div class="bg-danger"><span data-dz-errormessage></span></div></div>',
 				};
 				
 				var myDropzone = new Dropzone("#field_"+fieldID+"_"+entity.fields.id.value, opts);
+				
 				myDropzone.on("processing", function(file) {
-					this.options.params.parent_entity_id = extraData.parent_entity_id;
-					this.options.params.parent_entity_name = extraData.parent_entity_name;
-					this.options.params.parent_entity_field = extraData.parent_entity_field;
+					this.options.params.parent_entity_id = entity.local_data.eid;
+					this.options.params.parent_entity_name = entity.entityName;
+					this.options.params.parent_entity_field = fieldID;
 				});
 				myDropzone.on("removedfile", function(file) {
+					var serverFlesCount=0;
+					var deletedFilesCount=0;
+					var dropzoneFilesCount=this.files.length;
+					
 					console.log('removedfile: id = ' + file.id);
 					
 					// если удаляем серверный файл
@@ -846,8 +848,18 @@ function initEntityScripts(container_id) {
 							if(!entity.local_data.fields[fieldID].deletedFiles) entity.local_data.fields[fieldID].deletedFiles = [];
 							// помещаем ID файла в массив для удаления
 							entity.local_data.fields[fieldID].deletedFiles.push(file.id);
+							deletedFilesCount = entity.local_data.fields[fieldID].deletedFiles.length;
 						}
 					}
+					if(field.files) serverFlesCount = field.files.length;
+					
+					var finalFilesCount = serverFlesCount + dropzoneFilesCount - deletedFilesCount;
+					// убираем кнопку "Добавить", если удален файл и количество оставшихся файлов стало меньше разрешенного
+					if(this.clickableElements.length>0 && finalFilesCount < this.options.maxFiles) this.clickableElements[0].style.display = 'none';
+					else this.clickableElements[0].style.display = 'flex';
+				});
+				myDropzone.on("maxfilesreached", function(file) {
+					if(this.clickableElements.length>0) this.clickableElements[0].style.display = 'none';
 				});
 				myDropzone.on("completemultiple", function(files) {
 					var response = null;
@@ -873,17 +885,25 @@ function initEntityScripts(container_id) {
 					if(this.getQueuedFiles().length==0) entity.local_data.fields[fieldID].deferredUpload.resolve();
 				});
 				
+				//myDropzone.previewsContainer.innerHTML += '<div id="addBtn123" class="dz-preview col-lg-3 bg-success" style="display: flex; align-items: center;"><span data-dz-name class="center-block">Добавить файл</span></div>';
+				//myDropzone.previewsContainer.innerHTML += '<div id="addBtn123" class="dz-preview dz-clickable col-lg-3 bg-success" style="display: flex; align-items: center;"><button class="btn btn-success center-block"><i class="glyphicon glyphicon-plus"></i><span></span></button></div>';
+				//myDropzone.clickableElements.push(document.getElementById('addBtn123'));
+				
 				if(entity.fields[fieldID].files) {
 					var files = entity.fields[fieldID].files;
 					var filesLength = files.length;
 					for(var i = 0; i < filesLength; i++) {
 						var file = files[i];
-						var mockFile = {id: file.id, name: file.name, size: "", url: file.url};
+						var mockFile = {id: file.id, name: file.name, size: null, url: file.url};
 						myDropzone.emit("addedfile", mockFile);
 						myDropzone.createThumbnailFromUrl(mockFile, file.url);
 						myDropzone.emit("complete", mockFile);
 					}
 					myDropzone.options.maxFiles = myDropzone.options.maxFiles - filesLength;
+					if(myDropzone.clickableElements.length>0 && myDropzone.options.maxFiles <= 0) {
+						myDropzone.clickableElements[0].style.display = 'none';
+						myDropzone.options.maxFiles = 0;
+					}
 				}
 				
 				if(!entity.local_data.fields) entity.local_data.fields = {};
