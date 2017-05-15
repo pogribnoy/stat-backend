@@ -12,14 +12,23 @@
 					<div class="row">
 						<?php foreach($orgs as $org) { ?>
 							<div class="col-lg-2">
-								<a href="/organization/index?id=<?php echo $org["id"]; ?>" class="thumbnail">
-									<?php if($org["img"] != "") { ?>
-										<img src="/<?php echo $org["img"]; ?>" alt="..." >
-									<?php } else { ?>
-										<img src="/no_image.jpg" alt="Нет изображения" >
+								<div class="thumbnail">
+									<a href="/organization/index?id=<?php echo $org["id"]; ?>">
+										<?php if(isset($org["img"]) && $org["img"] != '') { ?>
+											<img src="/<?php echo $org["img"]; ?>" alt="..." >
+										<?php } else { ?>
+											<img src="/no_image.jpg" alt="Нет изображения" >
+										<?php } ?>
+										<p class="text-center h4"><?php echo $org["name"]; ?></p>
+									</a>
+									<?php if(isset($org['organizationRequestCount'])) { ?>
+										<p class="text-center">
+											<button type="button" class="btn btn-default" aria-label="Left Align" onClick="document.location = '/organization?id=<?php echo $org["id"]; ?>&selected_tab=organizationrequestlist&filter_status=<?php echo $controller->config["application"]["requestStatus"]["newStatusID"]; ?>';" title="<?php if($org['organizationRequestCount'] && $org['organizationRequestCount'] > 0) { ?>Имеются не обработанных вопросы от граждан<?php } else { ?>Не обработанных вопросов от граждан нет<?php } ?>">
+												<span class="glyphicon glyphicon-envelope" aria-hidden="true"></span> <span class="label <?php if($org['organizationRequestCount'] > 0) { ?>label-danger<?php } else { ?>label-success<?php } ?>"><?php echo $org['organizationRequestCount']; ?></span>
+											</button>
+										</p>
 									<?php } ?>
-									<p class="text-center h4"><?php echo $org["name"]; ?></p>
-								</a>
+								</div>
 							</div>
 						<?php } ?>
 					</div><!-- /.row -->
@@ -30,9 +39,18 @@
 <?php } ?>
 <?php //var_dump( $user); ?>
 <?php //var_dump( $orgs); ?>
+<?php //var_dump( $dbg); ?>
+<?php //echo $dbg; ?>
+
 
 
 <script type="text/javascript"><!--
+
+var orgs = <?php echo json_encode($orgs); ?>;
+
+document.addEventListener("DOMContentLoaded", function(event) { 
+ // console.log(orgs);
+});
 
 function sendEmail() {
 	$.ajax({

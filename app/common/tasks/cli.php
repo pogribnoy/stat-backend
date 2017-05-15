@@ -20,6 +20,7 @@ $loader->registerDirs(
     [
         __DIR__ . "/",
         realpath(__DIR__ . "/../models") . "/",
+        realpath(__DIR__ . "/../library") . "/",
     ]
 );
 
@@ -79,6 +80,10 @@ $console = new ConsoleApp();
 $console->setDI($di);
 
 $di->setShared("console", $console);
+
+$di->setShared('email', function(){
+	return new Emailer();
+});
 
 /**
  * Определяем консольные аргументы

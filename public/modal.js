@@ -19,6 +19,7 @@ function hideModal(container_id) {
 // Показывает контейнр в модальном окне
 function showModal(container_id) {
 	containers[container_id].jqobj.modal('show');
+	$.notifyClose();
 }
 
 // Закрывает модальное окно
@@ -178,7 +179,7 @@ function linkSelectedRows(source_container_id){
 	}
 }
 
-/* Грязный хак для мультимодаьлности Bottstrap
+/* Грязный хак для мультимодальности Bootstrap
 * Ввзят отсюда: http://www.bootply.com/cObcYInvpq#
 * Проект: https://github.com/jhaygt/bootstrap-multimodal
 */

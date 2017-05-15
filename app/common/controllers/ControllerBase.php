@@ -17,6 +17,14 @@ class ControllerBase extends Controller {
 	public $entityName;
 	// наименование сущности в нижнем регистре
 	public $entityNameLC;
+	// доступ к полю на просмотр
+	const readonlyAccess = 'show';
+	// доступ к полю на редактирование
+	const editAccess = 'edit';
+	// скрытое поле
+	const hiddenAccess = 'hidden';
+	// запрос, полученный с клиента
+	public $rq;
 
 	
 	// фильтр
@@ -106,5 +114,32 @@ class ControllerBase extends Controller {
 				)
 			);
 		}
+	}
+	
+	protected function getFieldAccess($fieldID) {
+		$userRoleID = $this->userData['role_id'];
+		//$this->logger->log(__METHOD__ . ". actionNameLC = " . $this->actionNameLC . ". resource = " . $this->controllerNameLC . "_field_" . $fieldID . ".  role_id=adminRoleID:" . ($userRoleID == $this->config->application->adminRoleID));
+		if($this->actionNameLC == 'edit' || $this->actionNameLC == 'save') {
+			//$this->logger->log(__METHOD__ . ". actionNameLC = " . $this->actionNameLC);
+			if($this->acl->isAllowed($userRoleID, $this->controllerNameLC . "_field_" . $fieldID, 'edit')) { 
+				//$this->logger->log(__METHOD__ . ". asd1 = "); 
+				return $this::editAccess; 
+			}
+			else if($this->acl->isAllowed($userRoleID, $this->controllerNameLC . "_field_*", 'edit')) { 
+				//$this->logger->log(__METHOD__ . ". asd2 = "); 
+				return $this::editAccess; 
+			}
+			else if($userRoleID == $this->config->application->adminRoleID && ($this->acl->isAllowed($this->config->application->adminRoleID, $this->controllerNameLC . "_field_" . $fieldID, 'edit') || $this->acl->isAllowed($this->config->application->adminRoleID, $this->controllerNameLC . "_field_*", 'edit'))) { 
+				//$this->logger->log(__METHOD__ . ". asd3 = "); 
+				return $this::editAccess; 
+			}
+			$this->logger->log(__METHOD__ . ". asd4 = ");
+		}
+		return $this::readonlyAccess;
+	}
+	protected function isFieldAccessibleForUser($field) {
+		//$this->logger->log(__METHOD__ . ". resource = " . $this->controllerNameLC . "_field_" . $field['id'] . ". access = " . $field['access']);
+		if(isset($field["access"]) && $field["access"] == $this::editAccess) return true;
+		return false;
 	}
 }

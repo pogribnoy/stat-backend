@@ -6,6 +6,12 @@ class ExpenseController extends ControllerEntity {
 		parent::initialize();
 	}
 	
+	/*protected $access = [
+		'edit' => [
+			//'created_at' => self::readonlyAccess,
+		]
+	];*/
+	
 	/* 
 	* Заполняет (инициализирует) свойство fields
 	* Переопределяемый метод.
@@ -106,9 +112,9 @@ class ExpenseController extends ControllerEntity {
 			'created_at' =>	array(
 				'id' => 'created_at',
 				'name' => $this->t->_("text_entity_property_created_at"),
-				'type' => 'date',
+				'type' => 'text',
 				'newEntityValue' => null,
-				'visible' =>false,
+				//'access' => $this->readonlyAccess,
 			),
 		];
 		// наполняем поля данными
@@ -124,7 +130,6 @@ class ExpenseController extends ControllerEntity {
 		$this->entity->expense_type_id = $this->fields['expense_type']['value_id'];
 		$this->entity->expense_status_id = $this->fields['expense_status']['value_id'];
 		$this->entity->name = $this->fields['name']['value'];
-		/*$this->entity->date = $this->fields['date']['value'];*/
 		$this->entity->amount = $this->fields['amount']['value'];
 		$this->entity->settlement = $this->fields['settlement']['value'];
 		$this->entity->street_type_id = $this->fields['street_type']['value_id'];
@@ -133,7 +138,8 @@ class ExpenseController extends ControllerEntity {
 		$this->entity->executor = $this->fields['executor']['value'];
 		$this->entity->target_date_from = $this->fields['target_date']['value1'];
 		$this->entity->target_date_to = $this->fields['target_date']['value2'];
-		$this->entity->created_at = $this->fields['created_at']['value'];
+		$this->entity->created_at = (new DateTime('now'))->format("Y-m-d");
+		$this->logger->log(__METHOD__ . ". created_at = " . $this->entity->created_at);
 	}
 	
 	/* 
@@ -168,98 +174,13 @@ class ExpenseController extends ControllerEntity {
 		$this->fields["target_date"]["value2"] = $row->expense->target_date_to;
 		$this->fields["created_at"]["value"] = $row->expense->created_at;
 	}
-		
+	
 	/* 
-	* Очищает параметры запроса
-	* Расширяемый метод.
+	* Обновляет данные сущности после сохранения в БД (например, проставляется дата создания записи)
+	* Переопределяемый метод.
 	*/
-	protected function sanitizeSaveRqData($rq) {
-		$res = 0;
-		// id, //select, link
-		$res |= parent::sanitizeSaveRqData($rq);
-		
-		// name
-		if(isset($rq->fields->name) && isset($rq->fields->name->value)) {
-			$val = $this->filter->sanitize(urldecode($rq->fields->name->value), ["trim", "string"]);
-			if($val != '') $this->fields['name']['value'] = $val;
-			else $this->fields['name']['value'] = null;
-			//$this->logger->log('val = ' . $this->fields['name']['value']);
-		}
-		else $this->fields['name']['value'] = null;
-		
-		//amount
-		if(isset($rq->fields->amount) && isset($rq->fields->amount->value)) {
-			$val = $this->filter->sanitize(urldecode($rq->fields->amount->value), ["trim", "string"]);
-			if($val != '') $this->fields['amount']['value'] = $val;
-			else $this->fields['amount']['value'] = null;
-			//$this->logger->log('val = ' . $this->fields['amount']['value']);
-		}
-		else $this->fields['amount']['value'] = null;
-		
-		
-		//settlement
-		if(isset($rq->fields->settlement) && isset($rq->fields->settlement->value)) {
-			$val = $this->filter->sanitize(urldecode($rq->fields->settlement->value), ["trim", "string"]);
-			if($val != '') $this->fields['settlement']['value'] = $val;
-			else $this->fields['settlement']['value'] = null;
-			//$this->logger->log('val = ' . $this->fields['settlement']['value']);
-		}
-		else $this->fields['settlement']['value'] = null;
-		
-		//street
-		if(isset($rq->fields->street) && isset($rq->fields->street->value)) {
-			$val = $this->filter->sanitize(urldecode($rq->fields->street->value), ["trim", "string"]);
-			if($val != '') $this->fields['street']['value'] = $val;
-			else $this->fields['street']['value'] = null;
-			//$this->logger->log('val = ' . $this->fields['street']['value']);
-		}
-		else $this->fields['street']['value'] = null;
-		
-		//house
-		if(isset($rq->fields->house) && isset($rq->fields->house->value)) {
-			$val = $this->filter->sanitize(urldecode($rq->fields->house->value), ["trim", "string"]);
-			if($val == '') $this->fields['house']['value'] = null;
-			else $this->fields['house']['value'] = $val;
-			//$this->logger->log('val = ' . $this->fields['house']['value']);
-		}
-		else $this->fields['house']['value'] = null;
-		
-		//executor
-		if(isset($rq->fields->executor) && isset($rq->fields->executor->value)) {
-			$val = $this->filter->sanitize(urldecode($rq->fields->executor->value), ["trim", "string"]);
-			if($val == '') $this->fields['executor']['value'] = null;
-			else $this->fields['executor']['value'] = $val;
-			//$this->logger->log('val = ' . $this->fields['executor']['value']);
-		}
-		else $this->fields['executor']['value'] = null;
-		
-		//target_date
-		if(isset($rq->fields->target_date)) {
-			//$this->logger->log(__METHOD__ . '. 1');
-			if(isset($rq->fields->target_date->value1)) {
-				$val = $this->filter->sanitize(urldecode($rq->fields->target_date->value1), ["trim", "string"]);
-				if($val == '') $this->fields['target_date']['value1'] = null;
-				else $this->fields['target_date']['value1'] = $val;
-				//$this->logger->log(__METHOD__ . '. value1=' . $val);
-				//$this->logger->log('val = ' . $this->fields['target_date']['value1']);
-			}
-			if(isset($rq->fields->target_date->value2)) {
-				$val = $this->filter->sanitize(urldecode($rq->fields->target_date->value2), ["trim", "string"]);
-				if($val == '') $this->fields['target_date']['value2'] = null;
-				else $this->fields['target_date']['value2'] = $val;
-				//$this->logger->log(__METHOD__ . '. value2=' . $val);
-				//$this->logger->log('val = ' . $this->fields['target_date']['value2']);
-			}
-		}
-		else {
-			//$this->logger->log(__METHOD__ . '. 3' . $val);
-			$this->fields['target_date']['value1'] = null;
-			$this->fields['target_date']['value2'] = null;
-		}
-		//$this->logger->log(__METHOD__ . '. target_date=' . json_encode($this->fields['target_date']));
-		
-		$res |= $this->check();
-		
-		return $res;
+	protected function updateEntityFieldsFromModelAfterSave() {
+		$this->fields["id"]["value"] = $this->entity->id;
+		$this->fields["created_at"]["value"] = $this->entity->created_at;
 	}
 }

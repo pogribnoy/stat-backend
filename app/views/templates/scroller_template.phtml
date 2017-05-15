@@ -6,7 +6,7 @@
 <div class="modal" id="{{:modal_container_id}}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel_{{:modal_container_id}}" data-backdrop="static">
 	<div class="modal-dialog modal-lg" {{if (descriptor.type=='scroller' || (descriptor.scrollers && ~utilities.getOjectKeysCount(descriptor.scrollers) > 0)) }}style="width: 95%" {{/if}} role="document">
 		<div class="modal-content">
-			<div class="modal-header">
+			<div class="modal-header bg-primary">
 				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 				<h4 class="modal-title" id="myModalLabel_{{:descriptor.local_data.udid}}">{{:descriptor.title}}</h4>
 			</div>
@@ -41,7 +41,7 @@
 <span></span>
 <div class="container-fluid">
 	<div class="row">
-		<div class="panel panel-default" id="{{:descriptor.local_data.container_id}}">
+		<div class="panel panel-default panel-primary panel-info" id="{{:descriptor.local_data.container_id}}">
 			<div class="panel-heading stat-scroller-header"{{if !(descriptor.notCollapsible == "1")}} data-toggle="collapse" data-target="#{{:descriptor.local_data.container_id}}CollapseDiv{{/if}}">
 				{{:descriptor.title}}
 				{{if !(descriptor.notCollapsible == "1")}}<span class="pull-right "><button type="button" class="btn btn-default btn-xs"><i class="glyphicon glyphicon-minus"></i></button></span>{{/if}}
@@ -61,7 +61,8 @@
 							{{if descriptor.group_operations.length > 0 || descriptor.common_operations > 0 ~descriptor=descriptor}}
 								<!-- строка общих операций -->
 								<tr>
-									<td colspan="{{:~columns.length+2}}">
+									<th colspan="{{:~utilities.getVisibleColumns(~columns)+2}}">
+									<div class="row-fluid"><div class="col-lg-12">
 										<div class="pull-right" role="group" aria-label="...">&nbsp;
 											{{for descriptor.common_operations tmpl="common_operation" /}}
 										
@@ -69,29 +70,32 @@
 												<div class="btn-group"><button type="button" class="btn btn-xs dropdown-toggle" data-toggle="dropdown">С выбранными<span class="caret"></span></button><ul class="dropdown-menu">{{include tmpl="button_group_delete"/}}</ul></div>
 											{{/for}}
 										</div><!-- /.btn-group -->
-									</td>
+									</div></div>
+									</th>
 								</tr>
 							{{/if}}
 							<!-- строка заголовков -->
 							<tr>
 								{{if descriptor.group_operations.length > 0}}<th>{{if ~descriptor.local_data.select_style == "radio"}}{{else}}<input type="checkbox" name="{{:~descriptor.local_data.container_id}}" class="toggle-all"/>{{/if}}</th>{{/if}}
 								{{for ~columns}}
-									<th{{if hideble}} class="hidden-xs hidden-sm hidden-md"{{/if}}>
-										{{if sortable}}
-											<span onclick="change_sort('{{:~descriptor.local_data.container_id}}', '{{:id}}');"><u>{{:name}}</u></span>
-											{{if id === ~descriptor.filter_values.sort}}
-												<button type="button" class="btn btn-default btn-xs" aria-label="{{:name}}" name="{{:id}}" onclick="change_sort('{{:~descriptor.local_data.container_id}}', '{{:id}}');">
-												{{if ~descriptor.filter_values.order === "DESC"}}
-													<span class="glyphicon glyphicon-sort-by-attributes-alt" aria-hidden="true"></span>
-												{{else}}
-													<span class="glyphicon glyphicon-sort-by-attributes" aria-hidden="true"></span>
+									{{if !hidden }}
+										<th{{if hideble}} class="hidden-xs hidden-sm hidden-md"{{/if}}>
+											{{if sortable}}
+												<span onclick="change_sort('{{:~descriptor.local_data.container_id}}', '{{:id}}');"><u>{{:name}}</u></span>
+												{{if id === ~descriptor.filter_values.sort}}
+													<button type="button" class="btn btn-default btn-xs" aria-label="{{:name}}" name="{{:id}}" onclick="change_sort('{{:~descriptor.local_data.container_id}}', '{{:id}}');">
+													{{if ~descriptor.filter_values.order === "DESC"}}
+														<span class="glyphicon glyphicon-sort-by-attributes-alt" aria-hidden="true"></span>
+													{{else}}
+														<span class="glyphicon glyphicon-sort-by-attributes" aria-hidden="true"></span>
+													{{/if}}
+													</button>
 												{{/if}}
-												</button>
+											{{else}}
+												{{:name}}
 											{{/if}}
-										{{else}}
-											{{:name}}
-										{{/if}}
-									</th>
+										</th>
+									{{/if}}
 								{{/for}}
 							</tr>
 						</thead>
@@ -101,34 +105,37 @@
 								<tr>
 									{{if descriptor.group_operations.length > 0}}<td class="stat-row-checkbox-td"></td>{{/if}}
 									{{for ~columns}}
-										<td class="{{if hideble}}hidden-xs hidden-sm hidden-md {{/if}}{{if id == "id"}}stat-id-td{{else id == "active"}}stat-active-td{{else id == "operations"}}stat-operations-td{{/if}}">
-											{{if filter}} 
-												{{if filter==="text"}} <input type="text" name="filter_{{:id}}" value="{{:filter_value}}" class="form-control input-sm"/>
-												{{else filter==="number"}} <input type="number" name="filter_{{:id}}" value="{{:filter_value}}"{{if id == "id"}} class="form-control input-sm stat-id-input-field"{{/if}} min="0"/>
-												{{else filter==="email"}} <input type="email" name="filter_{{:id}}" value="{{:filter_value}}" class="form-control input-sm"/>
-												{{else filter==="select"}}
-													{{if filter_values.length>10}}<div class="input-group-sm">{{/if}}
-														<select name="filter_{{if filter_id }}{{:filter_id}}{{else}}{{:id}}{{/if}}" class="form-control input-sm {{if filter_values.length>15}}extended{{/if}}" style="width:100%;">
-															<option value="*" {{if filter_value===""}} selected="selected"{{/if}}></option>
-															{{if nullSubstitute && nullSubstitute != "undefined"}}<option value="**" {{if filter_value=='**'}} selected="selected"{{/if}}>{{:nullSubstitute}}</option>{{/if}}
-															{{if style === "id"}}
-																{{for filter_values ~filter_value=filter_value}}<option value="{{:id}}" {{if id==~filter_value}}selected="selected"{{/if}}>{{:name}}</option>{{/for}}
-															{{else }}
-																{{for filter_values ~filter_value=filter_value}}<option value="{{:#data}}" {{if #data==~filter_value}}selected="selected"{{/if}}>{{:#data}}</option>{{/for}}
-															{{/if}}
+										{{if !hidden }}
+											<td class="{{if hideble}}hidden-xs hidden-sm hidden-md {{/if}}{{if id == 'id'}}stat-id-td{{else id == 'active'}}stat-active-td{{else id == 'operations'}}stat-operations-td{{/if}}">
+												{{if filter}} 
+													{{if filter==='text'}} <input type="text" name="filter_{{:id}}" value="{{:filter_value}}" class="form-control input-sm"/>
+													{{else filter==='number'}} <input type="number" name="filter_{{:id}}" value="{{:filter_value}}"{{if id == "id"}} class="form-control input-sm stat-id-input-field"{{/if}} min="0"/>
+													{{else filter==="email"}} <input type="email" name="filter_{{:id}}" value="{{:filter_value}}" class="form-control input-sm"/>
+													{{else filter==="select"}}
+														{{if filter_values.length>10}}<div class="input-group-sm">{{/if}}
+															<select name="filter_{{if filter_id }}{{:filter_id}}{{else}}{{:id}}{{/if}}" class="form-control input-sm {{if filter_values.length>15}}extended{{/if}}" style="width:100%;">
+																<option value="*" {{if filter_value===""}} selected="selected"{{/if}}></option>
+																{{if nullSubstitute && nullSubstitute != "undefined"}}<option value="**" {{if filter_value=='**'}} selected="selected"{{/if}}>{{:nullSubstitute}}</option>{{/if}}
+																{{if filter_style === "id"}}
+																	{{for filter_values ~filter_value=filter_value}}<option value="{{:id}}" {{if id==~filter_value}}selected="selected"{{/if}}>{{:name}}</option>{{/for}}
+																{{else }}
+																	{{for filter_values ~filter_value=filter_value}}<option value="{{:#data}}" {{if #data==~filter_value}}selected="selected"{{/if}}>{{:#data}}</option>{{/for}}
+																{{/if}}
+															</select>
+														{{if filter_values.length>2}}</div>{{/if}}
+													{{else filter==="bool"}}
+														<select name="filter_{{:id}}" class="form-control input-sm">
+															<option value="*" {{if filter_value == "*" || filter_value == ""}} selected="selected"{{/if}}></option>
+															<option value="1" {{if filter_value == "1"}} selected="selected"{{/if}}>Да</option>
+															<option value="0" {{if filter_value == "0"}} selected="selected"{{/if}}>Нет</option>
 														</select>
-													{{if filter_values.length>2}}</div>{{/if}}
-												{{else filter==="bool"}}
-													<select name="filter_{{:id}}" class="form-control input-sm">
-														<option value="*" {{if filter_value == "*" || filter_value == ""}} selected="selected"{{/if}}></option>
-														<option value="1" {{if filter_value == "1"}} selected="selected"{{/if}}>Да</option>
-														<option value="0" {{if filter_value == "0"}} selected="selected"{{/if}}>Нет</option>
-													</select>
+													{{else filter==='period'}} <input type="text" name="filter_{{:id}}" value="{{:filter_value}}" class="form-control input-sm"/>
+													{{/if}}
+												{{else id==="operations"}}
+													{{for ~descriptor.filter_operations tmpl="filter_operation" /}}
 												{{/if}}
-											{{else id==="operations"}}
-												{{for ~descriptor.filter_operations tmpl="filter_operation" /}}
-											{{/if}}
-										</td>
+											</td>
+										{{/if}}
 									{{/for}}
 								</tr>
 							{{/if}}
@@ -545,17 +552,41 @@ function apply_filter(container_id) {
 	}
 	
 	console.log(url);
-	$.ajax({
+	
+	var rqDefferred = $.ajax({
 		url: url,
 		data: rq,
 		dataType: 'json',
 		//dataType: 'html',
 		method: 'post',
 		beforeSend: function() {
-				// показываем прогрессбар
+			// показываем прогрессбар
+			setTimeout(function() {
+				if(rqDefferred.state() == 'pending') {
+					var blockedJQ = $('#' + container_id + 'CollapseDiv');
+					var spinnerJQ = blockedJQ.find('#spinner');
+					//if(spinnerJQ.length == 0) blockedJQ.prepend('<div class="container-fluid"><div id="spinner" class="row" style="display: flex; align-items: center;"><div class="col-lg-12 bg-warning"><button class="btn btn-default center-block"><span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Обработка запроса</button></div></div></div>');
+					if(spinnerJQ.length == 0) blockedJQ.prepend('<div id="spinner" class="LockOn"><button class="btn btn-default center-block"><span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Обработка запроса</button></div>');
+					else {
+						//spinnerJQ.show();
+						spinnerJQ.removeClass('LockOff');
+						spinnerJQ.addClass('LockOn');
+					}
+					//var getHeight = document.getElementById(container_id + 'CollapseDiv').clientHeight;
+					//document.getElementById("spinner").style.height = getHeight*2;
+					spinnerJQ.height(blockedJQ.height());
+				}
+			}, 500);
+			
 		},
 		complete: function() {
 			// скрываем прогрессбар
+			clearTimeout(jqobj.data.timeoutID);
+			//$('#spinner').hide();
+			var blockedJQ = $('#' + container_id + 'CollapseDiv');
+			var spinnerJQ = blockedJQ.find('#spinner');
+			spinnerJQ.removeClass('LockOn');
+			spinnerJQ.addClass('LockOff');
 		},			
 		success: (function(json) {
 			if(!handleAjaxError(json.error)) {

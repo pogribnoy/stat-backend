@@ -14,45 +14,25 @@
 	</div><!-- /.row -->
 	<div class="row-fluid">
 		<!-- Nav tabs -->
-		<ul class="nav nav-tabs" role="tablist">
-			<li role="presentation" class="active"><a href="#entity_tab_main" aria-controls="entity_tab_main" role="tab" data-toggle="tab">Основная информация</a></li>
+		<ul class="nav nav-pills" role="tablist">
+			<li role="presentation" class="{{if !descriptor.filter_values['selected_tab'] || descriptor.filter_values['selected_tab'] == 'entity_tab_main'}}active{{/if}}"><a href="#entity_tab_main" aria-controls="entity_tab_main" role="tab" data-toggle="tab">Основная информация</a></li>
 			
-			{{if descriptor.scrollers && descriptor.scrollers.expenselist}}<li role="presentation" class=""><a href="#entity_tab_expenses" aria-controls="entity_tab_expenses" role="tab" data-toggle="tab">Расходы</a></li>{{/if}}
-			{{if descriptor.scrollers && descriptor.scrollers.messages}}<li role="presentation" class=""><a href="#entity_tab_messages" aria-controls="entity_tab_messages" role="tab" data-toggle="tab">Сообщения</a></li>{{/if}}
-			{{if descriptor.scrollers && descriptor.scrollers.userlist}}<li role="presentation" class=""><a href="#entity_tab_userlist" aria-controls="entity_tab_userlist" role="tab" data-toggle="tab">Пользователи</a></li>{{/if}}
+			{{if descriptor.scrollers && descriptor.scrollers.expenselist}}<li role="presentation" class="{{if descriptor.filter_values['selected_tab'] && descriptor.filter_values['selected_tab'] == descriptor.scrollers.expenselist.controllerNameLC}}active{{/if}}"><a href="#entity_tab_expenses_{{:descriptor.local_data.container_id}}" aria-controls="entity_tab_expenses" role="tab" data-toggle="tab">Расходы</a></li>{{/if}}
+			{{if descriptor.scrollers && descriptor.scrollers.userlist}}<li role="presentation" class="{{if descriptor.filter_values['selected_tab'] && descriptor.filter_values['selected_tab'] == descriptor.scrollers.userlist.controllerNameLC}}active{{/if}}"><a href="#entity_tab_userlist_{{:descriptor.local_data.container_id}}" aria-controls="entity_tab_userlist" role="tab" data-toggle="tab">Пользователи</a></li>{{/if}}
+			{{if descriptor.scrollers && descriptor.scrollers.organizationrequestlist}}<li role="presentation" class="{{if descriptor.filter_values['selected_tab'] && descriptor.filter_values['selected_tab'] == descriptor.scrollers.organizationrequestlist.controllerNameLC}}active{{/if}}"><a href="#entity_tab_organizationrequestlist_{{:descriptor.local_data.container_id}}" aria-controls="entity_tab_organizationrequestlist" role="tab" data-toggle="tab">Вопросы <span id="scroller_{{:descriptor.scrollers.organizationrequestlist.controllerNameLC}}_newCount" class="label {{if descriptor.scrollers.organizationrequestlist.newCount && descriptor.scrollers.organizationrequestlist.newCount > 0}}label-danger{{else}}label-success{{/if}}">{{:descriptor.scrollers.organizationrequestlist.newCount}}</span></a></li>{{/if}}
 		</ul>	
 		<!-- Tab panes -->
 		<div class="tab-content">
-			<div role="tabpanel" class="tab-pane active" id="entity_tab_main">
+			<div role="tabpanel" class="tab-pane {{if !descriptor.filter_values['selected_tab'] || descriptor.filter_values['selected_tab'] == 'entity_tab_main'}}active{{/if}}" id="entity_tab_main">
 				<div class="container-fluid">
 					<div class="row-fluid">&nbsp;</div>
-					<div class="form-horizontal">
-						{{if descriptor.fields ~fields=~utilities.objectToArray(descriptor.fields)}}
-							{{for ~fields ~descriptor=descriptor}}
-								<div class="form-group" name="field_{{:id}}">
-									<label for="field_{{:id}}_value" class="col-sm-2 control-label">{{:name}}</label>
-									<div class="col-sm-8">
-										{{if type == "label"}}
-											{{include tmpl = ~descriptor.actionName + "_entity_field_label" /}}
-										{{else type == "text"}}
-											{{include tmpl = ~descriptor.actionName + "_entity_field_text" /}}
-										{{else type == "select"}}
-											{{include tmpl = ~descriptor.actionName + "_entity_field_select" /}}
-										{{else type == "email"}}
-											{{include tmpl = ~descriptor.actionName + "_entity_field_text" /}}
-										{{else type == "img"}}
-											<!--{{include tmpl = ~descriptor.actionName + "_entity_field_img" /}}-->
-											{{include tmpl = ~descriptor.actionName + "_entity_field_img" /}}
-										{{/if}}
-									</div>
-								</div>
-							{{/for}}
-						{{/if}}
+					<div class="row-fluid">
+						{{include tmpl = "entity_fields_form" /}}
 					</div>
 				</div>
 			</div>
 			{{if descriptor.scrollers && descriptor.scrollers.expenselist}}
-				<div role="tabpanel" class="tab-pane" id="entity_tab_expenses">
+				<div role="tabpanel" class="tab-pane {{if descriptor.filter_values['selected_tab'] && descriptor.filter_values['selected_tab'] == descriptor.scrollers.expenselist.controllerNameLC}}active{{/if}}" id="entity_tab_expenses_{{:descriptor.local_data.container_id}}">
 					<div class="container-fluid">
 						<div class="row-fluid">&nbsp;</div>
 						<div class="row-fluid">
@@ -61,22 +41,22 @@
 					</div>
 				</div>
 			{{/if}}
-			{{if descriptor.scrollers && descriptor.scrollers.messages}}
-				<div role="tabpanel" class="tab-pane" id="entity_tab_messages">
-					<div class="container-fluid">
-						<div class="row-fluid">&nbsp;</div>
-						<div class="row-fluid">
-							<div id="placeholder_{{:descriptor.scrollers.messages.local_data.container_id}}"></div>
-						</div>
-					</div>
-				</div>
-			{{/if}}
 			{{if descriptor.scrollers && descriptor.scrollers.userlist}}
-				<div role="tabpanel" class="tab-pane" id="entity_tab_userlist">
+				<div role="tabpanel" class="tab-pane {{if descriptor.filter_values['selected_tab'] && descriptor.filter_values['selected_tab'] == descriptor.scrollers.userlist.controllerNameLC}}active{{/if}}" id="entity_tab_userlist_{{:descriptor.local_data.container_id}}">
 					<div class="container-fluid">
 						<div class="row-fluid">&nbsp;</div>
 						<div class="row-fluid">
 							<div id="placeholder_{{:descriptor.scrollers.userlist.local_data.container_id}}"></div>
+						</div>
+					</div>
+				</div>
+			{{/if}}
+			{{if descriptor.scrollers && descriptor.scrollers.organizationrequestlist}}
+				<div role="tabpanel" class="tab-pane {{if descriptor.filter_values['selected_tab'] && descriptor.filter_values['selected_tab'] == descriptor.scrollers.organizationrequestlist.controllerNameLC}}active{{/if}}" id="entity_tab_organizationrequestlist_{{:descriptor.local_data.container_id}}">
+					<div class="container-fluid">
+						<div class="row-fluid">&nbsp;</div>
+						<div class="row-fluid">
+							<div id="placeholder_{{:descriptor.scrollers.organizationrequestlist.local_data.container_id}}"></div>
 						</div>
 					</div>
 				</div>

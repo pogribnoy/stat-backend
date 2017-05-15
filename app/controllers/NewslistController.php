@@ -44,10 +44,10 @@ class NewslistController extends ControllerList {
 			'created_by' => array(
 				'id' => 'created_by',
 				'name' => $this->controller->t->_("text_entity_property_created_by"),
-				'filter' => 'select',
+				'filter' => 'text',
 				'filter_value' => isset($this->filter_values['created_by']) ? $this->filter_values['created_by'] : '',
-				'filter_id' => 'created_by_id', // задается, если отличается от id
-				'style' => 'id',
+				//'filter_id' => 'created_by_id', // задается, если отличается от id
+				//'filter_style' => 'id',
 				"sortable" => "DESC"
 			),
 			'operations' => array(

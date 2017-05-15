@@ -73,10 +73,10 @@ class NewsController extends ControllerEntity {
 	*/
 	protected function fillModelFieldsFromSaveRq() {
 		//$this->entity->id получен ранее при select из БД или будет присвоен при создании записи в БД
-		$this->entity->name = $this->fields['name']['value'];
-		$this->entity->description = $this->fields['description']['value'];
-		$this->entity->publication_date = $this->fields['publication_date']['value'];
-		$this->entity->created_by = $this->fields['created_by']['value_id'];
+		if(isset($this->fields['name']['access']) && $this->fields['name']['access'] == 'edit') $this->entity->name = $this->fields['name']['value'];
+		if(isset($this->fields['description']['access']) && $this->fields['description']['access'] == 'edit') $this->entity->description = $this->fields['description']['value'];
+		if(isset($this->fields['publication_date']['access']) && $this->fields['publication_date']['access'] == 'edit') $this->entity->publication_date = $this->fields['publication_date']['value'];
+		if(isset($this->fields['created_by']['access']) && $this->fields['created_by']['access'] == 'edit') $this->entity->created_by = $this->fields['created_by']['value_id'];
 	}
 	
 	/* 
@@ -100,45 +100,5 @@ class NewsController extends ControllerEntity {
 		$this->fields["publication_date"]["value"] = $row->news->publication_date;
 		$this->fields["created_by"]["value"] = $row->created_by_name;
 		$this->fields["created_by"]["value_id"] = $row->created_by_id;
-	}
-		
-	/* 
-	* Очищает параметры запроса
-	* Расширяемый метод.
-	*/
-	protected function sanitizeSaveRqData($rq) {
-		$res = 0;
-		// id, //select, link
-		$res |= parent::sanitizeSaveRqData($rq);
-		
-		//$this->error['messages'][] = ['title' => "Debug. " . __METHOD__, 'msg' => "id=" . $this->fields['id']['value']];
-		
-		// name
-		$this->fields['name']['value'] = null;
-		if(isset($rq->fields->name) && isset($rq->fields->name->value)) {
-			$this->fields['name']['value'] = $this->filter->sanitize(urldecode($rq->fields->name->value), ["trim", "string"]);
-			if($this->fields['name']['value'] == '') $this->fields['name']['value'] = null;
-		}
-		
-		// publication_date
-		$this->fields['publication_date']['value'] = null;
-		if(isset($rq->fields->publication_date) && isset($rq->fields->publication_date->value)) {
-			$this->fields['publication_date']['value'] = $this->filter->sanitize(urldecode($rq->fields->publication_date->value), ["trim", "string"]);
-			if($this->fields['publication_date']['value'] == '') $this->fields['publication_date']['value'] = null;
-		}
-		
-		// description
-		$this->fields['description']['value'] = null;
-		if(isset($rq->fields->description) && isset($rq->fields->description->value)) {
-			$this->fields['description']['value'] = $this->filter->sanitize(urldecode($rq->fields->description->value), ["trim", "string"]);
-			if($this->fields['description']['value'] == '') $this->fields['description']['value'] = null;
-		}
-		
-		// userlist, expenselist
-		//if(!$this->sanitizeSaveRqDataCheckRelations($rq)) $res |= 2;
-		
-		$res |= $this->check();
-		
-		return $res;
 	}
 }

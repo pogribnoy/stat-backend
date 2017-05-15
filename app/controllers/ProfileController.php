@@ -1,7 +1,7 @@
 <?php
 class ProfileController extends ControllerEntity{
 	public $entityName  = 'User';
-	public $tableName  = 'User';
+	public $tableName  = 'user';
 	
 	public function initialize() {
 		parent::initialize();
@@ -75,7 +75,7 @@ class ProfileController extends ControllerEntity{
 		//$this->entity->id получен ранее при select из БД или будет присвоен при создании записи в БД
 		$this->entity->name = $this->fields['name']['value'];
 		$this->entity->phone = $this->fields['phone']['value'];
-		if(isset($this->fields['password']['value'])) $this->entity->password = $this->fields['password']['value'];
+		if(isset($this->fields['password']['value']) && $this->fields['password']['value'] != null) $this->entity->password = $this->fields['password']['value'];
 	}
 	
 	/* 
@@ -108,7 +108,7 @@ class ProfileController extends ControllerEntity{
 	*/
 	public function fillFieldsWithLists() {
 		// роли
-		$user_role_rows = UserRole::find();
+		/*$user_role_rows = UserRole::find();
 		$user_roles = array();
 		foreach ($user_role_rows as $row) {
 			// наполняем массив
@@ -117,41 +117,6 @@ class ProfileController extends ControllerEntity{
 				"name" => $row->name
 			);
 		}
-		$this->fields['user_role']['values'] = $user_roles;
-	}
-	
-	/* 
-	* Очищает параметры запроса
-	* Расширяемый метод.
-	*/
-	protected function sanitizeSaveRqData($rq) {
-		$res = 0;
-		// id, select, link
-		$res |= parent::sanitizeSaveRqData($rq);
-		
-		// name
-		$this->fields['name']['value'] = null;
-		if(isset($rq->fields->name) && isset($rq->fields->name->value)) {
-			$this->fields['name']['value'] = $this->filter->sanitize(urldecode($rq->fields->name->value), ["trim", "string"]);
-			if($this->fields['name']['value'] == '') $this->fields['name']['value'] = null;
-		}
-		
-		// password
-		$this->fields['password']['value'] = null;
-		if(isset($rq->fields->password) && isset($rq->fields->password->value)) {
-			$this->fields['password']['value'] = $this->filter->sanitize(urldecode($rq->fields->password->value), ["trim", "string"]);
-			if($this->fields['password']['value'] == '') $this->fields['password']['value'] = null;
-		}
-		
-		// phone
-		$this->fields['phone']['value'] = null;
-		if(isset($rq->fields->phone) && isset($rq->fields->phone->value)) {
-			$this->fields['phone']['value'] = $this->filter->sanitize(urldecode($rq->fields->phone->value), ["trim", "string"]);
-			if($this->fields['phone']['value'] == '') $this->fields['phone']['value'] = null;
-		}
-		
-		$res |= $this->check();
-		
-		return $res;
+		$this->fields['user_role']['values'] = $user_roles;*/
 	}
 }

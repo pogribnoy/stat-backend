@@ -16,7 +16,7 @@ class OrganizationRequest extends Model {
 	/**
 	* @var integer
 	*/
-	public $user_id;
+	public $expense_id;
 	
 	/**
 	* @var integer
@@ -53,8 +53,9 @@ class OrganizationRequest extends Model {
 	}
 	public function initialize() {
 		$this->belongsTo("topic_id", "OrganizationRequestTopic", "id");
-		$this->belongsTo("user_id", "User", "id");
+		//$this->belongsTo("user_id", "User", "id");
 		$this->belongsTo("organization_id", "Organization", "id");
+		$this->belongsTo("expense_id", "Expense", "id");
 		$this->belongsTo("status_id", "Status", "id");
 	}
 }

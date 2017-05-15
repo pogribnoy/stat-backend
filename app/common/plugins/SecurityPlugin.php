@@ -31,7 +31,7 @@ class SecurityPlugin extends Plugin {
 		//var_dump($this->loader);
 		
 		// Создание регистратора с поддержкой записи
-		$aclName = "acl_" . $this->config->application->module;
+		$aclName = "acl_" . $this->config['application']['module'];
 		//if (!isset($this->persistent->$aclName) && $this->config->application->cacheACL == 1) {
 		//if (!isset($this->persistent->acl)) {
 			$roles = array();
@@ -52,15 +52,6 @@ class SecurityPlugin extends Plugin {
 						'module' => $r->module
 					);
 					$acl->addResource(new Acl\Resource($r->controller), $r->action);
-					/*if($r->action == 'save') {
-						$resources[-$r->id] = array(
-							'controller' => $r->controller,
-							'action' => 'check', 
-							'group' => $r->group, 
-							'module' => $r->module
-						);
-						$acl->addResource(new Acl\Resource($r->controller), 'check');
-					}*/
 				}
 			}
 			
@@ -74,7 +65,7 @@ class SecurityPlugin extends Plugin {
 					$acl->addRole($role);
 					// роль "Суперпользователь" имеет доступ ко всему, не зависимо от активности
 					//var_dump($ur);
-					if($ur->id == 1) {
+					if($ur->id == $this->config->application->adminRoleID) {
 						//$this->logger->log('Superuser. Module: ' . $this->config->application->module);
 						foreach($resources as $r) {
 							if ($r['module'] === $this->config->application->module) $acl->allow($ur->id, $r['controller'], $r['action']);
@@ -136,7 +127,8 @@ class SecurityPlugin extends Plugin {
 	 */
 	public function beforeDispatch(Event $event, Dispatcher $dispatcher) {
 		$userData = $this->getUserData();
-		$this->logger->log(__METHOD__ . ". getControllerClass = " . $dispatcher->getControllerClass());
+		$this->logger->log(__METHOD__ . ". ControllerClass = " . $dispatcher->getControllerClass() . ', Action class = ' . $dispatcher->getActionName());
+		//$this->logger->log(__METHOD__ . ". sessionID = " . var_dump($this->session->getId()));
 		
 		// проверяем время жизни сессии
 		$auth = $this->session->get('auth');
@@ -182,13 +174,13 @@ class SecurityPlugin extends Plugin {
 
 		$allowed = $acl->isAllowed($role, $controller, $action);
 		
-		$this->logger->log("Access: user: " . ( $this->user!=null && isset($this->user['id']) ? $this->user['id'] . ' (' . $this->user['name'] . '), ' : 'guest, ') . "role: " . $role . ", resource: " . $controller . " \ " . $action . ", URL: " . json_encode($this->request->getURI()) . ", RESULT: " . ($allowed == Acl::ALLOW ? '1' : '0'));
+		$this->logger->log(__METHOD__ . ". Access attempt. user: " . ( $this->user!=null && isset($this->user['id']) ? $this->user['id'] . ' (' . $this->user['name'] . '), ' : 'guest, ') . "role_id: " . $role . ", resource: " . $controller . " \ " . $action . ", URL: " . json_encode($this->request->getURI()) . ", RESULT: " . ($allowed == Acl::ALLOW ? '1' : '0'));
 		
 		if ($allowed != Acl::ALLOW) {
 			// админка, гость
-			if($role == 2 && $this->config->application->module === "backend") {
+			if($role == $this->config['application']['guestRoleID'] && $this->config['application']['module'] === "backend") {
 				if ($this->request->isAjax()) {
-					$this->logger->log("AJAX. Redirect to _/login/index_");
+					$this->logger->log(__METHOD__ . ". AJAX. Redirect to _/login/index_");
 					$this->view->disable();
 					$this->response->setContentType('application/json', 'UTF-8');
 					$data = array(
@@ -204,22 +196,27 @@ class SecurityPlugin extends Plugin {
 					$this->response->setJsonContent(json_encode($data));
 				}
 				else { 
-					$this->logger->log("HTTP-request");
-					if($acl->isAllowed($role, 'login', 'index'))	{
-						$this->logger->log("/login/index is accessable. User redirected to /login/index");
+					$this->logger->log(__METHOD__ . ". HTTP-request");
+					if($acl->isAllowed($role, 'login', 'index')) {
+						$this->logger->log(__METHOD__ . ". /login/index is accessable. User redirected to /login/index");
+						//$this->logger->log(__METHOD__ . ". request = " . var_dump($this->request));
 						return $this->response->redirect("/login/index", true, 301)->sendHeaders();
 					}
 					else {
-						$this->logger->log("/index/index is NOT accessable. User redirected to /login/index");
+						$this->logger->log(__METHOD__ . ". /login/index is NOT accessable. Forward to /errors/show401");
+						$dispatcher->forward(array(
+							'controller' => 'errors',
+							'action'     => 'show401',
+						));
 						return $this->response->redirect("/login/index", true, 301)->sendHeaders();
 					}
 					//$this->response->redirect("/login/index", true, 301)->sendHeaders();
 				}
 			}
 			// общедоступная часть, не важно, какая роль
-			else if($this->config->application->module === "frontend") {
+			else if($this->config['application']['module'] === "frontend") {
 				if ($this->request->isAjax()) {
-					$this->logger->log("AJAX. Redirect to _/index/index_");
+					$this->logger->log(__METHOD__ . ". AJAX. Redirect to _/index/index_");
 					$this->view->disable();
 					$this->response->setContentType('application/json', 'UTF-8');
 					$data = array(
@@ -235,18 +232,21 @@ class SecurityPlugin extends Plugin {
 					$this->response->setJsonContent(json_encode($data));
 				}
 				else { 
-					$this->logger->log("HTTP-request");
+					$this->logger->log(__METHOD__ . ". HTTP-request");
 					if($acl->isAllowed($role, 'index', 'index'))	{
-						$this->logger->log("/index/index is accessable. User redirected to /index/index");
+						$this->logger->log(__METHOD__ . ". /index/index is accessable. User redirected to /index/index");
 						return $this->response->redirect("/index/index", true, 301)->sendHeaders();
 					}
 					else {
-						$this->logger->log("/index/index is NOT accessable. User redirected to /login/index");
-						return $this->response->redirect("/login/index", true, 301)->sendHeaders();
+						$this->logger->log(__METHOD__ . ". /index/index is NOT accessable. Forward to /errors/show401");
+						$dispatcher->forward(array(
+							'controller' => 'errors',
+							'action'     => 'show401',
+						));
 					}
 					//$this->response->redirect("/login/index", true, 301)->sendHeaders();
 				}
-				//$this->logger->log("NOT allowed. Guest. Redirect to login");
+				//$this->logger->log(__METHOD__ . ". NOT allowed. Guest. Redirect to login");
 				/*$dispatcher->forward([
 					'controller' => 'login',
 					'action'     => 'index',
@@ -257,7 +257,7 @@ class SecurityPlugin extends Plugin {
 			// остальные: авторизованный пользователь, в админке
 			else {
 				if ($this->request->isAjax()) {
-					$this->logger->log("AJAX. Redirect to _/errors/show401_");
+					$this->logger->log(__METHOD__ . ". AJAX. Redirect to _/errors/show401_");
 					$this->view->disable();
 					$this->response->setContentType('application/json', 'UTF-8');
 					$data = array(
@@ -279,9 +279,9 @@ class SecurityPlugin extends Plugin {
 					));
 				}
 			}
-			return true;
+			//return true;
 		}
-		//$this->logger->log("SequrityPlugin returns true");
+		//$this->logger->log(__METHOD__ . ". SequrityPlugin returns true");
 		return true;
 	}
 	
@@ -289,7 +289,7 @@ class SecurityPlugin extends Plugin {
 		if($this->user != null) return $this->user;
 		else {
 			$this->user = array();
-			$this->user['role_id'] = 2;	// по умолчанию - гость
+			$this->user['role_id'] = $this->config['application']['guestRoleID'];	// по умолчанию - гость
 			
 			$auth = $this->session->get('auth');
 			if ($auth) {

@@ -26,6 +26,9 @@ class ControllerList extends ControllerBase {
 		"order" => "desc",
 	];
 	
+	// количество новых записей, новых по разным критериям, например для вопросов организаций - кол-во вопросов в статусе "Новый"
+	public $newCount = 0;
+	
 	// максимальное количество записей на странице
 	public $max_page_size = 100;
 	// количество страниц для скроллеров
@@ -41,11 +44,15 @@ class ControllerList extends ControllerBase {
 		if($this->request->isAjax()) {
 			$this->view->disable();
 			$this->response->setContentType('application/json', 'UTF-8');
+			
+			// TODO. Удалить, используется только для отладки спиннера
+			if(isset($this->filter_values['id'])) sleep(10);
+			
+			//$this->logger->log(__METHOD__ . '. descriptor = ' . json_encode($this->descriptor));
 			return json_encode($this->descriptor);
 		}
 		else {
 			// передаем в представление имеющиеся данные
-			//$this->view->setVar("page_header", $this->t->_('text_'.$this->controllerName.'_title'));
 			$this->view->descriptor = $this->descriptor;
 			return null;
 		}
@@ -81,14 +88,16 @@ class ControllerList extends ControllerBase {
 		}
 	}
 	
-	public function filterAction() {
+	/*public function filterAction() {
+		//sleep(2);
+		
 		$this->view->disable();
 		$this->response->setContentType('application/json', 'UTF-8');
 		
 		$this->createDescriptor();
 		
 		return json_encode($this->descriptor);
-	}
+	}*/
 	
 	public function createDescriptor($controller = null, $add_filters = null, $action = null) {
 		if($controller == null) $this->controller = $this;
@@ -110,28 +119,26 @@ class ControllerList extends ControllerBase {
 			// пример: $this->logger->log(__METHOD__ . ". add_filters['page_size']=" . $add_filters["page_size"]);
 			$this->viewCacheKey = $this->controllerName . (isset($this->actionName) ? "_" . $this->actionName : "") . ".html";
 			
-			$this->logger->log(__METHOD__ . ". controllerNameLC=" . $this->controllerNameLC);
+			//$this->logger->log(__METHOD__ . ". controllerNameLC=" . $this->controllerNameLC);
 		}
 		
 		// читаем настройки
 		$this->getSettings();
 		
+		// формируем список столбцов
+		$this->initColumns();
+		
 		// разбираем доп. фильтры, передаваемые из других контроллеров
 		$this->parseAddFilters($add_filters);
 		
-		
 		// Разбираем значения параметров фильтра из запроса
 		$this->sanitizeGetDataRqFilters();
-		
-		// формируем список столбцов
-		$this->initColumns();
 		
 		// вспомогательные данные
 		$this->fillColumnsWithLists();
 		
 		$this->fillOperations();
 		
-		$this->createDescriptorObject();
 		
 		// строим запрос к БД на выборку данных
 		$phql = $this->getPhql();
@@ -139,6 +146,7 @@ class ControllerList extends ControllerBase {
 		
 		// выбираем данные с фильтром, сортировкой и лимитом
 		$rows = false;
+		$this->logger->log(__METHOD__ . ". phql=" . $phql);
 		$rows = $this->modelsManager->executeQuery($phql);
 		
 		// считаем количество записей
@@ -147,6 +155,8 @@ class ControllerList extends ControllerBase {
 		
 		// наполняем $fields
 		$this->fillItemsFromRows($rows);
+		
+		$this->createDescriptorObject();
 		
 		// TODO. Возвращать реальное количество страниц
 		$this->descriptor["pager"]["total_pages"] = $count/$this->descriptor["filter_values"]["page_size"]+1;
@@ -212,9 +222,7 @@ class ControllerList extends ControllerBase {
 		$exludeOps = $this->getExludeOps();
 		
 		// получаем действия, доступные пользователю
-		if(!isset($this->controller->tools)) $this->controller->tools = DI::getDefault()->getTools();
-		//var_dump($this->controller->tools);
-		$this->operations = $this->controller->tools->getScrollerOperations($this->controller, $this->entityNameLC, $this->actionNameLC);
+		$this->operations = $this->getScrollerOperations($this->controller, $this->entityNameLC, $this->actionNameLC);
 	}
 	
 	/* 
@@ -223,6 +231,7 @@ class ControllerList extends ControllerBase {
 	public function createDescriptorObject() {
 		$this->descriptor = array(
 			"controllerName" => $this->controllerNameLC,
+			"controllerNameLC" => $this->controllerNameLC,
 			"entityNameLC" => $this->entityNameLC,
 			"type" => "scroller",
 			"columns" => $this->columns,
@@ -238,6 +247,7 @@ class ControllerList extends ControllerBase {
 			"add_style" => "entity", //scroller
 			"edit_style" => 'modal', //url
 			"template" => $this->getTmpl(),
+			"newCount" => $this->newCount,
 		);
 		if(isset($this->notCollapsible)) $this->descriptor["notCollapsible"] = $this->notCollapsible;
 		//$this->logger->log(json_encode($this->descriptor));
@@ -268,20 +278,61 @@ class ControllerList extends ControllerBase {
 	*/
 	public function sanitizeGetDataRqFilters() {
 		if(isset($_REQUEST["page"])) $this->filter_values["page"] = $this->filter->sanitize(urldecode($_REQUEST["page"]), ['trim',"int"]); else $this->filter_values["page"] = 1;
-		if(isset($_REQUEST["sort"])) $this->filter_values["sort"] = $this->filter->sanitize(urldecode($_REQUEST["sort"]), ['trim',"string"]); else $this->filter_values['sort'] = "id";
-		if(isset($_REQUEST["order"])) $this->filter_values["order"] = $this->filter->sanitize(urldecode($_REQUEST["order"]), ['trim',"string"]); else $this->filter_values['order'] = "DESC";
+		if(isset($_REQUEST["sort"])) $this->filter_values["sort"] = $this->filter->sanitize(urldecode($_REQUEST["sort"]), ['trim',"string"]); else $this->filter_values['sort'] = $this->defaultSort['column'];
+		if(isset($_REQUEST["order"])) $this->filter_values["order"] = $this->filter->sanitize(urldecode($_REQUEST["order"]), ['trim',"string"]); else $this->filter_values['order'] = $this->defaultSort['order'];
 		if(isset($_REQUEST["page_size"])) {
 			$this->filter_values["page_size"] = $this->filter->sanitize(urldecode($_REQUEST["page_size"]), ['trim',"int"]); 
 			if($this->filter_values["page_size"]=="" || !in_array($this->filter_values["page_size"], $this->pager['page_sizes'])) $this->filter_values['page_size'] = $this->max_page_size;
 		}
 		else $this->filter_values['page_size'] = $this->max_page_size;
 		
-		/*if(isset($_REQUEST["add_filters"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_id"]), ['trim',"int"]);
-			if($val != '') $this->filter_values["id"] =  $val;
+		if(isset($_REQUEST["exclude_ids"])) {
+			$val = $this->filter->sanitize(urldecode($_REQUEST["exclude_ids"]), ["trim", "string"]);
+			if($val != '') $this->filter_values["exclude_ids"] =  $val;
+		}
+		
+		// TODO. Сделать цикл по колонкам и проверять, есть ли переданные значения в фильтре
+		foreach($this->columns as $columnID => &$column) {
+			// нашли необходимое поле и оно фильтруемое
+			if(isset($column['filter'])) {
+				$filterID = "filter_" . $columnID;
+				//$this->logger->log(__METHOD__ . '. columnID = ' . $columnID);
+				// если поле есть в фильтре
+				if(isset($_REQUEST[$filterID]) && ($column['filter'] == 'text' || $column['filter'] == 'period')) {
+					$filterID = "filter_" . $columnID;
+					$val = $this->filter->sanitize(urldecode($_REQUEST[$filterID]), ['trim', "string"]);
+					if($val != '') $this->filter_values[$columnID] =  $val;
+				}
+				else if(isset($_REQUEST[$filterID]) && ($column['filter'] == 'number' || $column['filter'] == 'bool')) {
+					$filterID = "filter_" . $columnID;
+					$val = $this->filter->sanitize(urldecode($_REQUEST[$filterID]), ['trim', "int"]);
+					if($val != '') $this->filter_values[$columnID] =  $val;
+				}
+				else if(isset($_REQUEST[$filterID]) && $column['filter'] == 'select' && isset($column['filter_style']) && $column['filter_style'] == "id") {
+					$val = $this->filter->sanitize(urldecode($_REQUEST[$filterID]), ['trim', "int"]);
+					if($val != '') $this->filter_values[$columnID] =  $val;
+					else if ($_REQUEST[$filterID] == "**") $this->filter_values[$columnID] = "**";
+				}
+				else if(isset($_REQUEST[$filterID]) && $column['filter'] == 'select' && isset($column['filter_style']) && $column['filter_style'] == "name") {
+					$val = $this->filter->sanitize(urldecode($_REQUEST[$filterID]), "string");
+					if($val != '') $this->filter_values[$columnID] =  $val;
+					else if ($_REQUEST[$filterID] == "**") $this->filter_values[$columnID] = "**";
+				}
+				
+				if(isset($this->filter_values[$columnID])) $column['filter_value'] = $val;
+			}
+		}
+		
+		$this->addNonColumnsFilters();
+		
+		$this->logger->log(__METHOD__ . '. filter_values = ' . json_encode($this->filter_values));
+		
+		/*if(isset($_REQUEST["filter_organization"])) {
+			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_organization"]), ['trim',"int"]);
+			if($val != '') $this->filter_values["organization"] =  $val;
 		}*/
 		
-		if(isset($_REQUEST["filter_id"])) {
+		/*if(isset($_REQUEST["filter_id"])) {
 			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_id"]), ['trim',"int"]);
 			if($val != '') $this->filter_values["id"] =  $val;
 		}
@@ -378,24 +429,24 @@ class ControllerList extends ControllerBase {
 			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_region"]), ['trim',"int"]);
 			if($val != '') $this->filter_values["region"] =  $val;
 		}
-		if(isset($_REQUEST["filter_expense_type_id"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_expense_type_id"]), ['trim',"int"]);
-			if($val != '') $this->filter_values["expense_type_id"] =  $val;
+		if(isset($_REQUEST["filter_expense_type"])) {
+			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_expense_type"]), ['trim',"int"]);
+			if($val != '') $this->filter_values["expense_type"] =  $val;
 		}
-		if(isset($_REQUEST["filter_expense_status_id"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_expense_status_id"]), ['trim',"int"]);
-			if($val != '') $this->filter_values["expense_status_id"] =  $val;
+		if(isset($_REQUEST["filter_expense_status"])) {
+			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_expense_status"]), ['trim',"int"]);
+			if($val != '') $this->filter_values["expense_status"] =  $val;
 		}
-		if(isset($_REQUEST["filter_organization_id"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_organization_id"]), ['trim',"int"]);
-			if($val != '') $this->filter_values["organization_id"] =  $val;
+		if(isset($_REQUEST["filter_organization"])) {
+			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_organization"]), ['trim',"int"]);
+			if($val != '') $this->filter_values["organization"] =  $val;
 		}
-		if(isset($_REQUEST["filter_street_type_id"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_street_type_id"]), ['trim',"int"]);
-			if($val != '') $this->filter_values["street_type_id"] =  $val;
+		if(isset($_REQUEST["filter_street_type"])) {
+			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_street_type"]), ['trim',"int"]);
+			if($val != '') $this->filter_values["street_type"] =  $val;
 			else {
-				$val = $this->filter->sanitize(urldecode($_REQUEST["filter_street_type_id"]), ['trim',"string"]);
-				if($val == '**') $this->filter_values["street_type_id"] = "**";
+				$val = $this->filter->sanitize(urldecode($_REQUEST["filter_street_type"]), ['trim',"string"]);
+				if($val == '**') $this->filter_values["street_type"] = "**";
 			}
 		}
 		if(isset($_REQUEST["filter_organization_name"])) {
@@ -409,25 +460,63 @@ class ControllerList extends ControllerBase {
 		if(isset($_REQUEST["filter_created_by_id"])) {
 			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_created_by_id"]), ['trim',"int"]);
 			if($val != '') $this->filter_values["created_by_id"] =  $val;
-		}
+		}*/
 		
-		if(isset($_REQUEST["exclude_ids"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["exclude_ids"]), "string");
-			if($val != '') $this->filter_values["exclude_ids"] =  $val;
-		}
+		
 	}
+	
+	protected function addNonColumnsFilters() {}
 
 	/* 
 	* Добавляет текст запроса к БД параметры фильтрации
 	* Расширяемый метод
 	*/
 	public function addFilterValuesToPhql($phql) {
-		//$this->logger->log(json_encode($this->filter_values));
-		// параметры фильтрации
-		if(isset($this->filter_values["id"])) $phql .= " AND <TableName>.id LIKE '%" . $this->filter_values["id"] . "%'";
+		//$this->logger->log(__METHOD__ . '. filter_values = ' . json_encode($this->filter_values));
+		//$this->logger->log(__METHOD__ . '. email = ' . json_encode($this->columns['email']));
+		
+		foreach($this->filter_values as $id => $value) {
+			// нашли необходимое поле и оно фильтруемое
+			if(isset($this->columns[$id]) && isset($this->columns[$id]['filter'])) {
+				$column = $this->columns[$id];
+				//$this->logger->log(__METHOD__ . '. id = ' . $id);
+				
+				$newPhql = $this->addSpecificFilterValuesToPhql($phql, $id);
+				//$this->logger->log(__METHOD__ . '. newPhql = ' . $newPhql);
+				// сортировка не по значению из связанной таблицы, то ставим стандартную сортировку
+				if (!$newPhql) {
+					// если код - спецслово СУБД, то его надо заключить в квадратные скобки
+					$field = $id;
+					if($column['filter'] == 'select' && isset($column['filter_style']) && $column['filter_style'] == "id") $field .= '_id';
+					if($id == 'group') $field = '[' . $id . ']';
+					
+					if(isset($column["nullSubstitute"]) && $value == $column["nullSubstitute"]) $phql .= " AND (<TableName>." . $field . " IS NULL OR <TableName>." . $field . " = '' OR <TableName>." . $field . " = '" . $column["nullSubstitute"] . "')";
+					else if ($column['filter'] == 'select' && isset($column['filter_style']) && $column['filter_style'] == "id") $phql .= " AND <TableName>." . $field . " = " . $value;
+					else if ($column['filter'] == 'bool') $phql .= " AND <TableName>." . $field . " = " . $value;
+					else  $phql .= " AND <TableName>." . $field . " LIKE '%" . $value . "%'";
+				}
+				else $phql = $newPhql;
+			}
+			//else $this->logger->log(__METHOD__ . '. id2 = ' . $id);
+		}
+		// используется на фронте для отбора расходов конкретной организации
+		if(isset($this->filter_values["organization"])) $phql .= " AND <TableName>.organization_id = '" . $this->filter_values["organization"] . "'";
+		// используется на фронте для сброса конкретного фильтра путем выбора значения ""
+		if(isset($this->filter_values["street_type"])) {
+			if($this->filter_values["street_type"] == "**") {
+				$phql .= " AND (<TableName>.street_type_id IS NULL OR <TableName>.street_type_id = '')";
+				//if(isset($this->columns['street_type']["nullSubstitute"])) $this->filter_values["street_type_id"] = $this->columns['street_type']["nullSubstitute"];
+			}
+			else $phql .= " AND <TableName>.street_type_id = '" . $this->filter_values["street_type"] . "'";
+		}
+		
+		
+		
 		// исключаем записи, которые не нужны
+		// TODO. !!!Необходимо парсить массив и собирать заново, чтобы не столкнуться с SQL-инъекцией
 		if(isset($this->filter_values["exclude_ids"])) $phql .= " AND <TableName>.id NOT IN (" . $this->filter_values["exclude_ids"] . ")";
 		
+		/*if(isset($this->filter_values["id"])) $phql .= " AND <TableName>.id LIKE '%" . $this->filter_values["id"] . "%'";
 		if(isset($this->filter_values["name"]) && isset($this->columns['name'])) $phql .= " AND <TableName>.name LIKE '%" . $this->filter_values["name"] . "%'";
 		if(isset($this->filter_values["email"]) && isset($this->columns['email'])) $phql .= " AND <TableName>.email LIKE '%" . $this->filter_values["email"] . "%'";
 		if(isset($this->filter_values["contacts"]) && isset($this->columns['contacts'])) $phql .= " AND <TableName>.contacts LIKE '%" . $this->filter_values["contacts"] . "%'";
@@ -438,14 +527,15 @@ class ControllerList extends ControllerBase {
 		if(isset($this->filter_values["controller"]) && isset($this->columns['controller'])) $phql .= " AND <TableName>.controller LIKE '%" . $this->filter_values["controller"] . "%'";
 		if(isset($this->filter_values["action"]) && isset($this->columns['action'])) $phql .= " AND <TableName>.action LIKE '%" . $this->filter_values["action"] . "%'";
 		if(isset($this->filter_values["module"]) && isset($this->columns['module'])) $phql .= " AND <TableName>.module LIKE '%" . $this->filter_values["module"] . "%'";
+		if(isset($this->filter_values["group"]) && isset($this->columns['group'])) $phql .= " AND <TableName>.[group] LIKE '%" . $this->filter_values["group"] . "%'";
+		if(isset($this->filter_values["date"]) && isset($this->columns['date'])) $phql .= " AND <TableName>.date LIKE '%" . $this->filter_values["date"] . "%'";
+		if(isset($this->filter_values["created_at"]) && isset($this->columns['created_at'])) $phql .= " AND <TableName>.created_at LIKE '%" . $this->filter_values["created_at"] . "%'";
+		if(isset($this->filter_values["organization"])) $phql .= " AND <TableName>.organization_id = '" . $this->filter_values["organization"] . "'";
+		
 		if(isset($this->filter_values["amount"]) && isset($this->columns['amount'])) {
 			if(isset($this->columns['amount']["nullSubstitute"]) && $this->filter_values["amount"] == $this->columns['amount']["nullSubstitute"]) $phql .= " AND (<TableName>.amount IS NULL OR <TableName>.amount = '' OR <TableName>.amount = '" . $this->columns['amount']["nullSubstitute"] . "')";
 			else $phql .= " AND <TableName>.amount LIKE '%" . str_replace([".", ",", "-"], "", $this->filter_values["amount"]) . "%'";
 		}
-		if(isset($this->filter_values["date"]) && isset($this->columns['date'])) $phql .= " AND <TableName>.date LIKE '%" . $this->filter_values["date"] . "%'";
-		if(isset($this->filter_values["created_at"]) && isset($this->columns['created_at'])) $phql .= " AND <TableName>.created_at LIKE '%" . $this->filter_values["created_at"] . "%'";
-		
-		if(isset($this->filter_values["group"]) && isset($this->columns['group'])) $phql .= " AND <TableName>.[group] LIKE '%" . $this->filter_values["group"] . "%'";
 		if(isset($this->filter_values["target_date"]) && isset($this->columns['target_date'])) {
 			if(isset($this->columns['street']["nullSubstitute"]) && $this->filter_values["target_date"] == $this->columns['target_date']["nullSubstitute"]) $phql .= " AND (<TableName>.target_date_from IS NULL OR <TableName>.target_date_from = '' OR <TableName>.target_date_from = '" . $this->columns['target_date']["nullSubstitute"] . "' OR (<TableName>.target_date_to IS NULL OR <TableName>.target_date_to = '' OR <TableName>.target_date_to = '" . $this->columns['target_date']["nullSubstitute"] . "'))";
 			else $phql .= " AND (<TableName>.target_date_from LIKE '%" . $this->filter_values["target_date"] . "%' OR <TableName>.target_date_to LIKE '%" . $this->filter_values["target_date"] . "%')";
@@ -473,42 +563,49 @@ class ControllerList extends ControllerBase {
 			}
 			else $phql .= " AND <TableName>.street_type_id = '" . $this->filter_values["street_type_id"] . "'";
 		}
+		*/
 		//else $this->logger->log($this->filter_values["street_type_id"]);
 		
 		// фильтры по справочникам
-		if(isset($this->filter_values["region"])) $phql .= " AND Region.id = '" . $this->filter_values["region"] . "'";
-		if(isset($this->filter_values["organization"])) $phql .= " AND <TableName>.organization_id = '" . $this->filter_values["organization"] . "'";
-		if(isset($this->filter_values["expense_type_id"])) $phql .= " AND ExpenseType.id = '" . $this->filter_values["expense_type_id"] . "'";
-		if(isset($this->filter_values["expense_status_id"])) $phql .= " AND ExpenseStatus.id = '" . $this->filter_values["expense_status_id"] . "'";
-		if(isset($this->filter_values["organization_id"])) $phql .= " AND Organization.id = '" . $this->filter_values["organization_id"] . "'";
-		if(isset($this->filter_values["organization_name"])) $phql .= " AND Organization.name LIKE '%" . $this->filter_values["organization_name"] . "%'";
-		if(isset($this->filter_values["user_role"])) $phql .= " AND UserRole.id = '" . $this->filter_values["user_role"] . "'";
-		if(isset($this->filter_values["created_by_id"])) $phql .= " AND User.id = '" . $this->filter_values["created_by_id"] . "'";
+		//if(isset($this->filter_values["region"])) $phql .= " AND Region.id = '" . $this->filter_values["region"] . "'";
+		//if(isset($this->filter_values["expense_type_id"])) $phql .= " AND ExpenseType.id = '" . $this->filter_values["expense_type_id"] . "'";
+		//if(isset($this->filter_values["expense_status_id"])) $phql .= " AND ExpenseStatus.id = '" . $this->filter_values["expense_status_id"] . "'";
+		//if(isset($this->filter_values["organization_id"])) $phql .= " AND Organization.id = '" . $this->filter_values["organization_id"] . "'";
+		//if(isset($this->filter_values["organization_name"])) $phql .= " AND Organization.name LIKE '%" . $this->filter_values["organization_name"] . "%'";
+		//if(isset($this->filter_values["user_role"])) $phql .= " AND UserRole.id = '" . $this->filter_values["user_role"] . "'";
+		//if(isset($this->filter_values["created_by_id"])) $phql .= " AND User.id = '" . $this->filter_values["created_by_id"] . "'";
 		
 		
-		//$this->logger->log(json_encode($phql));
+		//$this->logger->log(__METHOD__ . '. phql = ' . $phql);
 		return $phql;
 	}
+	
+	protected function addSpecificFilterValuesToPhql($phql, $id) { return null; }
 	
 	/* 
 	* Добавляет  в текст запроса к БД параметры сортировки и лимита
 	*/
-	public function addSortLimitToPhql($phql) {
+	protected function addSortLimitToPhql($phql) {
 		$filter_values = $this->filter_values;
-		$start = ((integer)$filter_values['page'] - 1) * (integer)$filter_values["page_size"] ;
 		
-		if($filter_values['sort'] == 'region' || $filter_values['sort'] == 'region_name') $phql .= ' ORDER BY Region.name ' . $filter_values['order'];
-		else if($filter_values['sort'] == 'user_role' || $filter_values['sort'] == 'region_name') $phql .= ' ORDER BY UserRole.name ' . $filter_values['order'];
-		else if($filter_values['sort'] == 'region_name') $phql .= ' ORDER BY Region.name ' . $filter_values['order'];
-		else if($filter_values['sort'] == 'expense_type') $phql .= ' ORDER BY ExpenseType.name ' . $filter_values['order'];
-		else if($filter_values['sort'] == 'street_type') $phql .= ' ORDER BY StreetType.name ' . $filter_values['order'];
-		//else if($filter_values['sort'] == 'street') $phql .= ' ORDER BY <TableName>.street ' . $filter_values['order'];
-		//else if($filter_values['sort'] == 'house') $phql .= ' ORDER BY <TableName>.house ' . $filter_values['order'];
-		else $phql .= ' ORDER BY <TableName>.' .$this->defaultSort['column'] . ' ' . $this->defaultSort['order'];
-		//else $phql .= ' ORDER BY <TableName>.' . $filter_values['sort'] . ' ' . $filter_values['order'];
+		foreach($this->columns as $id => $column) {
+			if(isset($column['sortable']) && $filter_values['sort'] == $id) {
+				//$this->logger->log(__METHOD__ . '. id = ' . $id);
+				// нашли колонку, по которой сортируем
+				$newPhql = $this->addSpecificSortLimitToPhql($phql, $id);
+				//$this->logger->log(__METHOD__ . '. isSpecific = ' . $isSpecific);
+				// сортировка не по значению из связанной таблицы, то ставим стандартную сортировку
+				if (!$newPhql) $phql .= ' ORDER BY <TableName>.' . $id . ' ' . $filter_values['order'];
+				else $phql = $newPhql;
+			}
+		}
+		
+		$start = ((integer)$filter_values['page'] - 1) * (integer)$filter_values["page_size"] ;
 		$phql .= ' LIMIT '. $start . ', ' . $filter_values["page_size"];
 		return $phql;
 	}
+	
+	protected function addSpecificSortLimitToPhql($phql, $id) { return null; }
 	
 	/* 
 	* Заполняет свойство items данными, полученными после выборки из БД
@@ -549,4 +646,84 @@ class ControllerList extends ControllerBase {
 	* Переопределяемый метод.
 	*/
 	public function fillColumnsWithLists() {}
+	
+	public function getScrollerOperations($controller, $entityNameLC, $actionName="show") {
+		//$entityName = strtolower($entityName);
+		$role_id = $controller->userData['role_id'];
+		$acl = $controller->acl;
+		$t = $controller->t;
+		
+		
+		$showOp = null;
+		$editOp = null;
+		$sendOp = null;
+		$deleteOp = null;
+		$addOp = null;
+		
+		if($acl->isAllowed($role_id, $entityNameLC, 'show')) {
+			$showOp = array(
+				'id' => 'show',
+				'name' => $t->_('button_show'),
+			);
+		}
+		if($acl->isAllowed($role_id, $entityNameLC, 'edit')) {
+			$editOp = array(
+				'id' => 'edit',
+				'name' => $t->_('button_edit'),
+			);
+		}
+		if($acl->isAllowed($role_id, $entityNameLC, 'delete')) {
+			$deleteOp = array(
+				'id' => 'delete',
+				'name' => $t->_('button_delete'),
+			);
+		}
+		if($acl->isAllowed($role_id, $entityNameLC, 'add')) {
+			$addOp = array(
+				'id' => 'add',
+				'name' => $t->_('button_add'),
+			);
+		}
+		
+		$operations = array();
+		
+		// массив операций на основе разрешений, привязанных к одной сущности
+		$operations["item_operations"] = array();
+		if($showOp) $operations["item_operations"][] = $showOp;
+		
+		if($actionName !== "show") {
+			if($editOp) $operations["item_operations"][] = $editOp;
+			if($sendOp) $operations["item_operations"][] = $sendOp;
+			if($deleteOp) $operations["item_operations"][] = $deleteOp;
+		}
+		
+		// массив операций на основе разрешений, не привязанных к одной сущности
+		$operations["common_operations"] = array();
+		if($addOp && $actionName != "show") {
+			// для скроллера
+			$operations["common_operations"][] = $addOp;
+			// для грида
+			$operations["common_operations"][] = array(
+				'id' => 'select',
+				'name' => $t->_('button_select'),
+			);
+		}
+		
+		// массив групповых операций
+		$operations["group_operations"] = array();
+		if($deleteOp && $actionName != "show") {
+			$operations["group_operations"][] = $deleteOp;
+		}
+		
+		// массив операций для фильтра
+		$operations["filter_operations"] = [[
+			'id' => 'apply',
+			'name' => $t->_('button_apply')
+		],
+		[
+			'id' => 'clear',
+			'name' => $t->_('button_clear')
+		]];
+		return $operations;
+	}
 }

@@ -22,31 +22,23 @@ class OrganizationrequestlistController extends ControllerList {
 				'filter_value' => isset($this->filter_values['id']) ? $this->filter_values['id'] : '',
 				"sortable" => "DESC",
 			),
-			'organization' => array(
+			'expense' => array(
+				'id' => 'expense',
+				'name' => $this->controller->t->_("text_organizationrequestlist_expense"),
+				//'type' => 'text',
+				//'filter' => 'text',
+				//'filter_value' => isset($this->filter_values['topic']) ? $this->filter_values['topic'] : '',
+				//'filter_style' => 'id',
+				//"sortable" => "DESC",
+			),
+			/*'organization' => array(
 				'id' => 'organization',
 				'name' => $this->controller->t->_("text_organizationrequestlist_organization"),
 				//'type' => 'text',
 				'filter' => 'text',
 				'filter_value' => isset($this->filter_values['organization']) ? $this->filter_values['organization'] : '',
 				"sortable" => "DESC",
-			),
-			'user' => array(
-				'id' => 'user',
-				'name' => $this->controller->t->_("text_organizationrequestlist_user"),
-				//'type' => 'text',
-				'filter' => 'text',
-				'filter_value' => isset($this->filter_values['user']) ? $this->filter_values['user'] : '',
-				"sortable" => "DESC",
-			),
-			'topic' => array(
-				'id' => 'name',
-				'name' => $this->controller->t->_("text_organizationrequestlist_topic"),
-				//'type' => 'text',
-				'filter' => 'select',
-				'filter_value' => isset($this->filter_values['topic']) ? $this->filter_values['topic'] : '',
-				'style' => 'id',
-				"sortable" => "DESC",
-			),
+			),*/
 			'request' => array(
 				'id' => 'request',
 				'name' => $this->controller->t->_("text_organizationrequestlist_request"),
@@ -70,17 +62,17 @@ class OrganizationrequestlistController extends ControllerList {
 			),
 			'status' => array(
 				'id' => 'status',
-				'name' => $this->controller->t->_("text_entity_status"),
+				'name' => $this->controller->t->_("text_entity_property_status"),
 				'filter' => 'select',
 				'filter_value' => isset($this->filter_values['status']) ? $this->filter_values['status'] : '',
-				'style' => 'id',
+				'filter_style' => 'id',
 				"sortable" => "DESC",
 			),
 			'created_at' => array(
-				'id' => 'date',
+				'id' => 'created_at',
 				'name' => $this->controller->t->_("text_entity_property_date"),
 				'filter' => 'text',
-				'filter_value' => isset($this->filter_values['date']) ? $this->filter_values['date'] : '',
+				'filter_value' => isset($this->filter_values['created_at']) ? $this->filter_values['created_at'] : '',
 				"sortable" => "DESC",
 			),
 			'operations' => array(
@@ -96,7 +88,7 @@ class OrganizationrequestlistController extends ControllerList {
 	*/
 	public function fillColumnsWithLists() {
 		// темы запросов для фильтрации
-		$topic_rows = OrganizationRequestTopic::find();
+		/*$topic_rows = OrganizationRequestTopic::find();
 		$topics = array();
 		foreach ($topic_rows as $row) {
 			// наполняем массив
@@ -105,7 +97,19 @@ class OrganizationrequestlistController extends ControllerList {
 				"name" => $row->name
 			);
 		}
-		$this->columns['topic']['filter_values'] = $topics;
+		$this->columns['topic']['filter_values'] = $topics;*/
+		
+		// статусы запросов для фильтрации
+		$request_status_rows = RequestStatus::find();
+		$request_statuses = array();
+		foreach ($request_status_rows as $row) {
+			// наполняем массив
+			$request_statuses[] = [
+				'id' => $row->id,
+				"name" => $this->controller->t->_($row->name_code),
+			];
+		}
+		$this->columns['status']['filter_values'] = $request_statuses;
 	}
 	
 	/* 
@@ -114,10 +118,13 @@ class OrganizationrequestlistController extends ControllerList {
 	*/
 	public function getPhqlSelect() {
 		$userRoleID = $this->controller->userData['role_id'];
+		$userID = $this->controller->userData['id'];
 		
 		// строим запрос к БД на выборку данных
-		$phql = "SELECT <TableName>.*, OrganizationRequestTopic.id AS topic_id, OrganizationRequestTopic.name AS topic_name, RequestStatus.id AS request_status_id, RequestStatus.name AS request_status_name FROM <TableName> JOIN OrganizationRequestTopic on OrganizationRequestTopic.id=<TableName>.topic_id JOIN RequestStatus on RequestStatus.id=<TableName>.status_id";
-		if($userRoleID != 1) $phql .= ' JOIN Organization ON Organization.id = <TableName>.organization_id INNER JOIN UserOrganization ON UserOrganization.organization_id = <TableName>.organization_id AND UserOrganization.user_id = ' . $userRoleID;
+		$phql = "SELECT <TableName>.*, Expense.id AS expense_id, Expense.name AS expense_name, RequestStatus.id AS request_status_id, RequestStatus.name_code AS request_status_name_code FROM <TableName> JOIN Expense on Expense.id=<TableName>.expense_id JOIN RequestStatus on RequestStatus.id=<TableName>.status_id";
+		if($userRoleID != $this->config->application->adminRoleID) $phql .= ' JOIN Organization ON Organization.id = <TableName>.organization_id INNER JOIN UserOrganization ON UserOrganization.organization_id = <TableName>.organization_id AND UserOrganization.user_id = ' . $userID;
+		
+		//$this->logger->log(__METHOD__ . ". userRoleID = " . $userRoleID . ". Config userRoleID = " . $this->config->application->adminRoleID);
 		
 		$phql .= " WHERE 1=1";
 		
@@ -130,45 +137,48 @@ class OrganizationrequestlistController extends ControllerList {
 	}
 	
 	/* 
-	* Добавляет текст запроса к БД параметры фильтрации
-	* Расширяемый метод
-	*/
-	public function addFilterValuesToPhql($phql) {
-		$phql = parent::addFilterValuesToPhql($phql);
-		
-		//if(isset($this->filter_values["expense_type_id"]) && isset($this->columns['expense_type_id'])) $phql .= " AND ExpenseType.id = '" . $this->filter_values["expense_type_id"] . "'";
-		
-		return $phql;
-	}
-	
-	/* 
 	* Заполняет свойство items['fields'] данными, полученными после выборки из БД
 	* Переопределяемый метод.
 	*/
 	public function fillFieldsFromRow($row) {
-		$this->items[] = array(
-			"fields" => array(
-				"id" => array(
+		//$this->logger->log(__METHOD__ . ". row = " . json_encode($row));
+		$item = [
+			"fields" => [
+				"id" => [
 					'id' => 'id',
-					'value' => $row->expense->id,
-				),
-				"name" => array(
-					'id' => 'name',
-					'value' =>  $row->expense->name,
-				),
-				"amount" => array(
-					'id' => 'amount',
-					'value' => $row->expense->amount ? number_format($row->expense->amount / 100, 2, '.', ' ') : '',
-				),
-				"date" => array(
-					'id' => 'date',
-					'value' =>  $row->expense->date,
-				),
-				"expense_type" => array(
-					'value_id' => $row->expense_type_id ? $row->expense_type_id : '',
-					'value' => $row->expense_type_name ? $row->expense_type_name : ''
-				)
-			)
-		);
+					'value' => $row->organizationRequest->id,
+				],
+				"expense" => [
+					'id' => 'expense',
+					'value_id' =>  $row->expense_id,
+					'value' =>  $row->expense_name,
+				],
+				"request" => [
+					'id' => 'request',
+					'value' =>  $row->organizationRequest->request,
+				],
+				"response" => [
+					'id' => 'response',
+					'value' =>  $row->organizationRequest->response,
+				],
+				"response_email" => [
+					'id' => 'response_email',
+					'value' =>  $row->organizationRequest->response_email,
+				],
+				"status" => [
+					'id' => 'status',
+					'value_id' =>  $row->request_status_id,
+					'value' =>  $this->controller->t->_($row->request_status_name_code),
+				],
+				"created_at" => [
+					'id' => 'created_at',
+					'value' =>  $row->organizationRequest->created_at,
+				],
+			]
+		];
+		if($row->request_status_id === $this->config['application']['requestStatus']['newStatusID']) $this->newCount++;
+		//$this->logger->log(__METHOD__ . ". request_status_id = " . $row->request_status_id . ". Config newStatusID = " . $this->config->application->requestStatus->newStatusID . " . Сравнение: " . ($row->request_status_id === $this->config->application->requestStatus->newStatusID) . ". newCount = " . $this->newCount);
+		
+		$this->items[] = $item;
 	}
 }

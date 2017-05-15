@@ -23,7 +23,7 @@ class NotFoundPlugin extends Plugin {
 		// инициализируем лог
 		$logger = new FileAdapter(APP_PATH . "app/logs/errors.log", array('mode' => 'a'));
 		//$logger->log('ctrler = ' . $dispatcher->getControllerName ());
-		$str = "NotFoundPlugin. Ошибка 500: ";
+		$str = null;
 		if ($exception instanceof DispatcherException) {
 			switch ($exception->getCode()) {
 				case Dispatcher::EXCEPTION_HANDLER_NOT_FOUND:
@@ -45,18 +45,20 @@ class NotFoundPlugin extends Plugin {
 					$str = 'Параметры неверны (EXCEPTION_INVALID_PARAMS)';
 					break;
 			}
-			$dispatcher->forward(array(
-				'controller' => 'errors',
-				'action' => 'show404',
-			));
 			$logger->log("NotFoundPlugin. Ошибка 404. " . $str . ". " . $exception);
-			return false;
+			if($str) {
+				$dispatcher->forward(array(
+					'controller' => 'errors',
+					'action' => 'show404',
+				));
+				return false;
+			}
 		}
 		$dispatcher->forward(array(
 			'controller' => 'errors',
 			'action'     => 'show500'
 		));
-		$logger->log($str . $exception);
+		$logger->log(__METHOD__ . ". ". $exception);
 		return false;
 	}
 }

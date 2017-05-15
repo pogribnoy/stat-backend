@@ -50,27 +50,6 @@ class RegionController extends ControllerEntity {
 	}
 	
 	/* 
-	* Очищает параметры запроса
-	* Расширяемый метод.
-	*/
-	protected function sanitizeSaveRqData($rq) {
-		$res = 0;
-		// id, select, link
-		$res |= parent::sanitizeSaveRqData($rq);
-		
-		// name
-		$this->fields['name']['value'] = null;
-		if(isset($rq->fields->name) && isset($rq->fields->name->value)) {
-			$this->fields['name']['value'] = $this->filter->sanitize(urldecode($rq->fields->name->value), ["trim", "string"]);
-			if($this->fields['name']['value'] == '') $this->fields['name']['value'] = null;
-		}
-		
-		$res |= $this->check();
-		
-		return $res;
-	}
-	
-	/* 
 	* Удаляет ссылки на сущность ($this->entity, если не передано отдельная сущность) из связанных таблиц
 	* Переопределяемый метод.
 	*/

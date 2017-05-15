@@ -24,165 +24,147 @@ class FileController extends ControllerBase {
 		
 		if ($this->request->isPost()) {
 			$rq = $this->request->getJsonRawBody();
-		
-			if(!isset($rq->files) || !isset($rq->parent_entity_name) || !isset($rq->parent_entity_id) || !isset($rq->parent_entity_field)) {
+			
+			$filt = new Phalcon\Filter();
+			$entityID = null;
+			$entityName = null;
+			$entityField = null;
+			if(isset($rq->parent_entity_id)) $entityID = $filt->sanitize(urldecode($rq->parent_entity_id), ["trim", "int"]);
+			if(isset($rq->parent_entity_name)) $entityName = $filt->sanitize(urldecode($rq->parent_entity_name), ["trim", "string"]);
+			if(isset($rq->parent_entity_field)) $entityField = $filt->sanitize(urldecode($rq->parent_entity_field), ["trim", "string"]);
+			
+			if(($entityID == null || $entityID == '') || ($entityName == null || $entityName == '') || ($entityField == null || $entityField == '')) {
 				$this->error['messages'][] = [
-					'title' => "Ошибка",
+					'title' => $this->t->_("msg_error_title"),
 					'msg' => "Не получен идентификатор файла или данные основной сущности"
 				];
 			}
-			else {
-				//$files = $this->filter->sanitize(urldecode($_REQUEST['files']), ['trim', "string"]);
-				$files = $this->filter->sanitize($rq->files, ['trim', "string"]);
-				$entityID = $this->filter->sanitize($rq->parent_entity_id, ['trim', "int"]);
-				$entityName = $this->filter->sanitize($rq->parent_entity_name, ['trim', "string"]);
-				$entityField = $this->filter->sanitize($rq->parent_entity_field, ['trim', "string"]);
-				
-				if($entityName == '' || $entityField == '' || $entityID == '') {
-					$this->error['messages'][] = [
-						'title' => "Ошибка",
-						'msg' => "Данные основной сущности переданы в неверном формате"
-					];
-				}
-				else {
-					foreach($files as $fileID) {
-						if($fileID == '') {
-							$this->error['messages'][] = [
-								'title' => "Ошибка",
-								'msg' => "Идентификатор файла передан в неверном формате"
-							];
-						}
+			else if(isset($rq->files)) {
+				// находим сущность, у которой удаляем файл
+				$entity = $entityName::findFirst(["conditions" => "id = ?1", "bind" => [1 => $entityID]]);
+				if($entity) {
+					foreach($rq->files as $fileItemID) {
+						$fileID = $filt->sanitize(urldecode($fileItemID), ["trim", "int"]);
+						// плохие id файлов просто пропускаем
+						if($fileID == null || $fileID == '') continue; //unset($rq->files[$fileItemID]);
 						else {
-							$file = File::findFirst( array(
-								"conditions" => "id = ?1",
-								"bind" => array(1 => $fileID)
-							));
-							$entity = false;
-							$entity = $entityName::findFirst(["conditions" => "id = ?1", "bind" => array(1 => $entityID)]);
-							$fcWithOneFile = false;
+							$file = File::findFirst(["conditions" => "id = ?1", "bind" => [1 => $fileID]]);
 
 							// если файл найден
-							if($file != false) {
+							if($file && count($file) > 0) {
 								// в транзакции удаляем ссылающиеся на файл сущности, а потом и сам файл
 								// открываем транзакцию
-								$this->db->begin();
-								// удаляем ссылки
-								$fc = false;
-								$fc = FileCollection::findFirst(["conditions" => "file_id = ?1", "bind" => array(1 => $fileID)]);
-								// коллекиция для проверки доп. ссылок
-								$fc2 = false;
-								$fc2 = FileCollection::findFirst(["conditions" => "collection_id = ?1 AND file_id <> ?2", "bind" => array(1 => $entity->$entityField, 2 => $fileID)]);
-								if($fc2!==false && count($fc2)==0) $fcWithOneFile = true;
-								// если коллекция не найдена
-								if($fc === false) {
-									$dbMessages = '';
-									foreach ($fc->getMessages() as $message) {
-										$dbMessages .= "<li>" . $message . "</li>";
-									}
-									$this->error['messages'][] = [
-										'title' => "Не удалось удалить коллекцию ссылок на файл " . $file->name,
-										'msg' => "<ul>" . $dbMessages . "</ul>"
-									];
-								}
-								// если в коллекции нет других файлов, то пытаемся удалить коллекцию 
-								else if($fcWithOneFile && $fc->delete() === false) {
-									$dbMessages = '';
-									foreach ($fc->getMessages() as $message) {
-										$dbMessages .= "<li>" . $message . "</li>";
-									}
-									$this->error['messages'][] = [
-										'title' => "Не удалось удалить коллекцию ссылок на файл " . $file->name,
-										'msg' => "<ul>" . $dbMessages . "</ul>"
-									];
-								}
-								else {
-									//$this->logger->log('Удалена FileCollection: ' . json_encode($fc));
-									// если коллекция удалена полностью, удаляем ссылку из сущности на коллекцию
-									//$this->data['dbg'] = json_encode($entity);
+								// выбираем все файлы коллекции
+								$collection = FileCollection::find(["conditions" => "collection_id = ?1 AND file_id = ?2", "bind" => [1 => $entity->$entityField, 2 => $file->id]]);
+								// если нашли 1 или более одного и того же файла в коллекции
+								if($collection && count($collection) > 0) {
+									$this->db->begin();
 									
-									if(!$entity) {
-										$this->error['messages'][] = [
-											'title' => "Не удалось удалить файл" . $file->name,
-											'msg' => "Не найдена связанная сущность"
-										];
+									//удаляем все коллекции, которые на него смотрели
+									$this->logger->log(__METHOD__ . '. collection count = ' . count($collection));
+									// проходим по файлам и удаляем их
+									foreach($collection as $collectionFile) {
+										if($collectionFile->delete() === false) {
+											$dbMessages = '';
+											foreach ($fc->getMessages() as $message) {
+												$dbMessages .= "<li>" . $message . "</li>";
+											}
+											$dbMessages = $dbMessages;
+											$this->error['messages'][] = [
+												'title' => $this->t->_("msg_error_title"),
+												'msg' => "Не удалось удалить из базы данных коллекцию ссылок на файл " . $file->name . ": " . "<ul>" . $dbMessages . "</ul>",
+											];
+										}
 									}
-									else {
-										if($fcWithOneFile) $entity->$entityField = NULL;
-										//$this->logger->log("fc2 count = " . count($fc2));
-										// обновляем сущность, если удалили коллекцию
-										if($fcWithOneFile && $entity->update() === false) {
+									$this->logger->log(__METHOD__ . '. collection count after delete = ' . count($collection));
+									// если в коллекции не осталось файлов, то удаляем ссылку на коллекцию из сущности
+									if(count($collection) == 0) {
+										$entity->$entityField = null;
+										if($entity->update() === false) {
 											$dbMessages = '';
 											foreach ($n->getMessages() as $message) {
 												$dbMessages .= "<li>" . $message . "</li>";
 											}
 											$this->error['messages'][] = [
-												'title' => "Не обновлена связанная сущность",
-												'msg' => "<ul>" . $dbMessages . "</ul>"
+												'title' => $this->t->_("msg_error_title"),
+												'msg' => "Не обновлена связанная сущность: <ul>" . $dbMessages . "</ul>",
+											];
+										}
+									}
+									
+									// удаляем сам файл из БД
+									// проверяем, чтобы на файл не ссылалась другая коллекция или на файл на диске нессылалась запись из БД
+									$fc = FileCollection::findFirst(["conditions" => "file_id = ?1 AND collection_id <> ?2", "bind" => [1 => $fileID, 2 => $entity->$entityField]]);
+									$otherFiles = File::find(["conditions" => "name = '?1'", "bind" => [1 => $file->name]]);
+									if((!$fc || count($fc) == 0) ?? (!$otherFiles || count($otherFiles) == 0)) {
+										// удаляем файл из БД
+										if($file->delete() === false) {
+											$dbMessages = '';
+											foreach ($fc->getMessages() as $message) {
+												$dbMessages .= "<li>" . $message . "</li>";
+											}
+											$this->error['messages'][] = [
+												'title' => $this->t->_("msg_error_title"),
+												'msg' => "Не удалось удалить из базы данных файл " . $file->name . ": " . "<ul>" . $dbMessages . "</ul>",
 											];
 										}
 										else {
-											// если связи удалены, удаляем саму сущность
-											if ($file->delete() == false) {
-												$dbMessages = '';
-												foreach ($n->getMessages() as $message) {
-													$dbMessages .= "<li>" . $message . "</li>";
-												}
+											// файл удален, БД почищена, теперь удаляем файл на диске
+											try {
+												$res = array_map("unlink", glob(__DIR__ . '/../../public/' . $file->directory . $file->name));
+												$key = 1;
+												foreach($res as $r) { if(!$r) $key = 0; break; }
+											}
+											catch (Exception $e) {
 												$this->error['messages'][] = [
-													'title' => "Не удалось удалить файл name=" . $file->name,
-													'msg' => "<ul>" . $dbMessages . "</ul>"
+													'title' => $this->t->_("msg_error_title"),
+													'msg' => $this->t->_("msg_error_file_not_deleted_from_hdd"),
+												];
+												$key = false;
+											}
+											if($key) {
+												// файл на диске удален
+												$this->success['messages'][] = [
+													'title' => $this->t->_("msg_success_title"),
+													'msg' => $this->t->_("msg_success_file_deleted", ['file_name' => $file->name]),
 												];
 											}
 											else {
-												// БД почищена, теперь удаляем файл на диске
-												try {
-													$res = array_map("unlink", glob(__DIR__ . '/../../public/' . $file->directory . $file->name));
-													$key = 1;
-													foreach($res as $r) { if(!$r) $key = 0; break; }
-												}
-												catch (Exception $e) {
-													$this->error['messages'][] = [
-														'title' => "Ошибка",
-														'msg' => "Файл не удален из файлового хранилища"
-													];
-													$key = false;
-												}
-												if($key) {
-													// файл на диске удален
-													$this->success['messages'][] = [
-														'title' => "Успех",
-														'msg' => "Файл " . $file->name . " удален"
-													];
-												}
-												else {
-													$this->error['messages'][] = [
-														'title' => "Ошибка",
-														'msg' => "Файл не удален из файлового хранилища"
-													];
-												}
+												$this->error['messages'][] = [
+													'title' => $this->t->_("msg_error_title"),
+													'msg' => $this->t->_("msg_error_file_not_deleted_from_hdd", ['file_name' => $file->name]),
+												];
 											}
 										}
 									}
+									if(count($this->error['messages']) == 0) {
+										$this->db->commit();
+									}
+									else $this->db->rollback();
 								}
-								if(count($this->error['messages']) == 0) {
-									$this->db->commit();
-								}
-								else $this->db->rollback();
 							}
 							else {
+								$this->logger->error(__METHOD__ . 'Файл с ID=' . $fileID . ' не найден в БД');
 								$this->error['messages'][] = [
-									'title' => "Ошибка",
-									'msg' => "Файл с ID=" . $fileID . " не найден в БД"
+									'title' => $this->t->_("msg_error_title"),
+									'msg' => $this->t->_("msg_error_file_not_deleted", ['file_name' => $file->name]),
 								];
 							}
 						}
 					}
 				}
+				else {
+					$this->error['messages'][] = [
+						'title' => $this->t->_("msg_error_title"),
+						'msg' => $this->t->_("msg_error_files_not_deleted"),
+					];
+				}
 			}
 		}
 		else {
 			$this->error['messages'][] = [
-				'title' => "Ошибка",
-				'msg' => "Запрошено сохранение данных методом GET. Ожидается метод POST"
+				'title' => $this->t->_("msg_error_title"),
+				'msg' => $this->t->_("msg_error_post_is_expected"),
 			];
 		}
 		if(isset($this->error['messages']) && count($this->error['messages'])>0) $this->data['error'] = $this->error;
@@ -204,7 +186,7 @@ class FileController extends ControllerBase {
 		
 			if(!isset($_REQUEST['parent_entity_id']) || !isset($_REQUEST['parent_entity_name'])) {
 				$this->error['messages'][] = [
-					'title' => "Ошибка",
+					'title' => $this->t->_("msg_error_title"),
 					'msg' => "Не получен идентификатор файла или наименование основной сущности"
 				];
 			}
@@ -220,7 +202,7 @@ class FileController extends ControllerBase {
 				// проверяем, имеет ли право пользователь загружать изображения для данной сущности
 				if(!$this->acl->isAllowed($this->userData['role_id'], strtolower($pe_name), 'upload')) {
 					$this->error['messages'][] = [
-						'title' => "Ошибка",
+						'title' => $this->t->_("msg_error_title"),
 						'msg' => "Вы не имеете права загружать файлы данной сущности (" . strtolower($pe_name) . ")"
 					];
 				}
@@ -236,10 +218,10 @@ class FileController extends ControllerBase {
 							"conditions" => "id = ?1",
 							"bind" => array(1 => $pe_id)
 						));
-						$this->logger->log(__METHOD__ . '. entity = ' . json_encode($entity));
+						//$this->logger->log(__METHOD__ . '. entity = ' . json_encode($entity));
 						if ($entity == false) {
 							$this->error['messages'][] = [
-								'title' => "Ошибка",
+								'title' => $this->t->_("msg_error_title"),
 								'msg' => "Не найдена сущность, для которой загружаются данные"
 							];
 						}
@@ -265,7 +247,7 @@ class FileController extends ControllerBase {
 										$ext = $arr[count($arr)-1];
 										//$new_name = mb_strtolower($pe_name) . '_' . $pe_id . '_' . mb_substr($arr[count($arr)-2], 0, 5) . '.' . $ext;
 										$new_name = mb_strtolower($pe_name) . '_' . $pe_id . '_' . rand() . '.' . $ext;
-										$this->logger->log('new_name = ' . $new_name);
+										//$this->logger->log('new_name = ' . $new_name);
 										// Перемещаем файл в папку
 										$file->moveTo($output_dir . $new_name);
 										// Выводим детали в ответе
@@ -285,7 +267,7 @@ class FileController extends ControllerBase {
 								}
 								if(!$fileCopied) {
 									$this->error['messages'][] = [
-										'title' => "Ошибка",
+										'title' => $this->t->_("msg_error_title"),
 										'msg' => "Ошибка при обработке файла"
 									];
 								}
@@ -377,7 +359,7 @@ class FileController extends ControllerBase {
 						}
 					}
 					else $this->error['messages'][] = [
-						'title' => "Ошибка",
+						'title' => $this->t->_("msg_error_title"),
 						'msg' => "Не получен один из параметров: parent_entity_id, parent_entity_name"
 					];
 				}
@@ -385,7 +367,7 @@ class FileController extends ControllerBase {
 		}
 		else {
 			$this->error['messages'][] = [
-				'title' => "Ошибка",
+				'title' => $this->t->_("msg_error_title"),
 				'msg' => "Запрошено сохранение данных методом GET. Ожидается метод POST"
 			];
 		}

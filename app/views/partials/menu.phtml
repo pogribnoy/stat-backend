@@ -24,6 +24,8 @@
 		if($controller->acl->isAllowed($controller->userData['role_id'], 'regionlist', 'index')) $access['regionlist_index'] = 1;
 		if($controller->acl->isAllowed($controller->userData['role_id'], 'expensestatuslist', 'index')) $access['expensestatuslist_index'] = 1;
 		if($controller->acl->isAllowed($controller->userData['role_id'], 'tasks', 'index')) $access['tasks_index'] = 1;
+		
+		if($controller->acl->isAllowed($controller->userData['role_id'], 'profile', 'index')) $access['profile_index'] = 1;
 		//var_dump($access);
 		?>
 		<!-- Collect the nav links, forms, and other content for toggling -->
@@ -54,7 +56,7 @@
 						</ul>
 					</li>
 				<?php } ?>
-				<li><a href="/profile/edit?id=<?php echo $controller->userData['id']; ?>"><?php echo $t->_("main_menu_profile"); ?></a></li>
+				<?php if(isset($access['profile_index'])) { ?><li><a href="/profile/edit?id=<?php echo $controller->userData['id']; ?>"><?php echo $t->_("main_menu_profile"); ?></a></li><?php } ?>
 			</ul>
 		</div><!-- /.navbar-collapse -->
 		<ul class="nav navbar-nav navbar-right">

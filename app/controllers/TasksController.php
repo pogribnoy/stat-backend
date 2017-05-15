@@ -28,6 +28,14 @@ class TasksController extends ControllerBase {
 			"disabled" => 0,
 			"command" => " /var/www/stat-backend/backups/backup_files.sh",
 		],
+		// отправка ответов
+		"send_response" => [
+			"nameCode" => "name_tasks_index_response_sent",
+			"schedule" => "30 0 * * *",
+			"logFile" => APP_PATH . "app/common/tasks/send_response.log",
+			"disabled" => 0,
+			"command" => " php " . APP_PATH . "app/common/tasks/cli.php send_response",
+		],
 	];
 	
 	public function initialize() {

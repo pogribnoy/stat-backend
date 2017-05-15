@@ -3,14 +3,21 @@ class UserController extends ControllerEntity{
 	public $entityName  = 'User';
 	public $tableName  = 'user';
 	
-	protected $scrollers = [
-		'organizationlist' => [
-			'linkEntityName' => 'Organization',
-			'linkTableName' => 'UserOrganization',
-			'linkTableLinkEntityFieldName' => 'organization_id',
-			'relationType' => 'nn'
-		]
-	];
+	protected function initScrollers() {
+		$this->scrollers = [
+			'organizationlist' => [
+				'linkEntityName' => 'Organization',
+				'linkTableName' => 'UserOrganization',
+				'linkTableLinkEntityFieldName' => 'organization_id',
+				'relationType' => 'nn',
+				'controllerClass' => 'OrganizationlistController',
+				'addStyle' => 'scroller',
+				'editStyle' => 'modal',
+				// доп. фиьлтр для выборки данных скроллера
+				'addFilter' => function() { return ["user_id" => $this->fields["id"]["value"]]; },
+			],
+		];
+	}
 	
 	public function initialize() {
 		parent::initialize();
@@ -150,70 +157,21 @@ class UserController extends ControllerEntity{
 	* Заполняет свойство scrollers данными списков из связанных таблиц
 	* Переопределяемый метод.
 	*/
-	public function fillScrollers() {
+	/*public function fillScrollers() {
+		$userRoleID = $this->userData['role_id'];
 		// грид организаций
-		$controller_organization_list = new OrganizationlistController();
-		$scroller_organization_list = $controller_organization_list->createDescriptor($this, array("user_id" => $this->fields["id"]["value"]));
-		//$scroller_expense_list['relationType'] = $this->scrollers[$controller_expense_list->controllerNameLC]['relationType'];
-		$scroller_organization_list['edit_style']  = "modal";
-		$scroller_organization_list["add_style"] = "scroller";
-		
-		$this->scrollers[$controller_organization_list->controllerNameLC] = $scroller_organization_list;
-	}
-	
-	/* 
-	* Очищает параметры запроса
-	* Расширяемый метод.
-	*/
-	protected function sanitizeSaveRqData($rq) {
-		$res = 0;
-		// id, //select, link
-		$res |= parent::sanitizeSaveRqData($rq);
-		
-		//$this->error['messages'][] = ['title' => "Debug. " . __METHOD__, 'msg' => "id=" . $this->fields['id']['value']];
-		
-		// active
-		$this->fields['active']['value'] = null;
-		if(isset($rq->fields->active) && isset($rq->fields->active->value)) {
-			$this->fields['active']['value'] = $this->filter->sanitize(urldecode($rq->fields->active->value), ["trim", "int"]);
-			if($this->fields['active']['value'] == '') $this->fields['active']['value'] = null;
+		$action = ($this->acl->isAllowed($userRoleID, "user_organizationlist", 'edit') ? ($this->actionNameLC == "show" ? 'show' : 'edit') : ($this->acl->isAllowed($userRoleID, "user_organizationlist", 'show') ? 'show' : null));
+		if($action) {
+			$controller_organization_list = new OrganizationlistController();
+			$scroller_organization_list = $controller_organization_list->createDescriptor($this, array("user_id" => $this->fields["id"]["value"]), $action);
+			//$scroller_expense_list['relationType'] = $this->scrollers[$controller_expense_list->controllerNameLC]['relationType'];
+			$scroller_organization_list['edit_style']  = "modal";
+			$scroller_organization_list["add_style"] = "scroller";
+			
+			$this->scrollers[$controller_organization_list->controllerNameLC] = $scroller_organization_list;
 		}
-		
-		// name
-		$this->fields['name']['value'] = null;
-		if(isset($rq->fields->name) && isset($rq->fields->name->value)) {
-			$this->fields['name']['value'] = $this->filter->sanitize(urldecode($rq->fields->name->value), ["trim", "string"]);
-			if($this->fields['name']['value'] == '') $this->fields['name']['value'] = null;
-		}
-		
-		// password
-		$this->fields['password']['value'] = null;
-		if(isset($rq->fields->password) && isset($rq->fields->password->value)) {
-			$this->fields['password']['value'] = $this->filter->sanitize(urldecode($rq->fields->password->value), ["trim", "string"]);
-			if($this->fields['password']['value'] == '') $this->fields['password']['value'] = null;
-		}
-		
-		// phone
-		$this->fields['phone']['value'] = null;
-		if(isset($rq->fields->phone) && isset($rq->fields->phone->value)) {
-			$this->fields['phone']['value'] = $this->filter->sanitize(urldecode($rq->fields->phone->value), ["trim", "string"]);
-			if($this->fields['phone']['value'] == '') $this->fields['phone']['value'] = null;
-		}
-		
-		// email
-		$this->fields['email']['value'] = null;
-		if(isset($rq->fields->email) && isset($rq->fields->email->value)) {
-			$this->fields['email']['value'] = $this->filter->sanitize(urldecode($rq->fields->email->value), ["trim", "string"]);
-			if($this->fields['email']['value'] == '') $this->fields['email']['value'] = null;
-		}
-		
-		// organizationlist
-		if(!$this->sanitizeSaveRqDataCheckRelations($rq)) $res |= 2;
-		
-		$res |= $this->check();
-		
-		return $res;
-	}
+		else unset($this->scrollers['organizationlist']);
+	}*/
 	
 	/* 
 	* Удаляет ссылки на сущность из связанных таблиц

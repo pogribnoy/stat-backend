@@ -19,7 +19,7 @@ class ExpenselistController extends ControllerList {
 				'name' => $this->controller->t->_("text_entity_property_id"),
 				'type' => 'number',
 				'filter' => 'number',
-				'filter_value' => isset($this->filter_values['id']) ? $this->filter_values['id'] : '',
+				//'filter_value' => isset($this->filter_values['id']) ? $this->filter_values['id'] : '',
 				"sortable" => "DESC",
 				'hideble' => 1,
 			),
@@ -28,72 +28,64 @@ class ExpenselistController extends ControllerList {
 				'name' => $this->controller->t->_("text_entity_property_name"),
 				'type' => 'text',
 				'filter' => 'text',
-				'filter_value' => isset($this->filter_values['name']) ? $this->filter_values['name'] : '',
+				//'filter_value' => isset($this->filter_values['name']) ? $this->filter_values['name'] : '',
 				"sortable" => "DESC",
 			),
 			'amount' => array(
 				'id' => 'amount',
 				'name' => $this->controller->t->_("text_entity_property_amount"),
 				'filter' => 'text',
-				'filter_value' => isset($this->filter_values['amount']) ? $this->filter_values['amount'] : '',
+				//'filter_value' => isset($this->filter_values['amount']) ? $this->filter_values['amount'] : '',
 				"sortable" => "DESC",
 			),
 			'settlement' => array(
 				'id' => 'settlement',
 				'name' => $this->controller->t->_("text_expenselist_settlement"),
 				'filter' => 'text',
-				'filter_value' => isset($this->filter_values['settlement']) ? $this->filter_values['settlement'] : '',
+				//'filter_value' => isset($this->filter_values['settlement']) ? $this->filter_values['settlement'] : '',
 				"sortable" => "DESC",
 			),
 			'street_type' => array(
 				'id' => 'street_type',
 				'name' => $this->controller->t->_("text_entity_property_street_type"),
 				'filter' => 'select',
-				'filter_value' => isset($this->filter_values['street_type_id']) ? $this->filter_values['street_type_id'] : '',
-				'filter_id' => 'street_type_id', // задается, если отличается от id
-				'style' => 'id',
+				//'filter_value' => isset($this->filter_values['street_type']) ? $this->filter_values['street_type'] : '',
+				//'filter_id' => 'street_type_id', // задается, если отличается от id
+				'filter_style' => 'id',
 				"sortable" => "DESC",
 			),
 			'street' => array(
 				'id' => 'street',
 				'name' => $this->controller->t->_("text_entity_property_street"),
 				'filter' => 'text',
-				'filter_value' => isset($this->filter_values['street']) ? $this->filter_values['street'] : '',
+				//'filter_value' => isset($this->filter_values['street']) ? $this->filter_values['street'] : '',
 				"sortable" => "DESC",
 			),
 			'house' => array(
 				'id' => 'house',
 				'name' => $this->controller->t->_("text_entity_property_house_building"),
 				'filter' => 'text',
-				'filter_value' => isset($this->filter_values['house']) ? $this->filter_values['house'] : '',
+				//'filter_value' => isset($this->filter_values['house']) ? $this->filter_values['house'] : '',
 				"sortable" => "DESC",
 			),
 			'expense_type' => array(
 				'id' => 'expense_type',
 				'name' => $this->controller->t->_("text_expenselist_expense_type"),
 				'filter' => 'select',
-				'filter_value' => isset($this->filter_values['expense_type']) ? $this->filter_values['expense_type'] : '',
-				'filter_id' => 'expense_type_id', // задается, если отличается от id
-				'style' => 'id',
+				//'filter_value' => isset($this->filter_values['expense_type']) ? $this->filter_values['expense_type'] : '',
+				//'filter_id' => 'expense_type_id', // задается, если отличается от id
+				'filter_style' => 'id',
 				"sortable" => "DESC",
 			),
 			'expense_status' => array(
 				'id' => 'expense_status',
 				'name' => $this->controller->t->_("text_entity_property_status"),
 				'filter' => 'select',
-				'filter_value' => isset($this->filter_values['expense_status']) ? $this->filter_values['expense_status'] : '',
-				'filter_id' => 'expense_status_id', // задается, если отличается от id
-				'style' => 'id',
+				//'filter_value' => isset($this->filter_values['expense_status']) ? $this->filter_values['expense_status'] : '',
+				//'filter_id' => 'expense_status_id', // задается, если отличается от id
+				'filter_style' => 'id',
 				"sortable" => "DESC",
 			),
-			/*'target_date' => array(
-				'id' => 'target_date',
-				'name' => $this->controller->t->_("text_entity_property_date"),
-				'filter' => 'text',
-				'filter_value' => isset($this->filter_values['target_date']) ? $this->filter_values['target_date'] : '',
-				//"sortable" => "DESC",
-			),
-			*/
 			'executor' => array(
 				'id' => 'executor',
 				'name' => $this->controller->t->_("text_entity_property_executor"),
@@ -105,7 +97,7 @@ class ExpenselistController extends ControllerList {
 				'id' => 'target_date',
 				'name' => $this->controller->t->_("text_expenselist_target_date"),
 				'filter' => 'text',
-				'filter_value' => isset($this->filter_values['target_date']) ? $this->filter_values['target_date'] : '',
+				//'filter_value' => isset($this->filter_values['target_date']) ? $this->filter_values['target_date'] : '',
 				'hideble' => 1,
 			),
 			'operations' => array(
@@ -179,78 +171,82 @@ class ExpenselistController extends ControllerList {
 	}
 	
 	/* 
-	* Добавляет текст запроса к БД параметры фильтрации
-	* Расширяемый метод
-	*/
-	public function addFilterValuesToPhql($phql) {
-		$phql = parent::addFilterValuesToPhql($phql);
-		
-		//if(isset($this->filter_values["expense_type_id"]) && isset($this->columns['expense_type_id'])) $phql .= " AND ExpenseType.id = '" . $this->filter_values["expense_type_id"] . "'";
-		
-		return $phql;
-	}
-	
-	/* 
 	* Заполняет свойство items['fields'] данными, полученными после выборки из БД
 	* Переопределяемый метод.
 	*/
 	public function fillFieldsFromRow($row) {
-		$this->items[] = array(
-			"fields" => array(
-				"id" => array(
+		$item = [
+			"fields" => [
+				"id" => [
 					'id' => 'id',
 					'value' => $row->expense->id,
-				),
-				"name" => array(
+				],
+				"name" => [
 					'id' => 'name',
 					'value' =>  $row->expense->name,
-				),
-				"amount" => array(
+				],
+				"amount" => [
 					'id' => 'amount',
 					//'value' => $row->expense->amount != null ? number_format($row->expense->amount / 100, 2, '.', ' ') : '',
 					'value' => $row->expense->amount ? $row->expense->amount : '',
-				),
-				/*"date" => array(
-					'id' => 'date',
-					'value' =>  $row->expense->date,
-				),*/
-				"settlement" => array(
+				],
+				"settlement" => [
 					'id' => 'settlement',
 					'value' =>  $row->expense->settlement ? $row->expense->settlement : '',
-				),
-				"street_type" => array(
+				],
+				"street_type" => [
 					'id' => 'street_type',
 					'value_id' => $row->street_type_id ? $row->street_type_id : '',
 					'value' => $row->street_type_name ? $row->street_type_name : '',
-				),
-				"street" => array(
+				],
+				"street" => [
 					'id' => 'street',
 					'value' =>  $row->expense->street ? $row->expense->street : '',
-				),
-				"house" => array(
+				],
+				"house" => [
 					'id' => 'house',
 					'value' =>  $row->expense->house ? $row->expense->house : '',
-				),
-				"executor" => array(
+				],
+				"executor" => [
 					'id' => 'executor',
 					'value' =>  $row->expense->executor ? $row->expense->executor : '',
-				),
-				"expense_type" => array(
+				],
+				"expense_type" => [
 					'id' => 'expense_type',
 					'value_id' => $row->expense_type_id ? $row->expense_type_id : '',
 					'value' => $row->expense_type_name ? $row->expense_type_name : '',
-				),
-				"expense_status" => array(
+				],
+				"expense_status" => [
 					'id' => 'expense_status',
 					'value_id' => $row->expense_status_id ? $row->expense_status_id : '',
 					'value' => $row->expense_status_name ? $row->expense_status_name : '',
-				),
-				"target_date" => array(
+				],
+				"target_date" => [
 					'id' => 'target_date',
 					'value1' => $row->expense->target_date_from ? $row->expense->target_date_from : '',
 					'value2' => $row->expense->target_date_to ? $row->expense->target_date_to : '',
-				),
-			)
-		);
+				],
+			]
+		];
+		
+		$this->items[] = $item;
+	}
+	
+	protected function addSpecificSortLimitToPhql($phql, $id) {
+		$filter_values = $this->filter_values;
+		if ($id == 'street_type') return $phql .= ' ORDER BY StreetType.name ' . $filter_values['order'];
+		else if($id == 'expense_type') return $phql .= ' ORDER BY ExpenseType.name ' . $filter_values['order'];
+		else if($id == 'expense_status') return $phql .= ' ORDER BY ExpenseStatus.name ' . $filter_values['order'];
+		return null;
+	}
+	
+	protected function addSpecificFilterValuesToPhql($phql, $id) { 
+		$filter_values = $this->filter_values;
+		$column =  $this->columns[$id];
+		if ($id == 'target_date') {
+			if(isset($column["nullSubstitute"]) && $filter_values[$id] == $column["nullSubstitute"]) return $phql .= " AND (<TableName>." . $id . "_from IS NULL OR <TableName>." . $id . "_from = '' OR <TableName>." . $id . "_from = '" . $column["nullSubstitute"] . "' OR (<TableName>." . $id . "_to IS NULL OR <TableName>." . $id . "_to = '' OR <TableName>." . $id . "_to = '" . $column["nullSubstitute"] . "'))";
+			else return $phql .= " AND (<TableName>." . $id . "_from LIKE '%" . $filter_values[$id] . "%' OR <TableName>." . $id . "_to LIKE '%" . $filter_values[$id] . "%')";
+		}
+		return null; 
 	}
 }

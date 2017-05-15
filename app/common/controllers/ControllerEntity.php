@@ -18,7 +18,7 @@ class ControllerEntity extends ControllerBase {
 	protected $success = array('messages' => array());
 	
 	// сущность - модель, прочитанная из БД
-	protected $entity = false;
+	public $entity = false;
 	
 	// поля сущности, включая и связанные данные
 	protected $fields;
@@ -34,12 +34,6 @@ class ControllerEntity extends ControllerBase {
 	
 	public function initialize() {
 		parent::initialize();
-	}
-	
-	public function beforeExecuteRoute($dispatcher){
-		parent::beforeExecuteRoute($dispatcher);
-		
-		$this->entityNameLC = strtolower($this->entityName);
 	}
 	
 	/* 
@@ -64,27 +58,13 @@ class ControllerEntity extends ControllerBase {
 			//$this->forward($this->request->getURI());
 		}
 		else {
+			$this->logger->error(__METHOD__ . '. "edit" and "show" action are not allowed. Forward to "/errors/show404". URL=' . $this->request->getURI());
 			$this->dispatcher->forward(array(
-				'controller' => $this->controllerNameLC,
+				'controller' => 'errors',
 				'action' => 'show404',
 				'sourceURL' => $this->request->getURI(),
 			));
 		}
-		
-		
-		/*
-		$this->createDescriptor();
-		
-		if($this->request->isAjax()) {
-			$this->view->disable();
-			$this->response->setContentType('application/json', 'UTF-8');
-			return json_encode($this->descriptor);
-		}
-		else {
-			// передаем в представление имеющиеся данные
-			//$this->view->setVar('page_header', $this->t->_('text_' . $this->controllerNameLC . '_title'));
-			$this->view->setVar("descriptor", $this->descriptor);
-		}*/
 	}
 	
 	/* 
@@ -151,85 +131,101 @@ class ControllerEntity extends ControllerBase {
 	}
 	
 	/* 
-	* Используется при открытии из скроллера сущности на редактирование в модалке
-	*/
-	/*public function getDataAction() {
-		
-		$this->view->disable();
-		$this->response->setContentType('application/json', 'UTF-8');
-		
-		$this->createDescriptor();
-		
-		return json_encode($this->descriptor);
-	}*/
-	
-	/* 
 	* Сохраняет или обнослявяет запись в БД
 	*/
 	public function saveAction() {
 		$this->view->disable();
 		$this->response->setContentType('application/json', 'UTF-8');
 		
+		//$this->logger->log(__METHOD__ . ". qwe ");
+		
 		if ($this->request->isPost()) {
-			$rq = $this->request->getJsonRawBody();
+			$this->initServerSideData();
+			
+			$this->rq = $this->request->getJsonRawBody();
 			$id = null;
+
+			//$this->logger->log(__METHOD__ . ". Fields: " . json_encode($this->fields));
 			
-			$this->initFields();
-			
-			$res = $this->sanitizeSaveRqData($rq);
+			$res = $this->sanitizeSaveRqData();
+			$res |= $this->check();
 			
 			//$this->logger->log(__METHOD__ . ". res: " . $res);
-			if($res<2 && !isset($_REQUEST["check_only"])) {
+			if(!isset($_REQUEST["check_only"]) && ($res==0 || ($res==1 && isset($_REQUEST["mandatory_save"])))) {
 				//$this->logger->log(__METHOD__ . ". sanitizeSaveRqData: " . json_encode($this->fields));
 				$id = $this->fields['id']['value'];
-				//$this->error['messages'][] = ['title' => "Debug. " . __METHOD__, 'msg' => "id=" . $this->fields['id']['value']];
-				
-				// открываем транзакцию
-				$this->db->begin();
-				
-				$this->entity = false;
-				// ищем сущность
-				$this->entity = $this->createOrFindEntity($id);
-				
-				// если сущность не нашли и не создали
-				if($this->entity == false){
-					//$this->db->rollback();
-					$this->error['messages'][] = [
-						'title' => "Ошибка",
-						'msg' => "Ошибка обновления данных при попытке сохранения сущности с id=".$id
-					];
-				}
-				// нашли или создали
-				else {
-					//$this->logger->log(__FUNCTION__ . ". Entity found: " . json_encode($this->entity));
-					// наполняем поля
-					$this->fillModelFieldsFromSaveRq();
-					if($id<0){
-						if ($this->entity->create() == false) {
-							//$this->db->rollback();
-							$dbMessages = '';
-							foreach ($this->entity->getMessages() as $message) {
-								$dbMessages .= "<li>" . $message . "</li>";
-							}
-							$this->error['messages'][] = [
-								'title' => "Ошибка создания",
-								'msg' => "<ul>" . $dbMessages . "</ul>"
-							];
-						}
+				if(isset($this->fields["id"]["value"])) {
+					$id = $this->fields['id']['value'];
+					//$this->error['messages'][] = ['title' => "Debug. " . __METHOD__, 'msg' => "id=" . $this->fields['id']['value']];
+					
+					// открываем транзакцию
+					$this->db->begin();
+					
+					// ищем сущность в БД
+					$entityName = $this->entityName;
+					$this->entity = $entityName::findFirst( array(
+						"conditions" => "id = ?1",
+						"bind" => array(1 => $id)
+					));
+					// если сущность не найдена в БД создается новая сущность
+					if($this->entity == false) $this->entity = new $entityName();
+					
+					// если сущность не нашли и не создали
+					if(!$this->entity){
+						//$this->logger->log(__METHOD__ . ". Entity not created");
+						$this->error['messages'][] = [
+							'title' => $this->t->_("msg_error_title"),
+							'msg' => "Ошибка обновления данных при попытке сохранения сущности с id=" . $id,
+						];
 					}
+					// нашли или создали
 					else {
-						if($this->entity->update() == false) {
-							//$this->db->rollback();
-							$dbMessages = '';
-							foreach ($this->entity->getMessages() as $message) {
-								$dbMessages .= "<li>" . $message . "</li>";
+						//$this->logger->log(__METHOD__ . ". Entity created");
+						// наполняем поля
+						// TODO. Необходимо переименовать функцию fillModelFieldsFromSaveRq в fillEntityFromFields
+						$this->fillModelFieldsFromSaveRq();
+						//$this->logger->log(__METHOD__ . ". Fields: " . json_encode($this->fields));
+						//$this->logger->log(__METHOD__ . ". Entity: " . json_encode($this->entity));
+						
+						if($id<0){
+							$this->logger->log(__METHOD__ . ". entity->create()");
+							if($this->entity->create() == false) {
+								//$this->db->rollback();
+								$dbMessages = '';
+								foreach ($this->entity->getMessages() as $message) {
+									$dbMessages .= "<li>" . $message . "</li>";
+								}
+								$this->error['messages'][] = [
+									'title' => "Ошибка создания",
+									'msg' => "<ul>" . $dbMessages . "</ul>"
+								];
 							}
-							$this->error['messages'][] = [
-								'title' => "Ошибка обновления данных (id=" . $id . ')',
-								'msg' => "<ul>" . $dbMessages . "</ul>"
-							];
+						}
+						else {
+							//$this->logger->log(__METHOD__ . ". entity->update()");
+							//$this->logger->log(__METHOD__ . ". this->entity = " . json_encode($this->entity));
+							//$this->logger->log(__METHOD__ . ". Entity: " . json_encode($this->entity));
+							if($this->entity->update() == false) {
+								//$this->db->rollback();
+								$dbMessages = '';
+								foreach ($this->entity->getMessages() as $message) {
+									$dbMessages .= "<li>" . $message . "</li>";
+								}
+								$this->error['messages'][] = [
+									'title' => "Ошибка обновления данных (id=" . $id . ')',
+									'msg' => "<ul>" . $dbMessages . "</ul>"
+								];
+							}
 						}
 					}
+				}
+				else {
+					$this->error['messages'][] = [
+						'title' => $this->t->_("msg_error_title"),
+						'msg' => 'Не получено значение идентификатора сущности (id)',
+					];
+					$this->logger->log(__METHOD__ . ". Не установлено значение fields['id']['value']");
+					$this->logger->log(__METHOD__ . ". Строка, выбранная из БД (rows): " . json_encode($rows));
 				}
 				if(count($this->error['messages'])==0) {
 					// если сущность сохранена в БД, то создаем ее связи
@@ -239,8 +235,8 @@ class ControllerEntity extends ControllerBase {
 						$this->updateEntityFieldsFromModelAfterSave();
 						if($id<0) $this->data['newID'] = $this->entity->id;
 						$this->success['messages'][] = [
-							'title' => "Операция успешна",
-							'msg' => "Запись с идентификатором " . $this->entity->id ." сохранена"
+							'title' => $this->t->_("msg_success_title"),
+							'msg' => $this->t->_("msg_success_entity_saved") . ". ID = " . $this->entity->id,
 						];
 					}
 					else $this->db->rollback();
@@ -249,13 +245,13 @@ class ControllerEntity extends ControllerBase {
 		}
 		else {
 			$this->error['messages'][] = [
-				'title' => "Ошибка",
-				'msg' => "Запрошено сохранение данных методом GET. Ожидается метод POST"
+				'title' => $this->t->_("msg_error_title"),
+				'msg' => $this->t->_("msg_error_post_is_expected"),
 			];
 		}
 		//$data['dbg'] = $id;
 		$this->data['item'] = $this->entity;	
-		$this->data['rq'] = $rq; // исходные параметры запроса для отладки
+		$this->data['rq'] = $this->rq; // исходные параметры запроса для отладки
 		if(isset($this->error['messages']) && count($this->error['messages'])>0) $this->data['error'] = $this->error;
 		else if(isset($this->success['messages']) && count($this->success['messages'])>0) $this->data['success'] = $this->success;
 		if(count($this->checkResult)>0) $this->data['checkResult'] = $this->checkResult;
@@ -277,12 +273,16 @@ class ControllerEntity extends ControllerBase {
 		// TODO. Проверяем права на удаление сущности
 		
 		// ищем сущность
-		$this->entity = $this->findEntity($this->filter_values["id"]);
+		$entityName = $this->entityName;
+		$this->entity = $entityName::findFirst( array(
+			"conditions" => "id = ?1",
+			"bind" => array(1 => $this->filter_values["id"])
+		));
 		
 		// если сущность не нашли
 		if($this->entity == false){
 			$this->error['messages'][] = [
-				'title' => "Ошибка",
+				'title' => $this->t->_("msg_error_title"),
 				'msg' => "Запись с id=" . $this->filter_values["id"] . ' не найдена'
 			];
 		}
@@ -292,7 +292,7 @@ class ControllerEntity extends ControllerBase {
 			$this->db->begin();
 			
 			// удаляем сущность
-			$this->deleteEntity();
+			$this->deleteEntity($this->entity);
 			
 			if(count($this->error['messages'])==0) {
 				$this->db->commit();
@@ -321,10 +321,10 @@ class ControllerEntity extends ControllerBase {
 	/* 
 	* Удаляет сушность, хранимую в $this->entity, если не передана отдельная сущность
 	*/
-	public function deleteEntity($entity=null) {
-		if(!isset($entity)) $entity = $this->entity;
+	public function deleteEntity($entity) {
 		// проверяем возможность удаления по связанным сущностям и удаляем возможные ссылки на сущность из связывающих таблиц
 		if($this->deleteEntityLinks($entity)) {
+			
 			// удаляем саму сущность
 			if(!$entity->delete()) {
 				$dbMessages = '';
@@ -332,29 +332,37 @@ class ControllerEntity extends ControllerBase {
 					$dbMessages .= "<li>" . $message . "</li>";
 				}
 				$this->error['messages'][] = [
-					'title' => "Ошибка",
-					'msg' => "Ошибка удаления:<ul>" . $dbMessages . "</ul>"
+					//'title' => $this->t->_("msg_error_title"),
+					'title' => 'Ошибка',
+					'msg' => "Ошибка удаления:<ul>" . $dbMessages . "</ul>",
 				];
 			}
+		}
+		else {
+			$this->error['messages'][] = [
+				//'title' => $this->t->_("msg_error_title"),
+				//'msg' => $this->t->_("msg_error_delete_fail"),
+				'title' => 'Ошибка',
+				'msg' => 'Неуспешное удаление',
+			];
 		}
 		return ['error' => $this->error, 'success' => $this->success];
 	}
 	
 	/* 
-	* Общий метод, формирующий дескриптор сущности для ответа
+	* Общий метод, формирующий дескриптор сущности для полной сущности (со всем связями, файлами и пр.)
 	*/
+	// TODO. Надо начало функции заменить на вызов initServerSideData()
 	public function createDescriptor() {
-		$this->sanitizeGetDataRqFilters();
+		$this->sanitizeRqFilters();
 		
 		$this->fillOperations();
 		
 		$this->initFields();
 		//$this->logger->log("initFields");
 		
-		//$this->fillFieldsWithLists();
-		
 		// если запрошена конкретная сущность
-		if($this->filter_values["id"] != "") {
+		if($this->filter_values["id"] != "" && $this->filter_values["id"] != null) {
 			// строим запрос к БД на выборку данных
 			$phql = $this->getPhql();
 			
@@ -363,21 +371,35 @@ class ControllerEntity extends ControllerBase {
 			$rows = $this->modelsManager->executeQuery($phql);
 			
 			// наполняем $fields
-			$this->fillFieldsFromRows($rows);
-			// если значнение id не заполнено (не нашли единственную запись в БД)
-			if(!isset($this->fields["id"]["value"])) {
-				$this->dispatcher->forward([
-					'controller' => 'errors',
-					'action'     => 'show404',
-				]);
-				$this->logger->log(__CLASS__ . ". " .  __FUNCTION__ . ". Не установлено значение fields['id']['value']");
-				$this->logger->log(__CLASS__ . ". " .  __FUNCTION__ . ". Строка, выбранная из БД (rows): " . json_encode($rows));
-				return;
+			//$this->fillFieldsFromRows($rows);
+			if(count($rows)==1) {
+				$this->fillFieldsFromRow($rows[0]);
+				
+				// если значнение id не заполнено (не нашли единственную запись в БД)
+				// TODO. Надо избавиться от форворда при AJAX-запросах
+				if(!isset($this->fields["id"]["value"])) {
+					$this->dispatcher->forward([
+						'controller' => 'errors',
+						'action'     => 'show404',
+					]);
+					$this->logger->log(__METHOD__ . ". Не установлено значение fields['id']['value']");
+					$this->logger->log(__METHOD__ . ". Строка, выбранная из БД (rows): " . json_encode($rows));
+					return;
+				}
+				else {
+					// наполняем поля с файлами
+					$this->getFiles();
+				}
 			}
-				// наполняем поля с файлами
-				//$this->fillFieldsWithLists();
-				$this->getFiles();
-			//}
+			// если не найдены записи
+			else{
+				$this->logger->log(__METHOD__ . ". count(rows) = " . count($rows));
+				$this->fillNewEntityFields();
+				/*$this->error['messages'][] = [
+					'title' => $this->t->_("msg_error_title"),
+					'msg' => "Выборка данных из БД либо пуста, либо содержит более 1 записи"
+				];*/
+			}
 		}
 		// если запрошена пустая сущность (создание сущности)
 		else {
@@ -387,23 +409,63 @@ class ControllerEntity extends ControllerBase {
 			
 		$this->fillScrollers();
 		
+		$this->customizeFields();
+		
 		$this->createDescriptorObject();
 	}
 	
 	/* 
-	* Заполняет свойство fields данными, полученными после выборки из БД
+	* Общий метод, формирующий дескриптор сущности для полной сущности (со всем связями, файлами и пр.)
 	*/
-	protected function fillFieldsFromRows($rows) {
-		if(count($rows)==1) {
-			$this->fillFieldsFromRow($rows[0]);
+	public function initServerSideData() {
+		$this->sanitizeRqFilters();
+		
+		$this->initFields();
+		//$this->logger->log("initFields");
+		
+		// если запрошена конкретная сущность
+		if($this->filter_values["id"] != "" && $this->filter_values["id"] != null) {
+			// строим запрос к БД на выборку данных
+			$phql = $this->getPhql();
+			
+			// выбираем данные
+			$rows = false;
+			$rows = $this->modelsManager->executeQuery($phql);
+			
+			// наполняем $fields
+			//$this->fillFieldsFromRows($rows);
+			if(count($rows)==1) {
+				$this->fillFieldsFromRow($rows[0]);
+				
+				// если значнение id не заполнено (не нашли единственную запись в БД)
+				// TODO. Надо избавиться от форворда при AJAX-запросах
+				if(!isset($this->fields["id"]["value"])) {
+					$this->dispatcher->forward([
+						'controller' => 'errors',
+						'action'     => 'show404',
+					]);
+					$this->logger->log(__METHOD__ . ". Не установлено значение fields['id']['value']");
+					$this->logger->log(__METHOD__ . ". Строка, выбранная из БД (rows): " . json_encode($rows));
+				}
+				else {
+					// наполняем поля с файлами
+					$this->getFiles();
+				}
+			}
+			// если не найдены записи
+			else{
+				$this->error['messages'][] = [
+					'title' => $this->t->_("msg_error_title"),
+					'msg' => $this->t->_("msg_error_not_one_rows"),
+				];
+			}
 		}
-		// если не найдены записи
-		else{
-			$this->error['messages'][] = [
-				'title' => "Ошибка",
-				'msg' => "Выборка данных из БД либо пуста, либо содержит более 1 записи"
-			];
+		// если запрошена пустая сущность (создание сущности)
+		else {
+			$this->fillNewEntityFields();
+			//$this->logger->log(json_encode($this->fields));
 		}
+		$this->customizeFields();
 	}
 	
 	/* 
@@ -426,9 +488,10 @@ class ControllerEntity extends ControllerBase {
 		$exludeOps = $this->getExludeOps();
 		
 		// получаем действия, доступные пользователю
-		$this->tools = Phalcon\DI::getDefault()->getTools();
+		// TODO. Вроде tools и так внедрен, как сервис
+		//$this->tools = Phalcon\DI::getDefault()->getTools();
 		//$this->logger->log(__METHOD__ . ". actionName1: " . json_encode($this->actionName));
-		$this->operations = $this->tools->getEntityFormOperations($this->userData['role_id'], $this->controllerNameLC, $this->acl, $this->t, $exludeOps, $this->actionName);
+		$this->operations = $this->getEntityFormOperations($this, $exludeOps, $this->actionName);
 		//$this->logger->log(__METHOD__ . ". actionName2: " . json_encode($this->actionName));
 	}
 	
@@ -449,7 +512,7 @@ class ControllerEntity extends ControllerBase {
 	*/
 	protected function createDescriptorObject() {
 		//$this->logger->log(json_encode($this->fields["name"]));
-		$this->descriptor = array(
+		$this->descriptor = [
 			"controllerName" => $this->controllerNameLC,
 			"entityNameLC" => $this->entityNameLC,
 			"entityName" => $this->entityName,
@@ -459,40 +522,44 @@ class ControllerEntity extends ControllerBase {
 			"operations" => $this->operations,
 			"filter_values" => $this->filter_values,
 			"title" => (isset($this->fields["name"]) && $this->fields["name"]["value"] != '') ? $this->fields["name"]["value"] : 
-				(($this->fields["id"] == -1) ? $this->t->_("text_" . $this->controllerNameLC . "_new_entity_title") : $this->t->_("text_" . $this->controllerNameLC . "_title")),
+				(($this->fields["id"]['value'] == '-1') ? $this->t->_("text_" . $this->controllerNameLC . "_new_entity_title") : $this->t->_("text_" . $this->controllerNameLC . "_title")),
 			"template" => $this->getTmpl(),
 			'data' => $this->data,
 			'actionName' => $this->actionName,
-		);
-		//$this->logger->log(json_encode($this->descriptor));
+		];
+		if(!$this->request->isAjax()) $this->view->page_header = $this->descriptor['title'];
+		//$this->logger->log(__METHOD__ . 'fields_id = ' . json_encode($this->descriptor['fields']['id']));
+		//$this->logger->log(__METHOD__ . 'title = ' . $this->descriptor['title']);
+		//$this->logger->log(__METHOD__ . 'value=-1 = ' . $this->fields["id"]['value'] == '-1');
 	}
 	
 	/* 
 	* Проверяет наличие сущностей из списков изменений в скроллере
 	*/
-	protected function sanitizeSaveRqDataCheckRelations($rq) {
-		if(isset($rq->scrollers)) {
+	protected function sanitizeSaveRqDataCheckRelations($rq = null) {
+		if(isset($this->rq->scrollers)) {
 			// TODO. переделать цикл. Обходить скроллеры $this->scrollers и смотреть есть ли что в запросе - остальное игнорить
-			foreach($rq->scrollers as $scrollerName => $scroller) {
+			foreach($this->rq->scrollers as $scrollerName => $scroller) {
 				if(array_key_exists($scrollerName, $this->scrollers)) {
 					$entities = false;
 					$linkEntityName = $this->scrollers[$scrollerName]['linkEntityName'];
 					
 					// добавляемые связи
-					if(isset($rq->scrollers->$scrollerName->added_items) && count($rq->scrollers->$scrollerName->added_items) > 0) {
+					if(isset($this->rq->scrollers->$scrollerName->added_items) && count($this->rq->scrollers->$scrollerName->added_items) > 0) {
 						$this->scrollers[$scrollerName]['added_items'] = [];
-						foreach($rq->scrollers->$scrollerName->added_items as $id) {
+						foreach($this->rq->scrollers->$scrollerName->added_items as $id) {
 							$id = $this->filter->sanitize(urldecode($id), ['trim', "int"]);
 							if($id != '') $this->scrollers[$scrollerName]['added_items'][] = $id;
 							else {
 								$this->error['messages'][] = [
-									'title' => "Ошибка",
+									'title' => $this->t->_("msg_error_title"),
 									'msg' => $scrollerName . ". Передан некорректный идентификатор"
 								];
 								return false;
 							}
 						}
 						if($this->scrollers[$scrollerName]['relationType'] == 'n') {
+							// TODO. При id < 0 необходимо вызывать метод sanitizeSaveRqData связанной сущности для проверки данных еще не созданной сущности
 							// проверяем, чтобы ВСЕ привязываемые сущности существовали
 							$entities = $linkEntityName::find(["conditions" => "id IN ({added_items:array})", "bind" => [
 								//1 => implode(',', $this->scrollers[$scrollerName]['added_items']),
@@ -501,8 +568,8 @@ class ControllerEntity extends ControllerBase {
 							if(!$entities || count($entities) < count($this->scrollers[$scrollerName]['added_items'])) {
 								//$this->logger->log("entities = " . json_encode($entities));
 								$this->error['messages'][] = [
-									'title' => "Ошибка",
-									'msg' => $scrollerName . ". Запись не найдена в БД"
+									'title' => $this->t->_("msg_error_title"),
+									'msg' => $scrollerName . ". Одна или более записей связанной таблицы не найдены в БД"
 								];
 								return false;
 							}
@@ -535,7 +602,7 @@ class ControllerEntity extends ControllerBase {
 							]]);
 							if(!$entities || count($entities) < count($this->scrollers[$scrollerName]['added_items'])) {
 								$this->error['messages'][] = [
-									'title' => "Ошибка",
+									'title' => $this->t->_("msg_error_title"),
 									'msg' => $scrollerName . ". Не найдены добавляемые записи1"
 								];
 								
@@ -544,14 +611,14 @@ class ControllerEntity extends ControllerBase {
 						}
 					}
 					// удаляемые связи
-					if(isset($rq->scrollers->$scrollerName->deleted_items) && count($rq->scrollers->$scrollerName->deleted_items) > 0) {
+					if(isset($this->rq->scrollers->$scrollerName->deleted_items) && count($this->rq->scrollers->$scrollerName->deleted_items) > 0) {
 						$this->scrollers[$scrollerName]['deleted_items'] = [];
-						foreach($rq->scrollers->$scrollerName->deleted_items as $id) {
+						foreach($this->rq->scrollers->$scrollerName->deleted_items as $id) {
 							$id = $this->filter->sanitize(urldecode($id), ['trim', "int"]);
 							if($id != '') $this->scrollers[$scrollerName]['deleted_items'][] = $id;
 							else {
 								$this->error['messages'][] = [
-									'title' => "Ошибка",
+									'title' => $this->t->_("msg_error_title"),
 									'msg' => $scrollerName . ". Передан некорректный идентификатор"
 								];
 								return false;
@@ -561,17 +628,13 @@ class ControllerEntity extends ControllerBase {
 				}
 				else {
 					$this->error['messages'][] = [
-						'title' => "Ошибка",
+						'title' => $this->t->_("msg_error_title"),
 						'msg' => "Передан неизвестный массив " . $key
 					];
 					return false;
 				}
 			}
 		}
-		else $this->error['messages'][] = [
-			'title' => "Ошибка",
-			'msg' => "Не переданы связанные массивы"
-		];
 		return true;
 	}
 	
@@ -579,8 +642,6 @@ class ControllerEntity extends ControllerBase {
 	* Сохраняет изменения связей сущности с сущностями из списков изменений в скроллере
 	*/
 	protected function saveRqDataRelations($scrollerName) {
-		$entities = false;
-		
 		// добавляемые связи
 		if(isset($this->scrollers[$scrollerName]['added_items']) && count($this->scrollers[$scrollerName]['added_items']) > 0) {
 			if($this->scrollers[$scrollerName]['relationType'] == 'n') {
@@ -595,7 +656,7 @@ class ControllerEntity extends ControllerBase {
 							$dbMessages .= "<li>" . $message . "</li>";
 						}
 						$this->error['messages'][] = [
-							'title' => "Ошибка",
+							'title' => $this->t->_("msg_error_title"),
 							'msg' => "Ошибка обновления данных:<ul>" . $dbMessages . "</ul>"
 						];
 						return false;
@@ -624,7 +685,7 @@ class ControllerEntity extends ControllerBase {
 							$dbMessages .= "<li>" . $message . "</li>";
 						}
 						$this->error['messages'][] = [
-							'title' => "Ошибка",
+							'title' => $this->t->_("msg_error_title"),
 							'msg' => "Ошибка обновления данных:<ul>" . $dbMessages . "</ul>"
 						];
 						return false;
@@ -645,7 +706,7 @@ class ControllerEntity extends ControllerBase {
 						$dbMessages .= "<li>" . $message . "</li>";
 					}
 					$this->error['messages'][] = [
-						'title' => "Ошибка",
+						'title' => $this->t->_("msg_error_title"),
 						'msg' => "Ошибка удаления данных:<ul>" . $dbMessages . "</ul>"
 					];
 					return false;
@@ -670,7 +731,7 @@ class ControllerEntity extends ControllerBase {
 								$dbMessages .= "<li>" . $message . "</li>";
 							}
 							$this->error['messages'][] = [
-								'title' => "Ошибка",
+								'title' => $this->t->_("msg_error_title"),
 								'msg' => "Ошибка удаления связей:<ul>" . $dbMessages . "</ul>"
 							];
 							return false;
@@ -698,13 +759,18 @@ class ControllerEntity extends ControllerBase {
 	* Заполняет свойство filter_values данными из запроса
 	* Расширяемый метод.
 	*/
-	protected function sanitizeGetDataRqFilters() {
-		if(isset($_REQUEST["id"])) $this->filter_values["id"] = $this->filter->sanitize(urldecode($_REQUEST["id"]), ["trim", "int"]); 
+	protected function sanitizeRqFilters() {
+		if(isset($_REQUEST["id"]) && $_REQUEST["id"] != "-1") $this->filter_values["id"] = $this->filter->sanitize(urldecode($_REQUEST["id"]), ["trim", "int"]); 
 		else $this->filter_values["id"] = '';
-		// доп параметры фильтрации, которые могут использоваться для заполнения полей сущности
-		if(isset($_REQUEST["filter_organization_id"])) $this->filter_values["organization_id"] = $this->filter->sanitize(urldecode($_REQUEST["filter_organization_id"]), ["trim", "int"]); 
+		// указание открыть сущность на конкретной вкладке
+		if(isset($_REQUEST["selected_tab"]) && $_REQUEST["selected_tab"] != "") $this->filter_values["selected_tab"] = $this->filter->sanitize(urldecode($_REQUEST["selected_tab"]), ["trim", "string"]); 
+		//else $this->filter_values["selected_tab"] = null;
 		
-		//$this->logger->log("sanitizeGetDataRqFilters: " . json_encode($this->filter_values));
+		// доп параметры фильтрации, которые могут использоваться для заполнения полей сущности
+		//if(isset($_REQUEST["filter_organization_id"])) $this->filter_values["organization_id"] = $this->filter->sanitize(urldecode($_REQUEST["filter_organization_id"]), ["trim", "int"]); 
+		
+		
+		//$this->logger->log(__METHOD__ . filter_values=". " . json_encode($this->filter_values));
 	}
 	
 	/* 
@@ -723,10 +789,58 @@ class ControllerEntity extends ControllerBase {
 	* Расширяемый метод.
 	*/
 	protected function initFields() {
+		$this->initScrollers();
+		
+		$this->initAccess();
+		
 		foreach($this->fields as $fieldID => &$field) {	
-			if($field['type'] == 'select' && $field['style'] == 'id') {
+			// устанавливаем доступы на основе роли из ACL
+			$field['access'] = $this->getFieldAccess($fieldID);
+			
+			// корректируем доступ на основе настроек сущности и действия (независимо от роди)
+			if(isset($this->access) && $this->access != null && isset($this->access[$this->actionNameLC]) && isset($this->access[$this->actionNameLC][$fieldID])) $field['access'] = $this->access[$this->actionNameLC][$fieldID];
+			
+			// предзаполняем списками, если поля доступно для редактирования
+			if($field['type'] == 'select' && $field['style'] == 'id' && (!isset($field['access']) || (isset($field['access']) && $field['access'] == $this::editAccess))) {
 				$this->fillFieldWithLists($field);
 			}
+		}
+	}
+	
+	protected function initScrollers() {}
+	
+	public function initAccess() {
+		if(isset($this->access) && isset($this->access["edit"])) $this->access["save"] = $this->access["edit"];
+	}
+	
+	/* 
+	* Заполняет свойство fields данными списков из связанных таблиц
+	* Переопределяемый метод. Переопределяется при необходимости
+	*/
+	protected function fillFieldWithLists(&$field) {
+		$userRoleID = $this->userData['role_id'];
+		
+		if(isset($field['linkEntityName']) && $field['linkEntityName'] != null) {
+			$linkEntityName = $field['linkEntityName'];
+			$alterName = null;
+			if(isset($field['linkEntityField']) && $field['linkEntityField'] != null) {
+				$alterName = $field['linkEntityField'];
+				$conditions = '';
+				if($userRoleID == $this->config->application->orgAdminRoleID && strtolower($field['linkEntityName']) == 'userrole') $conditions .= "id IN (" . $this->config->application->orgOperatorRoleID . ", " . $this->config->application->orgAdminRoleID . ")";
+				$rows = $linkEntityName::find(['conditions' => $conditions, 'order' => $alterName . ' ASC']);
+			}
+			else $rows = $linkEntityName::find(['order' => 'name ASC']);
+			//$this->logger->log('rows: ' . json_encode($rows));// DEBUG
+			$entities = array();
+			foreach ($rows as $row) {
+				// наполняем массив
+				$entities[] = array(
+					'id' => $row->id,
+					"name" => $alterName ? $this->t->_($row->$alterName) : $row->name,
+				);
+			}
+			//$this->data['asd'] = json_encode($rows);
+			$field['values'] = $entities;
 		}
 	}
 	
@@ -753,42 +867,103 @@ class ControllerEntity extends ControllerBase {
 			
 			// если поля связывает по id
 			if($field['type'] == 'link' || ($field['type'] == 'select' && $field['style'] == 'id')) {
-				$field["value"] = null;
-				$id = null;
+				
+				//$field["value"] = null;
+				$field["value_id"] = null;
 				if(isset($field["newEntityValue"])) {
+					$id = null;
+					//$this->logger->log(__METHOD__ . '. fieldID=' . $fieldID . '. newEntityValue=' . $field["newEntityValue"]);
 					if(is_object($field["newEntityValue"])) $id = $field["newEntityValue"]();
 					else $id = $field["newEntityValue"];
-				}
-				//$this->logger->log(__METHOD__ . '. id=' . $id);
-				
-				$linkEntityName = $field['linkEntityName'];
-				if($id != null) {
-					$entity = false;
-					$entity = $linkEntityName::findFirst( array(
-						"conditions" => "id = ?1",
-						"bind" => array(1 => $id)
-					));
-					if(!$entity) {
-						$this->logger->log(__METHOD__ . '. Controller/Action: ' . $this->controllerNameLC . '/' . $this->actionNameLC . '. Default entity "' . $linkEntityName . '" with ID=' . $id . ' in "newEntityValue" for field "' . $fieldID . '" not found');
+					
+					if($id != null) {
+						$linkEntityName = $field['linkEntityName'];
+						$linkEntityField = $field["linkEntityField"];
+						$entity = false;
+						$entity = $linkEntityName::findFirst( array(
+							"conditions" => "id = ?1",
+							"bind" => array(1 => $id)
+						));
+						if(!$entity) {
+							//$this->logger->log(__METHOD__ . '. Controller/Action: ' . $this->controllerNameLC . '/' . $this->actionNameLC . '. Default entity "' . $linkEntityName . '" with ID=' . $id . ' in "newEntityValue" for field "' . $fieldID . '" not found');
+						}
+						else {
+							$field["value"] = $entity->$linkEntityField;
+							$field["value_id"] = $entity->id;
+						}
 					}
-					else $field["value_id"] = $id;
 				}
+				else if(isset($field["newEntityID"]) && $field["newEntityID"] != '' && $field["newEntityID"] != null) {
+					//$field["value"] = null;
+					$field["value_id"] = null;
+					if(is_object($field["newEntityID"])) $field["value"] = $field["newEntityID"]();
+					//else if(is_numeric($field["newEntityID"])) {
+					else if(is_bool($field["newEntityID"]) && $field["newEntityID"] != false) {
+						//$this->logger->log(__METHOD__ . '. newEntityID = ' . $field["newEntityID"] . " gettype=" . gettype($field["newEntityID"]));
+						//$this->logger->log(__METHOD__ . '. BOOL field_id = ' . $field["id"] . " gettype=" . gettype(ctype_digit($field["newEntityID"])) . " ||| newEntityID=" . $field["newEntityID"] . " ||| is_int=" . ctype_digit($field["newEntityID"]) . " ||| is_bool=" . is_bool($field["newEntityID"]) . " ||| is_object=" . is_object($field["newEntityID"]));
+						$filterValueID = strtolower($field["linkEntityName"] . "_id");
+						if(isset($this->filter_values[$filterValueID]) && $this->filter_values[$filterValueID] != '' && $this->filter_values[$filterValueID] != null) {
+							$linkEntityName = $field["linkEntityName"];
+							$linkEntityField = $field["linkEntityField"];
+							$entity = false;
+							$entity = $linkEntityName::findFirst([
+								"conditions" => "id = ?1", 
+								"bind" => [
+									1 => $this->filter_values[$filterValueID],
+								],
+							]);
+							if($entity) {
+								$field["value"] = $entity->$linkEntityField;
+								$field["value_id"] = $entity->id;
+							}
+							else if(!isFieldAccessibleForUser($field) ){
+								$this->error['messages'][] = [
+									'title' => $this->t->_("msg_error_title"),
+									'msg' => "Ошибка формирования данных сущности",
+								];
+							}
+						}
+						else $this->logger->log(__METHOD__ . '. filter_values = ' . json_ENCODE($this->filter_values));
+					}
+					else if(ctype_digit($field["newEntityID"])) {
+						//$this->logger->log(__METHOD__ . '. INT field_id = ' . $field["id"] . " gettype=" . gettype(ctype_digit($field["newEntityID"])) . " ||| newEntityID=" . $field["newEntityID"] . " ||| is_int=" . ctype_digit($field["newEntityID"]) . " ||| is_bool=" . is_bool($field["newEntityID"]) . " ||| is_object=" . is_object($field["newEntityID"]));
+						$linkEntityName = $field["linkEntityName"];
+						$linkEntityField = $field["linkEntityField"];
+						$entity = false;
+						$entity = $linkEntityName::findFirst([
+							"conditions" => "id = ?1", 
+							"bind" => [
+								1 => (int)$field["newEntityID"],
+							],
+						]);					
+						if($entity) {
+							$this->logger->log(__METHOD__ . '. entity = ' . count($entity) . " id=" . $entity->id . " linkEntityField=" . $linkEntityField . " entity_linkEntityField=" . $entity->$linkEntityField);
+							$field["value_id"] = $entity->id;
+							$search = "_code";
+							$val = $linkEntityField;
+							//$this->logger->log(__METHOD__ . '. substr = ' . substr($val, strlen($val) - strlen($search)));
+							if(substr($val, strlen($val) - strlen($search)) == $search) $field["value"] = $this->t->_("code_" . $entity->$linkEntityField);
+							else $field["value"] = $entity->$linkEntityField;
+						}
+						else $this->logger->log(__METHOD__ . '. qwe = ');
+					}
+					//$this->logger->log(__METHOD__ . '. fieldID=' . $fieldID . '. newEntityID=' . $field["newEntityID"]);
+				}
+				//$this->logger->log(__METHOD__ . '. fieldID=' . $fieldID . '. id=' . $id);
 			}
 			// если поле связывает по тексту
-			else if($field['type'] == 'select') {
-				if(isset($field['style']) && $field['style'] == 'name') {
-					$field["value"] = null;
-					$value = null;
-					if(isset($field["newEntityValue"])) {
-						if(is_object($field["newEntityValue"])) $value = $field["newEntityValue"]();
-						else $value = $field["newEntityValue"];
-					}
-					if(isset($field["values"])) {
-						if(in_array($value, $field["values"]))  $field["value"] = $value;
-						else $this->logger->log(__METHOD__ . '. Controller/Action: ' . $this->controllerNameLC . '/' . $this->actionNameLC . '. Default value "' . $value . '" for field "' . $fieldID . '" not found in inline array "field["values"]"');
-					}
-					else if($value != null) $this->logger->log(__METHOD__ . '. Controller/Action: ' . $this->controllerNameLC . '/' . $this->actionNameLC . '. Default value "' . $field["newEntityValue"] . '" for field "' . $fieldID . '" is set, but inline array "field["values"]" is not set');
+			else if($field['type'] == 'select' && isset($field['style']) && $field['style'] == 'name') {
+				$field["value"] = null;
+				$value = null;
+				if(isset($field["newEntityValue"])) {
+					if(is_object($field["newEntityValue"])) $value = $field["newEntityValue"]();
+					else $value = $field["newEntityValue"];
 				}
+				if(isset($field["values"])) {
+					if(in_array($value, $field["values"]))  $field["value"] = $value;
+					else $this->logger->log(__METHOD__ . '. Controller/Action: ' . $this->controllerNameLC . '/' . $this->actionNameLC . '. Default value "' . $value . '" for field "' . $fieldID . '" not found in inline array "field["values"]"');
+				}
+				else if($value != null) $this->logger->log(__METHOD__ . '. Controller/Action: ' . $this->controllerNameLC . '/' . $this->actionNameLC . '. Default value "' . $field["newEntityValue"] . '" for field "' . $fieldID . '" is set, but inline array "field["values"]" is not set');
 			}
 			else if($field['type'] == 'img') {
 				// для изображениq значение по умолчанию пока не предусмотрено
@@ -807,59 +982,11 @@ class ControllerEntity extends ControllerBase {
 				}
 			}
 			else if(isset($field["newEntityValue"])) {
+				//$this->logger->log(__METHOD__ . '. newEntityValue: ' . $field["newEntityValue"]);
 				if(is_object($field["newEntityValue"])) $field["value"] = $field["newEntityValue"]();
 				else $field["value"] = $field["newEntityValue"];
 			}
 			// если предусмотрена выборка по ID, то надо запросить значение в связанной таблице
-			else if(isset($field["newEntityID"]) && $field["newEntityID"] != '' && $field["newEntityID"] != null) {
-				$field["value"] = null;
-				$field["value_id"] = null;
-				if(is_object($field["newEntityID"])) $field["value"] = $field["newEntityID"]();
-				//else if(is_numeric($field["newEntityID"])) {
-				else if(is_bool($field["newEntityID"]) && $field["newEntityID"] != false) {
-					//$this->logger->log(__METHOD__ . '. newEntityID = ' . $field["newEntityID"] . " gettype=" . gettype($field["newEntityID"]));
-					$this->logger->log(__METHOD__ . '. BOOL field_id = ' . $field["id"] . " gettype=" . gettype(ctype_digit($field["newEntityID"])) . " ||| newEntityID=" . $field["newEntityID"] . " ||| is_int=" . ctype_digit($field["newEntityID"]) . " ||| is_bool=" . is_bool($field["newEntityID"]) . " ||| is_object=" . is_object($field["newEntityID"]));
-					$filterValueID = strtolower($field["linkEntityName"] . "_id");
-					if(isset($this->filter_values[$filterValueID]) && $this->filter_values[$filterValueID] != '' && $this->filter_values[$filterValueID] != null) {
-						$linkEntityName = $field["linkEntityName"];
-						$linkEntityField = $field["linkEntityField"];
-						$entity = false;
-						$entity = $linkEntityName::findFirst([
-							"conditions" => "id = ?1", 
-							"bind" => [
-								1 => $this->filter_values[$filterValueID],
-							],
-						]);
-						if($entity) {
-							$field["value"] = $entity->$linkEntityField;
-							$field["value_id"] = $entity->id;
-						}
-					}
-				}
-				else if(ctype_digit($field["newEntityID"])) {
-					$this->logger->log(__METHOD__ . '. INT field_id = ' . $field["id"] . " gettype=" . gettype(ctype_digit($field["newEntityID"])) . " ||| newEntityID=" . $field["newEntityID"] . " ||| is_int=" . ctype_digit($field["newEntityID"]) . " ||| is_bool=" . is_bool($field["newEntityID"]) . " ||| is_object=" . is_object($field["newEntityID"]));
-					$linkEntityName = $field["linkEntityName"];
-					$linkEntityField = $field["linkEntityField"];
-					$entity = false;
-					$entity = $linkEntityName::findFirst([
-						"conditions" => "id = ?1", 
-						"bind" => [
-							1 => (int)$field["newEntityID"],
-						],
-					]);					
-					if($entity) {
-						$this->logger->log(__METHOD__ . '. entity = ' . count($entity) . " id=" . $entity->id . " linkEntityField=" . $linkEntityField . " entity_linkEntityField=" . $entity->$linkEntityField);
-						$field["value_id"] = $entity->id;
-						$search = "_code";
-						$val = $linkEntityField;
-						$this->logger->log(__METHOD__ . '. substr = ' . substr($val, strlen($val) - strlen($search)));
-						if(substr($val, strlen($val) - strlen($search)) == $search) $field["value"] = $this->t->_("code_" . $entity->$linkEntityField);
-						else $field["value"] = $entity->$linkEntityField;
-					}
-					else $this->logger->log(__METHOD__ . '. qwe = ');
-				}
-				else $this->logger->log(__METHOD__ . '. asd = ');
-			}
 			else {
 				$field["value"] = null;
 				$field["value_id"] = null;
@@ -876,7 +1003,7 @@ class ControllerEntity extends ControllerBase {
 			if($field['type'] == 'img') {
 				//$this->logger->log(json_encode($this->fields));
 				$row = false;
-				$entityName = $this->tableName;
+				$entityName = $this->entityName;
 				$row = $entityName::findFirst([
 					'conditions' => 'id = ?1',
 					'bind' => [1 => $this->fields["id"]["value"]],
@@ -884,7 +1011,9 @@ class ControllerEntity extends ControllerBase {
 				//$this->data['dbg'] = json_encode($row);
 				if($row) {
 					$files = false;
-					$files = $row->getFile(["limit" => $field["max_count"]]);
+					$conditions = [];
+					if(isset($field["max_count"])) $conditions['limit'] = $field["max_count"];
+					$files = $row->getFile($conditions);
 					//$this->data['files'] = json_encode($files);
 					if($files && count($files)>0) {
 						$field['files'] = array();
@@ -903,36 +1032,41 @@ class ControllerEntity extends ControllerBase {
 	}
 	
 	/* 
-	* Заполняет свойство fields данными списков из связанных таблиц
-	* Переопределяемый метод. Переопределяется при необходимости
-	*/
-	protected function fillFieldWithLists(&$field) {
-		$linkEntityName = $field['linkEntityName'];
-		$rows = $linkEntityName::find(['order' => 'name ASC']);
-		//$this->logger->log('rows: ' . json_encode($rows));// DEBUG
-		$entities = array();
-		foreach ($rows as $row) {
-			// наполняем массив
-			$entities[] = array(
-				'id' => $row->id,
-				"name" => $row->name
-			);
-		}
-		//$this->data['asd'] = json_encode($rows);
-		$field['values'] = $entities;
-	}
-	
-	/* 
 	* Заполняет свойство scrollers данными списков из связанных таблиц
 	* Переопределяемый метод.
 	*/
-	protected function fillScrollers() {}
+	protected function fillScrollers() {
+		$userRoleID = $this->userData['role_id'];
+		
+		if(isset($this->scrollers)) {
+			foreach($this->scrollers as $scrollerControllerNameLC => $scroller) {
+				$resource = $this->controllerNameLC . "_" . $scrollerControllerNameLC;
+				$action = ($this->acl->isAllowed($userRoleID, $resource, 'edit') ? ($this->actionNameLC == "show" ? 'show' : 'edit') : ($this->acl->isAllowed($userRoleID, $resource, 'show') ? 'show' : null));
+				if($action) {
+					$scrollerControllerClass = $scroller['controllerClass'];
+					$controller = new $scrollerControllerClass();
+					$scrollerController = $controller->createDescriptor($this, $scroller['addFilter'](), $action);
+					$scrollerController['relationType'] = $this->scrollers[$scrollerControllerNameLC]['relationType'];
+					$scrollerController["add_style"] = $scroller['addStyle'];
+					$scrollerController["edit_style"]  = $scroller['editStyle'];
+					
+					$this->scrollers[$scrollerControllerNameLC] = $scrollerController;
+				}
+				else unset($this->scrollers[$scrollerControllerNameLC]);
+			}
+		}
+	}
+	
+	/* 
+	* Используется после инициализации и наполнения полей для настройки доступных данных. Например, очищает список доступных статусов в зависимости от текущего статуса
+	*/
+	public function customizeFields() {}
 	
 	/* 
 	* Ищет запись в БД или создает новую
 	* Переопределяемый метод.
 	*/
-	protected function createOrFindEntity($id) {
+	/*protected function createOrFindEntity($id) {
 		$entity = false;
 		$entity = $this->findEntity($id);
 		if($entity == false) {
@@ -941,13 +1075,13 @@ class ControllerEntity extends ControllerBase {
 			return new $entityName();
 		}
 		else return $entity;
-	}
+	}*/
 	
 	/* 
 	* Ищет запись в БД
 	* Переопределяемый метод.
 	*/
-	protected function findEntity($id) { 
+	/*protected function findEntity($id) { 
 		if($id && $id >= 0) {
 			$entityName = $this->entityName;
 			return $entityName::findFirst( array(
@@ -956,16 +1090,86 @@ class ControllerEntity extends ControllerBase {
 			));
 		}
 		else return false;
-	}
+	}*/
 	
 	/* 
 	* Удаляет ссылки на сущность из связанных таблиц
 	* Переопределяемый метод.
 	*/
-	protected function deleteEntityLinks($entity) {return true;}
+	protected function deleteEntityLinks($entity) { 
+		$this->success['messages'][] = [
+			//'title' => $this->t->_("msg_error_title"),
+			'title' => 'deleteEntityLinks',
+			'msg' => "return true",
+		];
+		return true;
+	}
+	
+	protected function deleteEntityLinks1($entity) {
+		if(!isset($entity)) $entity = $this->entity;
+		$userRoleID = $this->userData['role_id'];
+		
+		if(isset($this->scrollers)) {
+			foreach($this->scrollers as $scrollerControllerNameLC => $scroller) {
+				// TODO. надо проверять,е сть ли у пользователя право удалять свзанные сущности. При этом удалять связи можно, если можно редактировать текущую сущность.
+				$resource = $this->controllerNameLC . "_" . $scrollerControllerNameLC;
+				if($scroller['relationType'] == 'nn') {
+					$linkTableName = $scroller['linkTableName'];
+					$rows = $linkTableName::find([
+						"conditions" => $scroller['linkEntityField'] . " = ?1",
+						"bind" => array(1 => $entity->id)
+					]);
+					foreach($rows as $row) {
+						// удаляем запись
+						if ($row->delete() == false) {
+							$this->db->rollback();
+							$dbMessages = '';
+							foreach ($n->getMessages() as $message) {
+								$dbMessages .= "<li>" . $message . "</li>";
+							}
+							$this->error['messages'][] = [
+								'title' => 'Не удалось удалить связь из таблицы "' . $linkTableName . '" c ' . $scroller['linkEntityField'] . ' = ' . $entity->id,
+								'msg' => "<ul>" . $dbMessages . "</ul>"
+							];
+							return false;
+						}
+					}
+				}
+				elseif($scroller['relationType'] == 'n') {
+					$entityControllerClass = $scroller['entityControllerClass'];
+					$e = new $entityControllerClass();
+					$linkEntityName = $scroller['linkEntityName'];
+					$rows = $linkEntityName::find([
+						"conditions" => $scroller['linkEntityField'] . " = ?1",
+						"bind" => array(1 => $entity->id)
+					]);
+					foreach($rows as $row) {
+						// удаляем расход
+						$res = $e->deleteEntity($row);
+						// если в процессе удаления возникла ошибка, то транзакция уже откачена, копируем сообщения
+						if($res && count($res['error']['messages']>0)) {
+							foreach($res['error']['messages'] as $message) {
+								$this->error['messages'][] = $message;
+							}
+							foreach($res['success']['messages'] as $message) {
+								$this->success['messages'][] = $message;
+							}
+							return false;
+						}
+						// если ошибок не было, то копируем только успешные сообщения
+						foreach($res['success']['messages'] as $message) {
+							$this->success['messages'][] = $message;
+						}
+					}
+				}
+			}
+		}
+		
+		return true;
+	}
 	
 	/* 
-	* Обновляет данные сущности после сохранения в БД (например, проставляется дата создвания записи)
+	* Обновляет данные сущности после сохранения в БД (например, проставляется дата создания записи)
 	* Переопределяемый метод.
 	*/
 	protected function updateEntityFieldsFromModelAfterSave() {}
@@ -974,73 +1178,116 @@ class ControllerEntity extends ControllerBase {
 	* Очищает параметры запроса
 	* Расширяемый метод.
 	*/
-	protected function sanitizeSaveRqData($rq) {
+	protected function sanitizeSaveRqData() {
 		$res = 0;
 		// id
-		if(isset($rq->fields->id) && isset($rq->fields->id->value)) {
-			$val = $this->filter->sanitize(urldecode($rq->fields->id->value), ["trim", "int"]);
-			if($val == '') {
-				$this->error['messages'][] = [
-					'title' => "Ошибка",
-					'msg' => "Не получен идентификатор сущности"
-				];
-			}
-			else $this->fields['id']['value'] = $val;
+		$this->fields['id']['value'] = null;
+		if(isset($this->rq->fields->id) && isset($this->rq->fields->id->value)) {
+			$val = $this->filter->sanitize(urldecode($this->rq->fields->id->value), ["trim", "int"]);
+			if($val != '') $this->fields['id']['value'] = $val;
 		}
-		else {
+		
+		if($this->fields['id']['value'] == null) {
 			$this->error['messages'][] = [
-				'title' => "Ошибка",
-				'msg' => "Не получен идентификатор сущности"
+				'title' => $this->t->_("msg_error_title"),
+				'msg' => $this->t->_("msg_error_no_id"),
 			];
 		}
 		
 		//$this->error['messages'][] = ['title' => "Debug1. " . __METHOD__, 'msg' => "res=" . $res . ". id=" . $this->fields['id']['value']];
 		
-		// ссылочные поля (select, link, bool)
+		// ссылочные поля (select, link, text, textarea, bool)
 		foreach($this->fields as $fieldID => &$field) {
+			// если поле не было доступно для редактирования, то ничего с клиента сохранять не надо
+			//if(!$this->isFieldAccessibleForUser($field)) continue;
+			//$this->logger->log(__METHOD__ . ". Accessible field. fieldID = " . $fieldID . ". value = " . $field['value'] . ". value_id = " . $field['value_id']);
+			
 			// поле есть в запросе и содержит id значения
 			if(($field['type'] == 'select' || $field['type'] == 'link')) {
 				$field['value'] = null;
 				$field['value_id'] = null;
-				if(isset($rq->fields->$fieldID) && isset($rq->fields->$fieldID->value_id)) {
-					// выбрано пустое значение 
-					if($rq->fields->$fieldID->value_id != '*' && $rq->fields->$fieldID->value_id != '') {
-						$field['value_id'] = $this->filter->sanitize($rq->fields->$fieldID->value_id, "int");
+				//$this->logger->log(__METHOD__ . ". fieldID = " . $fieldID . ". value_id = " . $field['value_id']);
+				if(isset($this->rq->fields->$fieldID) && isset($this->rq->fields->$fieldID->value_id)) {
+					// выбрано не пустое значение 
+					if($this->rq->fields->$fieldID->value_id != '*' && $this->rq->fields->$fieldID->value_id != '') {
+						$field['value_id'] = $this->filter->sanitize($this->rq->fields->$fieldID->value_id, ['trim', "int"]);
+						//$this->logger->log(__METHOD__ . ". fieldID = " . $fieldID . ". value_id = " . $field['value_id']);
 						if($field['value_id']=='') $field['value_id'] = null;
 						else {
-							// если style=id
-							if(isset($field['style']) && $field['style'] == "id") {
+							// если select style=id
+							if($field['type'] == 'select' && isset($field['style']) && $field['style'] == "id") {
 								// ничего делать не надо
 							}
-							// если style=name
-							else if(isset($field['values']) && isset($field['values'][$field['value_id']])) {
+							// если select style=name
+							else if($field['type'] == 'select'  && isset($field['style']) && $field['style'] == "name" && isset($field['values']) && isset($field['values'][$field['value_id']])) {
 								$field['value'] = $field['values'][$field['value_id']];
 							}
-							else $this->error['messages'][] = [
-								'title' => "Ошибка",
-								'msg' => 'Поле "'. $field['name'] .'". Передано некорректное значение 2. value_id=' . $field['value_id'] . ', rq_id=' . $rq->fields->$fieldID->value_id,
-							];
+							else if($field['type'] == 'select') {
+								$this->error['messages'][] = [
+									'title' => $this->t->_("msg_error_title"),
+									'msg' => $this->t->_("msg_check_field_invalid_value", ['field_name' => $field['name']]) . '. value_id=' . $field['value_id'] . ', rq_id=' . $this->rq->fields->$fieldID->value_id,
+								];
+							}
 						}
 					}
 					else {
 						$this->error['messages'][] = [
-							'title' => "Ошибка",
-							'msg' => 'Поле "'. $field['name'] .'". Передано некорректное значение. value_id=' . $field['value_id'] . ', rq_id=' . $rq->fields->$fieldID->value_id,
+							'title' => $this->t->_("msg_error_title"),
+							'msg' => $this->t->_("msg_check_field_invalid_value", ['field_name' => $field['name']]) . '. value_id=' . $field['value_id'] . ', rq_id=' . $this->rq->fields->$fieldID->value_id,
 						];
 					}
 					
 					//$this->logger->log(__METHOD__ . ". fieldID = " . $fieldID . ". value_id = " . $field['value_id']);
 				}
+				//$this->logger->log(__METHOD__ . ". fieldID = " . $fieldID . ". value_id = " . $field['value_id']);
 			}
-			else if($field['type'] == 'bool') {
+			else if($field['type'] == 'text' || $field['type'] == 'textarea' || $field['type'] == 'email' || $field['type'] == 'password' || $field['type'] == 'date') {
 				$field['value'] = null;
-				if(isset($rq->fields->$fieldID) && isset($rq->fields->$fieldID->value)) {
-					$field['value'] = $this->filter->sanitize($rq->fields->$fieldID->value_id, "int");
+				if(isset($this->rq->fields->$fieldID) && isset($this->rq->fields->$fieldID->value)) {
+					$field['value'] = $this->filter->sanitize(urldecode($this->rq->fields->$fieldID->value), ["trim", "string"]);
+					if($field['value'] == '') $field['value'] = null;
+				}
+			}
+			else if($field['type'] == 'period') {
+				$field['value1'] = null;
+				$field['value2'] = null;
+				if(isset($this->rq->fields->$fieldID)) {
+					$this->logger->log(__METHOD__ . '. 1');
+					if(isset($this->rq->fields->$fieldID->value1)) {
+						$field['value1'] = $this->filter->sanitize(urldecode($this->rq->fields->$fieldID->value1), ["trim", "string"]);
+						if($field['value1'] == '') $field['value1'] = null;
+						$this->logger->log(__METHOD__ . '. value1=' . $field['value1']);
+						//$this->logger->log('val = ' . $this->fields['target_date']['value1']);
+					}
+					if(isset($this->rq->fields->$fieldID->value2)) {
+						$field['value2'] = $this->filter->sanitize(urldecode($this->rq->fields->$fieldID->value2), ["trim", "string"]);
+						if($field['value2'] == '') $field['value2'] = null;
+						$this->logger->log(__METHOD__ . '. value2=' . $field['value2']);
+						//$this->logger->log('val = ' . $this->fields['target_date']['value2']);
+					}
+				}
+			}
+			else if($field['type'] == 'bool' || $field['type'] == 'amount') {
+				$field['value'] = null;
+				if(isset($this->rq->fields->$fieldID) && isset($this->rq->fields->$fieldID->value)) {
+					$field['value'] = $this->filter->sanitize($this->rq->fields->$fieldID->value, ["trim", "int"]);
+					if($field['value']=='') $field['value'] = null;
+				}
+			}
+			else if($field['type'] == 'recaptcha') {
+				$field['value'] = null;
+				if(isset($this->rq->fields->$fieldID) && isset($this->rq->fields->$fieldID->value)) {
+					$field['value'] = $this->filter->sanitize($this->rq->fields->$fieldID->value, ["trim", "string"]);
 					if($field['value']=='') $field['value'] = null;
 				}
 			}
 		}
 		//$this->error['messages'][] = ['title' => "Debug2. " . __METHOD__, 'msg' => "res=" . $res . ". id=" . $this->fields['id']['value']];
+		
+		if(isset($this->scrollers)) if(!$this->sanitizeSaveRqDataCheckRelations()) $res |= 2;
+		
+		//$res |= $this->check();
+		
 		return $res;
 	}
 	
@@ -1049,9 +1296,20 @@ class ControllerEntity extends ControllerBase {
 	* Расширяемый метод.
 	*/
 	protected function check() {
+		//$this->logger->log(__METHOD__ );
+		/*$bt = debug_backtrace();
+		$this->logger->log(__METHOD__ . "debug_backtrace()");
+		foreach($bt as $id => $value) {
+			$this->logger->log(__METHOD__ . ". fn: " . $value["function"]);// . ". value = " . implode(PHP_EOL, $value));
+		}*/
+		
 		$res = 0;
 		//$this->data["asd"] = [];
 		foreach($this->fields as $fieldID => $field) {
+			//$this->logger->log(__METHOD__ . ". fieldID = " . $fieldID . ". type = " . $field['type'] . ". access = " . $field['access']);
+			// если поле не было доступно для редактирования, то проверять не надо, т.к. клиент не поймет, что не так
+			if(!$this->isFieldAccessibleForUser($field)) continue;
+			
 			//$this->data["asd"][$fieldID] = $field["type"];
 			if($field['type'] == 'amount') {
 				// проверка на обязательность
@@ -1066,6 +1324,7 @@ class ControllerEntity extends ControllerBase {
 				$res |= $this->checkBasicEmail($field);
 			}
 			else if($field['type'] == 'text' || $field['type'] == 'textarea') {
+				//$this->logger->log(__METHOD__ . ". fieldID = " . $fieldID . ". type = " . $field['type']);
 				// проверка на обязательность
 				$res |= $this->checkBasicRequire($field);
 				
@@ -1094,6 +1353,9 @@ class ControllerEntity extends ControllerBase {
 			else if($field['type'] == 'link') {
 				$res |= $this->checkBasicLink($field);
 			}
+			else if($field['type'] == 'recaptcha' && !isset($_REQUEST["check_only"])) {
+				$res |= $this->checkBasicRecaptcha($field);
+			}
 		}
 		return $res;
 	}
@@ -1103,17 +1365,18 @@ class ControllerEntity extends ControllerBase {
 		if(isset($field['required']) && $field['required'] == 1 && (!isset($field['value']) || $field['value'] == null || $field['value'] == '')) {
 			$this->checkResult[] = [
 				'type' => "warning",
-				'msg' => 'Поле "' .  $field['name'] . '" обязательно для указания',
+				'msg' => $this->t->_("msg_check_field_mandatory", ['field_name' => $field['name']]),
 			];
 			$res |=1 ;
 		}
 		else if(isset($field['required']) && $field['required'] == 2 && (!isset($field['value']) || $field['value'] == null || $field['value'] == '')) {
 			$this->checkResult[] = [
 				'type' => "error",
-				'msg' => 'Поле "' .  $field['name'] . '" обязательно для указания',
+				'msg' => $this->t->_("msg_check_field_mandatory", ['field_name' => $field['name']]),
 			];
 			$res |= 2;
 		}
+		//$this->logger->log(__METHOD__ . ". fieldID = " . $field['id'] . ". value = " . $field['value'] . '. required = ' . $field['required']);
 		return $res;
 	}
 	
@@ -1122,14 +1385,14 @@ class ControllerEntity extends ControllerBase {
 		if(isset($field['min']) && $field['value'] != null && $field['value'] < $field['min']) {
 			$this->checkResult[] = [
 				'type' => "error",
-				'msg' => 'Поле "' . $field['name'] . '" содержит значение меньше допустимого',
+				'msg' => $this->t->_("msg_check_field_min_value", ['field_name' => $field['name']]),
 			];
 			$res |= 2;
 		}
 		if(isset($field['max']) && $field['value'] != null && $field['value'] > $field['max']) {
 			$this->checkResult[] = [
 				'type' => "error",
-				'msg' => 'Поле "' .$field['name'] . '" содержит значение больше допустимого',
+				'msg' => $this->t->_("msg_check_field_max_value", ['field_name' => $field['name']]),
 			];
 			$res |= 2;
 		}
@@ -1141,7 +1404,7 @@ class ControllerEntity extends ControllerBase {
 		if($field['value']!=null && strpos($field['value'], "@") === false) {
 			$this->checkResult[] = [
 				'type' => "error",
-				'msg' => 'Поле "' . $field['name'] . '" содержит значение, не соответствущее адресу электронной почты',
+				'msg' => $this->t->_("msg_check_field_email_format", ['field_name' => $field['name']]),
 			];
 			$res |= 2;
 		}
@@ -1150,17 +1413,17 @@ class ControllerEntity extends ControllerBase {
 	
 	protected function checkBasicText($field) {
 		$res = 0;
-		if(isset($field['min']) && $field['value'] < $field['min']) {
+		if(isset($field['min']) && count($field['value']) < $field['min']) {
 			$this->checkResult[] = [
 				'type' => "error",
-				'msg' => 'Поле "' . $field['name'] . '" содержит слишком короткое значение (должно быть не менее ' . $field['min'] . ' символов)',
+				'msg' => $this->t->_("msg_check_field_text_min", ['field_name' => $field['name'], 'field_min' => $field['min']]),
 			];
 			$res |= 2;
 		}
-		if(isset($field['max']) && $field['value'] > $field['max']) {
+		if(isset($field['max']) && count($field['value']) > $field['max']) {
 			$this->checkResult[] = [
 				'type' => "error",
-				'msg' => 'Поле "' . $field['name'] . '" содержит слишком длинное значение (должно быть не более ' . $field['max'] . ' символов)',
+				'msg' => $this->t->_("msg_check_field_text_max", ['field_name' => $field['name'], 'field_max' => $field['max']]),
 			];
 			$res |= 2;
 		}
@@ -1177,21 +1440,21 @@ class ControllerEntity extends ControllerBase {
 			if($reqMode == 1 && $val1 == null) {
 				$this->checkResult[] = [
 					'type' => "error",
-					'msg' => 'Поле "' . $field['name'] . '". Дата "' . $field['name1'] . '" обязательна для заполнения',
+					'msg' => $this->t->_("msg_check_field_period_1", ["field_name" => $field['name'], "field_name1" => $field['name1']]),
 				];
 				$res |= 2;
 			}
 			else if($reqMode == 2 && $val2 == null) {
 				$this->checkResult[] = [
 					'type' => "error",
-					'msg' => 'Поле "' . $field['name'] . '". Дата "' . $field['name2'] . '" обязательна для заполнения',
+					'msg' => $this->t->_("msg_check_field_period_2", ["field_name" => $field['name'], "field_name2" => $field['name2']]),
 				];
 				$res |= 2;
 			}
 			else if($reqMode == 3 && $val1 == null && $val2 == null) {
 				$this->checkResult[] = [
 					'type' => "error",
-					'msg' => 'Поле "' . $field['name'] . '". Должна быть заполнена хотя бы одна дата',
+					'msg' => $this->t->_("msg_check_field_period_any",  ["field_name" => $field['name']]),
 				];
 				$res |= 2;
 				//$this->logger->log(__METHOD__ . '. QQQ val1=' . $val1 . '. val2=' . $val2);
@@ -1199,7 +1462,7 @@ class ControllerEntity extends ControllerBase {
 			else if($reqMode == 4 && ($val1 == null || $val2 == null)) {
 				$this->checkResult[] = [
 					'type' => "error",
-					'msg' => 'Поле "' . $field['name'] . '". Период должен быть заполнен полностью',
+					'msg' => $this->t->_("msg_check_field_period_full",  ["field_name" => $field['name']]),
 				];
 				$res |= 2;
 			}
@@ -1210,7 +1473,7 @@ class ControllerEntity extends ControllerBase {
 				if($d1 > $d2) {
 					$this->checkResult[] = [
 						'type' => "error",
-						'msg' => 'В поле "'. $field['name'] .'" дата окончания периода не может быть меньше даты начала периода',
+						'msg' => $this->t->_("msg_check_field_period_2lt1",  ["field_name" => $field['name']]),
 					];
 					$res |= 2;
 				}
@@ -1227,14 +1490,14 @@ class ControllerEntity extends ControllerBase {
 			if($field['required'] == 1 && $field['value_id'] == null) {
 				$this->checkResult[] = [
 					'type' => "warning",
-					'msg' => 'Поле "'. $field['name'] .'" обязательно для указания',
+					'msg' => $this->t->_("msg_check_field_mandatory", ['field_name' => $field['name']]),
 				];
 				$res |= 1;
 			}
 			else if($field['required'] == 2 && $field['value_id'] == null) {
 				$this->checkResult[] = [
 					'type' => "error",
-					'msg' => 'Поле "'. $field['name'] .'" обязательно для указания',
+					'msg' => $this->t->_("msg_check_field_mandatory", ['field_name' => $field['name']]),
 				];
 				$res |= 2;
 			}
@@ -1246,7 +1509,7 @@ class ControllerEntity extends ControllerBase {
 			if(!$entity) {
 				$this->checkResult[] = [
 					'type' => "error",
-					'msg' => 'Поле "'. $field['name'] .'". По переданому идентификатору не найдена запись в БД (id=' . $field['value_id'] . ')',
+					'msg' => $this->t->_("msg_check_field_not_found_by_id", ['field_name' => $field['name']]),
 				];
 				$res |= 2;
 			}
@@ -1261,14 +1524,14 @@ class ControllerEntity extends ControllerBase {
 			if($field['required'] == 1 && $field['value_id'] == null) {
 				$this->checkResult[] = [
 					'type' => "warning",
-					'msg' => 'Поле "'. $field['name'] .'" обязательно для указания',
+					'msg' => $this->t->_("msg_check_field_mandatory", ['field_name' => $field['name']]),
 				];
 				$res |= 1;
 			}
 			else if($field['required'] == 2 && $field['value_id'] == null) {
 				$this->checkResult[] = [
 					'type' => "error",
-					'msg' => 'Поле "'. $field['name'] .'" обязательно для указания',
+					'msg' => $this->t->_("msg_check_field_mandatory", ['field_name' => $field['name']]),
 				];
 				$res |= 2;
 			}
@@ -1281,12 +1544,114 @@ class ControllerEntity extends ControllerBase {
 			else {
 				$this->checkResult[] = [
 					'type' => "error",
-					'msg' => 'Поле "'. $field['name'] .'". Передано значение не из списка',
+					'msg' => $this->t->_("msg_check_field_not_in_list", ['field_name' => $field['name']]),
 				];
 				$res |= 2;
 			}
 		}
+		//$this->logger->log(__METHOD__ . ". fieldID = " . $field['id'] . ". value_id = " . $field['value_id'] . ". value = " . $field['value'] . '. required = ' . $field['required']);
 		return $res;
 	}
 	
+	protected function checkBasicRecaptcha($field) {
+		$res = 0;
+		// сперва определяем, что вприниципе присутствет id
+		if($field['value'] == null || $field['value'] == $this->config['application']['reCaptchaPublicKey']) {
+			$this->checkResult[] = [
+				'type' => "error",
+				'msg' => $this->t->_("msg_check_field_mandatory", ['field_name' => $field['name']]),
+			];
+			$res |= 2;
+		}
+		else {
+			// выполняем запрос в google
+			$url = 'https://www.google.com/recaptcha/api/siteverify';
+			// данные для запроса
+			$postData = array(
+				'secret' => $this->config['application']['reCaptchaSecretKey'],
+				'response' => $field['value'],
+				//'remoteip' => $this->request->getClientAddress(),
+			);
+			
+			$result = file_get_contents($url, false, stream_context_create(array(
+				'http' => array(
+					'method'  => 'POST',
+					'header'  => 'Content-type: application/x-www-form-urlencoded',
+					'content' => http_build_query($postData)
+				)
+			)));
+			
+			$resultJSON = json_decode($result);
+			
+			if($resultJSON->success !== true) {
+				$this->checkResult[] = [
+					'type' => "error",
+					'msg' => $this->t->_("msg_check_field_recaptcha"),
+				];
+				$res |= 2;
+			}
+		}
+		//$this->logger->log(__METHOD__ . ". fieldID = " . $field['id'] . ". value_id = " . $field['value_id'] . ". value = " . $field['value'] . '. required = ' . $field['required']);
+		return $res;
+	}
+
+	// операции
+	public function getEntityFormOperations($controller, $exludeOps = null, $actionName="show") {
+		$controllerNameLC = $controller->controllerNameLC;
+		$role_id = $controller->userData['role_id'];
+		$acl = $controller->acl;
+		$t = $controller->t;
+		
+		//$entity = strtolower($entity);
+		$operations = array();
+		if(!$exludeOps) $exludeOps = array();
+		
+		// если запрошен просмотр, то надо убрать остальные операции с сущностью
+		if($actionName == "show") {
+			$exludeOps[] = "edit";
+			//$exludeOps[] = "send";
+			$exludeOps[] = "delete";
+		}
+		
+		// редактирование должно быть доступным, если доступно редактирование самой сущности или ее скроллеров
+		if(!in_array('edit', $exludeOps)) {
+			$editAllowed = false;
+			// кнопки "Сохранить" и "Проверить"
+			//$controller->logger->log(__METHOD__ . ". role_id = " . $role_id . ". controllerNameLC = " . $controllerNameLC);
+			if($acl->isAllowed($role_id, $controllerNameLC, 'edit')) {
+				$editAllowed = true;
+				//$controller->logger->log(__METHOD__ . ". test2");
+			}
+			// проверяем скроллеры
+			else if(isset($controller->scrollers)) {
+				foreach($controller->scrollers as $scrollerNameLC => $scroller) {
+					//$controller->logger->log(__METHOD__ . ". scrollers: " .  $controllerNameLC . "_" . $scrollerNameLC);
+					if($acl->isAllowed($role_id, $controllerNameLC . "_" . $scrollerNameLC, 'edit')) {
+						$editAllowed = true;
+						break;
+					}
+				}
+			}
+			if($editAllowed) {
+				$operations[] = array(
+					'id' => 'save',
+					'name' => $t->_('button_save'),
+				);
+				$operations[] = array(
+					'id' => 'check',
+					'name' => $t->_('button_check'),
+				);
+			}
+		}
+		
+		// кнопка "Удалить"
+		if($acl->isAllowed($role_id, $controllerNameLC, 'delete') && !in_array('delete', $exludeOps)) {
+			$operations[] = array(
+				'id' => 'delete',
+				'name' => $t->_('button_delete'),
+			);
+		}
+		
+		return $operations;
+	}
 }

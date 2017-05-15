@@ -5,7 +5,6 @@ class Expense extends Model{
 	public $id;
 	public $name;
 	public $amount;
-	//public $date;
 	public $expense_type_id;
 	public $expense_status_id;
 	public $organization_id;

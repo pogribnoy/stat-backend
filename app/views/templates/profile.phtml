@@ -15,30 +15,32 @@
 	<div class="row-fluid">
 		<div class="container-fluid">
 			<div class="form-horizontal">
-				{{if descriptor.fields ~fields=~utilities.objectToArray(descriptor.fields)}}
-					{{for ~fields ~descriptor=descriptor}}
-						<div class="form-group" name="field_{{:id}}">
-							<label for="field_{{:id}}_value" class="col-sm-2 control-label">{{:name}}</label>
-							<div class="col-sm-8">
-								{{if id == "id"}}
-									{{include tmpl = ~descriptor.actionName + "_entity_field_label" /}}
-								{{else id == "active"}}
-									{{include tmpl = "show_entity_field_bool" /}}
-								{{else id == "name"}}
-									{{include tmpl = ~descriptor.actionName + "_entity_field_text" /}}
-								{{else id == "email"}}
-									{{include tmpl = ~descriptor.actionName + "_entity_field_label" /}}
-								{{else id == "phone"}}
-									{{include tmpl = ~descriptor.actionName + "_entity_field_text" /}}
-								{{else id == "user_role"}}
-									{{include tmpl = ~descriptor.actionName + "_entity_field_label" /}}
-								{{else id == "password"}}
-									{{include tmpl = ~descriptor.actionName + "_entity_field_password" /}}
-									<!--<button type="button" class="btn btn-default" data-toggle="modal" data-target="#recoverModal">Напомнить пароль</button>
-									<button type="button" class="btn btn-default" data-toggle="modal" data-target="#changeModal">Изменить пароль</button>-->
-								{{/if}}
+				{{if descriptor.fields ~fields=~utilities.objectToArray(descriptor.fields) ~descriptor=descriptor}}
+					{{for ~fields}}
+						{{if !(access && access == "hidden") }}
+							<div class="form-group" name="field_{{:id}}">
+								<label for="field_{{:id}}_value" class="col-sm-2 control-label">{{:name}}{{if ~utilities.isFieldRequired(#data) == true && access == "edit"}}<span class="text-danger">*<span>{{/if}}</label>
+								<div class="col-sm-8">
+									{{if id == "id"}}
+										{{include tmpl = access + "_entity_field_label" /}}
+									{{else id == "active"}}
+										{{include tmpl = access + "_entity_field_bool" /}}
+									{{else id == "name"}}
+										{{include tmpl = access + "_entity_field_text" /}}
+									{{else id == "email"}}
+										{{include tmpl = access + "_entity_field_text" /}}
+									{{else id == "phone"}}
+										{{include tmpl = access + "_entity_field_text" /}}
+									{{else id == "user_role"}}
+										{{include tmpl = access + "_entity_field_link" /}}
+									{{else id == "password"}}
+										{{include tmpl = access + "_entity_field_password" /}}
+										<!--<button type="button" class="btn btn-default" data-toggle="modal" data-target="#recoverModal">Напомнить пароль</button>
+										<button type="button" class="btn btn-default" data-toggle="modal" data-target="#changeModal">Изменить пароль</button>-->
+									{{/if}}
+								</div>
 							</div>
-						</div>
+						{{/if}}
 					{{/for}}
 				{{/if}}
 			</div>

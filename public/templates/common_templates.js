@@ -1,51 +1,118 @@
 $.templates({
-//expenselist_row: '<td name="id" id="{{:fields.id.value}}">{{:fields.id.value}}</td><td>{{:fields.name.value}}</td><td>{{:fields.expense_type.value}}</td><td>{{for ~descriptor.item_operations tmpl="item_operation" ~entity=#data /}}</td>',
+/*** Шаблоны для скроллеров ***/
+// строк на странице
+page_size: '<select name="page_sizes" onchange="change_page_size(\'{{:~descriptor.local_data.container_id}}\');">{{for ~descriptor.pager.page_sizes tmpl="page_size_option" /}}</select>\n',
+page_size_option: '<option value="{{:#data}}" {{if #data == ~descriptor.filter_values.page_size}}selected="selected"{{/if}}>{{:#data}}</option>\n',
+
+// ячейка строки заголовков колонки
+column_name: '<th>{{:name}}{{if sortable}}{{if id === #parent.parent.parent.data.descriptor.filter_values.sort}}{{if #parent.parent.parent.parent.data.descriptor.filter_values.order === "DESC" && }}{{include tmpl="sort_desc"/}}{{else}}{{include tmpl="sort_asc"/}}{{/if}}{{else}}{{if #parent.parent.parent.parent.data.descriptor.filter_values.order === "DESC" && }}{{include tmpl="sort_desc"/}}{{else}}{{include tmpl="sort_asc"/}}{{/if}}{{/if}}{{/if}}</th>\n',
+
+common_operation: '{{if id=="add" && ~descriptor.add_style && ~descriptor.add_style == \'entity\' tmpl="button_add"}}{{else id=="select"  && ~descriptor.add_style && ~descriptor.add_style == \'scroller\' tmpl="button_select"}}{{/if}}\n',
+filter_operation: '{{if id==="apply" tmpl="button_apply"}}{{else id=="clear" tmpl="button_clear"}}{{/if}}\n',
+item_operation: '{{if id==="delete" tmpl="button_delete"}} {{else id=="edit" tmpl="button_edit"}}{{else id=="show" tmpl="button_show"}} {{else id=="question" tmpl="button_question"}}{{else id=="show" tmpl="button_show"}} {{/if}}\n',
+
+// общие кнопки скроллера
+button_add: '<button type="button" class="btn btn-success btn-xs" aria-label="{{:name}}" name="{{:id}}" onclick="row_edit(\'{{:~descriptor.local_data.container_id}}\', null);">{{:name}}</button>\n',	
+button_select: '<button type="button" class="btn btn-success btn-xs" aria-label="{{:name}}" name="{{:id}}" onclick="link_entity(\'{{:~descriptor.local_data.container_id}}\', \'{{:~descriptor.controllerName}}\', null, \'checkbox\');">{{:name}}</button>\n',	
+
+// групповые операции
+button_group_delete: '<li><a href="#" aria-label="{{:name}}" name="{{:id}}" onclick="group_delete(\'{{:~descriptor.local_data.container_id}}\');">{{:name}}</a></li>',
+
+// кнопки для строк
+button_edit: '<button type="button" class="btn btn-success btn-xs" aria-label="{{:name}}" name="{{:id}}" onclick="row_edit(\'{{:~descriptor.local_data.container_id}}\', \'{{:~entity.local_data.eid}}\');"><span class="glyphicon glyphicon-pencil" aria-hidden="true"></span></button>',
+button_show: '<button type="button" class="btn btn-xs" aria-label="{{:name}}" name="{{:id}}" onclick="row_show(\'{{:~descriptor.local_data.container_id}}\', \'{{:~entity.local_data.eid}}\');"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></button>',
+button_delete: '<button type="button" class="btn btn-danger btn-xs" aria-label="{{:name}}" name="{{:id}}{{:~entity.local_data.eid}}" onclick="row_delete(\'{{:~descriptor.local_data.container_id}}\', \'{{:~entity.local_data.eid}}\');"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>\n',
+button_question: '<button type="button" class="btn btn-xs" aria-label="{{:name}}" name="{{:id}}{{:~entity.local_data.eid}}" onclick="organizationRequest(\'{{:~descriptor.local_data.container_id}}\', \'{{:~entity.local_data.eid}}\');" title="Задать вопрос"><span class="glyphicon glyphicon-question-sign" aria-hidden="true"></span></button>\n',
+
+// кнопки фильтра
+button_apply: '<button type="button" class="btn btn-default btn-xs" aria-label="{{:name}}" name="{{:id}}" onclick="apply_filter(\'{{:~descriptor.local_data.container_id}}\');"><span class="glyphicon glyphicon-filter" aria-hidden="true"></span></button>\n',
+button_clear: '<button type="button" class="btn btn-default btn-xs" aria-label="{{:name}}" name="{{:id}}" onclick="clear_filter(\'{{:~descriptor.local_data.container_id}}\');"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>\n',
+
+// колонки скроллера
+scroller_row: '{{if ~descriptor.group_operations.length > 0}}{{include tmpl="scroller_data_cell_ckeckbox"/}}{{/if}}{{for ~columns ~entity=#data}}{{if !hidden }}{{if id=="operations"}}{{include tmpl="scroller_data_cell_operations"/}}{{else id=="active"}}{{include tmpl="scroller_data_cell_active"/}}{{else id=="id"}}{{include tmpl="scroller_data_cell_id"/}}{{else}}{{include tmpl="scroller_data_cell"/}}{{/if}}{{/if}}{{/for}}',
+scroller_data_cell_ckeckbox: '<td{{if hideble}} class="hidden-xs hidden-sm hidden-md"{{/if}}><input type="{{if ~descriptor.local_data.select_style }}{{:~descriptor.local_data.select_style}}{{else}}checkbox{{/if}}" name="row_{{:~descriptor.local_data.container_id}}" id="row_{{:#data.local_data.eid}}" /></td>',
+scroller_data_cell_id: '<td{{if hideble}} class="hidden-xs hidden-sm hidden-md"{{/if}} name="{{:~entity.local_data.eid}}" id="{{:~entity.local_data.eid}}">{{if ~entity.fields[id].value=="-1"}}-{{else}}{{:~entity.fields.id.value}}{{/if}}</td>',
+scroller_data_cell_active: '<td{{if hideble}} class="hidden-xs hidden-sm hidden-md"{{/if}} name="{{:id}}" id="{{:~entity.local_data.eid}}"><input type="checkbox" disabled {{if ~entity.fields[id].value=="1"}}checked="checked"{{/if}}/></td>',
+scroller_data_cell_operations: '<td{{if hideble}} class="hidden-xs hidden-sm hidden-md"{{/if}}>{{for ~descriptor.item_operations tmpl="item_operation" /}}</td>',
+//scroller_data_cellr: '<td>{{:~utilities.toJSON(~entity.fields[id])}}</td>',
+//scroller_data_cell1: '<td{{if hideble}} class="hidden-xs hidden-sm hidden-md"{{/if}} name="{{:id}}" id="{{:id}}">{{:~entity.fields[id].value}}</td>',
+scroller_data_cell: '<td{{if hideble}} class="hidden-xs hidden-sm hidden-md"{{/if}} name="{{:id}}" id="{{:id}}">\
+	{{if nullSubstitute && nullSubstitute != "undefined" && ~entity.fields[id].value == \'\'}}{{:nullSubstitute}}\
+	{{else ~entity.fields[id] }}\
+		{{if ~entity.fields[id].url}}<a href="{{:~entity.fields[id].url}}">{{/if}}\
+			{{if ~entity.fields[id].value1 && ~entity.fields[id].value2}}с {{:~entity.fields[id].value1}} по {{:~entity.fields[id].value2}}\
+			{{else ~entity.fields[id].value1 }}с {{:~entity.fields[id].value1}}\
+			{{else ~entity.fields[id].value2 }}до {{:~entity.fields[id].value2}}\
+			{{else}}{{:~entity.fields[id].value}}{{/if}}\
+		{{if ~entity.fields[id].url}}</a>{{/if}}\
+	{{/if}}\
+</td>',
+
 expenselist_row: '{{include tmpl="scroller_row" /}}',
-
-//expensetypelist_row: '<td name="id" id="{{:fields.id.value}}">{{:fields.id.value}}</td><td>{{:fields.name.value}}</td><td>{{for ~descriptor.item_operations tmpl="item_operation" ~entity=#data /}}</td>',
 expensetypelist_row: '{{include tmpl="scroller_row" /}}',
-
-//organizationlist_row: '<td name="id" id="{{:fields.id.value}}">{{:fields.id.value}}</td><td>{{:fields.name.value}}</td><td>{{:fields.region.value}}</td><td>{{:fields.contacts.value}}</td><td>{{:fields.email.value}}</td><td>{{for ~descriptor.item_operations tmpl="item_operation" ~entity=#data /}}</td>',
 organizationlist_row: '{{include tmpl="scroller_row" /}}',
-
-//resourcelist_row: '<td name="id" id="{{:fields.id.value}}">{{:fields.id.value}}</td><td>{{:fields.group.value}}</td><td>{{:fields.controller.value}}</td><td>{{:fields.action.value}}</td><td>{{:fields.module.value}}</td><td>{{:fields.description.value}}</td><td>{{for ~descriptor.item_operations tmpl="item_operation" ~entity=#data /}}</td>',
 resourcelist_row: '{{include tmpl="scroller_row" /}}',
-
-//settinglist_row: '<td name="id" id="{{:fields.id.value}}">{{:fields.id.value}}</td><td>{{:fields.code.value}}</td><td>{{:fields.value.value}}</td><td>{{:fields.description.value}}</td><td>{{for ~descriptor.item_operations tmpl="item_operation" ~entity=#data /}}</td>',
-settinglist_row: '{{include tmpl="scroller_row" /}}',
-
-//userlist_row: '<td name="id" id="{{:fields.id.value}}">{{:fields.id.value}}</td><td><input type="checkbox" disabled {{if fields.active.value==1}}checked="checked"{{/if}}/></td><td>{{:fields.phone.value}}</td><td>{{:fields.email.value}}</td><td>{{:fields.name.value}}</td><td>{{:fields.user_role.value}}</td><td>{{for ~descriptor.item_operations tmpl="item_operation" ~entity=#data /}}</td>',
 userlist_row: '{{include tmpl="scroller_row" /}}',
-
-//userrolelist_row: '<td name="id" id="{{:fields.id.value}}">{{:fields.id.value}}</td><td><input type="checkbox" disabled {{if fields.active.value==1}}checked="checked"{{/if}}/></td><td>{{:fields.name.value}}</td><td>{{for ~descriptor.item_operations tmpl="item_operation" ~entity=#data /}}</td>',
 userrolelist_row: '{{include tmpl="scroller_row" /}}',
-
 regionlist_row: '{{include tmpl="scroller_row" /}}',
 newslist_row: '{{include tmpl="scroller_row" /}}',
 streettypelist_row: '{{include tmpl="scroller_row" /}}',
 expensestatuslist_row: '{{include tmpl="scroller_row" /}}',
+organizationrequestlist_row: '{{include tmpl="scroller_row" /}}',
+
+
+/*** Шаблоны сущностей ***/
+// кнопки формы
+operation: '{{if id==="save" tmpl="entity_button_save"}}{{else id==="delete" tmpl="entity_button_delete"}}{{else id==="check" tmpl="entity_button_check"}}{{/if}}\n',
+entity_button_save: '<button type="button" class="btn btn-success" aria-label="{{:name}}" name="{{:id}}{{:~descriptor.local_data.eid}}" onclick="entitySave(\'{{:~descriptor.local_data.container_id}}\');">{{:name}}</button>\n',
+entity_button_delete: '<button type="button" class="btn btn-danger" aria-label="{{:name}}" name="{{:id}}{{:~descriptor.local_data.eid}}" onclick="entityDelete(\'{{:~descriptor.local_data.container_id}}\', \'{{:~descriptor.local_data.eid}}\');">{{:name}}</button>\n',
+entity_button_check: '<button type="button" class="btn" aria-label="{{:name}}" name="{{:id}}{{:~descriptor.local_data.eid}}" onclick="entityCheckOnly(\'{{:~descriptor.local_data.container_id}}\', \'{{:~descriptor.local_data.eid}}\');">{{:name}}</button>\n',
+
+// поля порм
+entity_fields_form: '<div class="form-horizontal">{{if descriptor.fields ~fields=~utilities.objectToArray(descriptor.fields) ~descriptor=descriptor}}{{for ~fields}}{{if !(access && access == "hidden") }}<div class="form-group" name="field_{{:id}}">\
+<label for="field_{{:id}}_value" class="col-sm-4 col-md-3 col-lg-offset-0 col-lg-3 control-label">{{:name}}{{if ~utilities.isFieldRequired(#data) == true && access == "edit"}}<span class="text-danger">*<span>{{/if}}</label><div class="col-sm-8 col-md-8 col-lg-7">\
+	{{if type == "label" }}{{include tmpl = access + "_entity_field_label" /}}\
+	{{else type == "text"}}{{include tmpl = access + "_entity_field_text" /}}\
+	{{else type == "textarea" }}{{include tmpl = access + "_entity_field_textarea" /}}\
+	{{else type == "select" }}{{include tmpl = access + "_entity_field_select" /}}\
+	{{else type == "email" }}{{include tmpl = access + "_entity_field_text" /}}\
+	{{else type == "amount"}}{{include tmpl = access + "_entity_field_amount" /}}\
+	{{else type == "number"}}{{include tmpl = access + "_entity_field_text" /}}\
+	{{else type == "date"}}{{include tmpl = access + "_entity_field_text" /}}\
+	{{else type == "period"}}{{include tmpl = access + "_entity_field_period" /}}\
+	{{else type == "password"}}{{include tmpl = access + "_entity_field_password" /}}\
+	{{else type == "bool"}}{{include tmpl = access + "_entity_field_bool" /}}\
+	{{else type == "link"}}{{include tmpl = access + "_entity_field_link" /}}\
+	{{else type == "img"}}{{include tmpl = access + "_entity_field_img" /}}\
+	{{else type == "recaptcha"}}{{include tmpl = access + "_entity_field_recaptcha" /}}\
+	{{/if}}\
+</div></div>{{/if}}{{/for}}{{/if}}</div><!-- /.form-horizontal -->',
 
 edit_entity_field_label: '<p id="field_{{:id}}_value" class="form-control-static">{{if (id==\'id\' && (value==\'-1\' || value==null)) }}-{{else}}{{:value}}{{/if}}</p>',
 show_entity_field_label: '<p id="field_{{:id}}_value" class="form-control-static">{{if (id==\'id\' && (value==\'-1\' || value==null)) }}-{{else}}{{:value}}{{/if}}</p>',
 edit_entity_field_text: '<input type="{{:type}}" class="form-control" id="field_{{:id}}_value" placeholder="{{:name}}" value="{{:value}}">',
 show_entity_field_text: '<p id="field_{{:id}}_value" class="form-control-static">{{:value}}</p>',
+//edit_entity_field_datetime: '<input type="text" class="form-control" id="field_{{:id}}_value" placeholder="гггг-мм-дд чч:мм:сс" value="{{:value}}">',
+//show_entity_field_datetime: '<p id="field_{{:id}}_value" class="form-control-static">{{:value}}</p>',
 edit_entity_field_period: '<div class="form-group"><div class="col-sm-1 col-md-1 col-lg-1 text-right">{{:name1}}</div><div class="col-sm-8 col-md-5 col-lg-5"><input type="date" class="form-control" id="field_{{:id}}_value1" placeholder="" value="{{:value1}}"></div><div class="col-lg-1 text-right">{{:name2}}</div><div class="col-lg-5"><input type="date" class="form-control" id="field_{{:id}}_value2" placeholder="" value="{{:value2}}"></div></div>',
-show_entity_field_period: '<p id="field_{{:id}}_value" class="form-control-static">{{:value1}}-{{:value2}}</p>',
+show_entity_field_period: '<p id="field_{{:id}}_value" class="form-control-static">{{if value1 && value2}}с {{:value1}} по {{:value2}}{{else value1}}с {{:value1}}{{else value2 }}до {{:value2}}{{else}}{{:value}}{{/if}}</p>',
 edit_entity_field_textarea: '<textarea rows="3" class="form-control" id="field_{{:id}}_value" placeholder="{{:name}}">{{:value}}</textarea>',
 show_entity_field_textarea: '<p id="field_{{:id}}_value" class="form-control-static">{{:value}}</p>',
 edit_entity_field_password: '<div class="row"><div class="col-lg-6"><div class="input-group">\
 <input id="field_{{:id}}_value" type="password" class="form-control" placeholder="Новый пароль" onkeyup="checkPasswordStrength(this, \'field_{{:id}}_value\');"/>\
-<span class="input-group-addon" title="Показать/скрыть пароль"  onclick="togglePasswordMask(this, \'field_{{:id}}_value\');"><span class="glyphicon glyphicon-eye-open"></span></span></div><label id="pass_strength_result"></label></div><div class="col-lg-6"><div class="input-group">\
-<input id="password2" type="password" class="form-control" placeholder="Повторите новый пароль" onkeyup="checkPasswordEq(this, \'field_{{:id}}_value\');"/><span class="input-group-addon" title="Показать/скрыть пароль"><span class="glyphicon glyphicon-asterisk"></span></span></div><label id="pass_eq_result"></label></div></div>',
+<span class="input-group-addon" title="Показать/скрыть пароль"  onclick="togglePasswordMask(this, \'field_{{:id}}_value\');"><span class="glyphicon glyphicon-eye-open"></span></span></div><label id="pass_strength_result" style="display:none;"></label></div><div class="col-lg-6"><div class="input-group">\
+<input id="password2" type="password" class="form-control" placeholder="Повторите новый пароль" onkeyup="checkPasswordEq(this, \'field_{{:id}}_value\');"/><span class="input-group-addon" title="Показать/скрыть пароль"><span class="glyphicon glyphicon-asterisk"></span></span></div><label id="pass_eq_result" style="display:none;"></label></div></div>',
 show_entity_field_password: '<p id="field_{{:id}}_value" class="form-control-static">**********</p>',
 edit_entity_field_bool: '<input type="checkbox" id="field_{{:id}}_value" {{if value == 1}}checked="checked"{{/if}} value="">',
 show_entity_field_bool: '<input type="checkbox" id="field_{{:id}}_value" {{if value == 1}}checked="checked"{{/if}} value="" disabled>',
-edit_entity_field_select: '<select id="field_{{:id}}_value" class="form-control" style="width:auto;">\
-<option disabled {{if value == null || value==\'\'}}selected{{/if}} value> --- Выберите --- </option>\
-{{if nullSubstitute && nullSubstitute != \'undefined\'}}<option {{if value == nullSubstitute}}selected{{/if}} value="*">{{:nullSubstitute}}</option>{{/if}}\
+edit_entity_field_select: '\
+<select id="field_{{:id}}_value" class="form-control" style="width:auto;">\
+{{if value == null || value==\'\' || value_id == null || value_id==\'\'}}<option disabled selected="selected" value> --- Выберите --- </option>{{/if}}\
+{{if nullSubstitute && nullSubstitute != \'undefined\'}}<option {{if value == nullSubstitute}}selected="selected"{{/if}} value="*">{{:nullSubstitute}}</option>{{/if}}\
 {{if style == "id" tmpl="edit_entity_field_select_id_style_options"}}\
 {{else tmpl="edit_entity_field_select_text_style_options"}}\
-{{/if}}</select>',
+{{/if}}\
+</select>',
 show_entity_field_select: '<p id="field_{{:id}}_value" class="form-control-static">{{:value}}</p>',
 // entity_field_select_id_style_options - список заполняется из справочника сущностей и имеет идентификаторы
 // entity_field_select_text_style_options - список заполняется текстовыми значениями и не имеет идентификаторов
@@ -62,4 +129,70 @@ show_entity_field_link: '<p id="field_{{:id}}_value" class="form-control-static"
 edit_entity_field_amount: '<input type="text" class="form-control" id="field_{{:id}}_value" placeholder="{{:name}}" value="{{:value}}" pattern="^\d*(\.\d{1,2}$)?" size="18">',
 show_entity_field_amount: '<p id="field_{{:id}}_value" class="form-control-static">{{:value}}</p>',
 
+edit_entity_field_recaptcha: '<div id="{{:id}}" class="g-recaptcha" data-sitekey="{{:value}}"></div>',
+show_entity_field_recaptcha: '<div id="{{:id}}" class="g-recaptcha" data-sitekey="{{:value}}"></div>',
+
 });
+
+// вспомогательные функции для страниц
+$.views.helpers({
+  utilities: {
+    getPagerHtml: function(descriptor) {
+		var total_pages = descriptor.pager.total_pages;
+		//var current = descriptor.filter_values.page;
+		//console.log("total_pages="+total_pages);
+		var html=''
+		for(var i=1; i<=total_pages; i++){
+			if(i==descriptor.filter_values.page) html += '<li class="active"><span><span aria-hidden="true">'+i.toString()+'</span></span></li>\n';
+			else html += '<li><a href="#" onclick="change_page(\'' + descriptor.local_data.container_id + '\', ' + i.toString() + ');">' + i.toString() + '</a></li>\n';
+		}
+      return html;
+    },
+	createUDID: function(descriptor) {
+      return createUDID(descriptor);
+    },
+	objectToArray: function(object) {
+		if(!object) return [];
+		// если передан массив, то его и возвращаем
+		else if(object && object.length) return object;
+		var res = [];
+		for (var key in object) {
+			res.push(object[key]);
+		}
+		return res;
+    },
+	getContainerByID: function(container_id) {
+		return containers[container_id];
+    },
+	getOjectKeysCount: function(array) {
+		return Object.keys(array).length;
+	},
+	/*toJSON: function(obj) {
+		return JSON.stringify(obj);
+	},*/
+	isFieldRequired: function(field) {
+		//console.log(field);
+		if(field.type == "period" && field.required && field.required > 0) return true;
+		else if(field.required && field.required == 2) return true;
+		return false;
+	},
+	getVisibleColumns: function(columns) {
+		//console.log(field);
+		var count = columns.length;
+		for (var columnID in columns) if(columns[columnID].hidden) count--;
+		return count;
+	},
+	checksHasError: checksHasError,
+  }
+});
+
+function checksHasError(checkResult) {
+	if(checkResult) {
+		var checkResultLength = checkResult.length;
+		for(var i=0; i< checkResultLength; i++) {
+			//console.log(checkResult[i].type);
+			if(checkResult[i].type == "error") return true;
+		}
+	}
+	return false;
+}

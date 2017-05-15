@@ -17,51 +17,51 @@ class ResourcelistController extends ControllerList {
 			'id' => array(
 				'id' => 'id',
 				'name' => $this->controller->t->_("text_entity_property_id"),
-				'type' => 'number',
+				//'type' => 'number',
 				'filter' => 'number',
-				'filter_value' => isset($this->filter_values['id']) ? $this->filter_values['id'] : '',
+				//'filter_value' => isset($this->filter_values['id']) ? $this->filter_values['id'] : '',
 				"sortable" => "DESC"
 			),
 			'group' => array(
 				'id' => 'group',
 				'name' => $this->controller->t->_("text_resourcelist_group"),
-				'type' => 'text',
+				//'type' => 'text',
 				'filter' => 'select',
-				'filter_value' => isset($this->filter_values['group']) ? $this->filter_values['group'] : 'acl',
+				//'filter_value' => 'acl',
 				"sortable" => "DESC",
-				'style' => 'name', //'id'
+				'filter_style' => 'name', //'id'
 			),
 			'controller' => array(
 				'id' => 'controller',
 				'name' => $this->controller->t->_("text_resourcelist_controller"),
-				'type' => 'text',
+				//'type' => 'text',
 				'filter' => 'text',
-				'filter_value' => isset($this->filter_values['controller']) ? $this->filter_values['controller'] : '',
+				//'filter_value' => isset($this->filter_values['controller']) ? $this->filter_values['controller'] : '',
 				"sortable" => "DESC"
 			),
 			'action' => array(
 				'id' => 'action',
 				'name' => $this->controller->t->_("text_resourcelist_action"),
-				'type' => 'text',
+				//'type' => 'text',
 				'filter' => 'text',
-				'filter_value' => isset($this->filter_values['action']) ? $this->filter_values['action'] : '',
+				//'filter_value' => isset($this->filter_values['action']) ? $this->filter_values['action'] : '',
 				"sortable" => "DESC"
 			),
 			'module' => array(
 				'id' => 'module',
 				'name' => $this->controller->t->_("text_resourcelist_module"),
-				'type' => 'text',
+				//'type' => 'text',
 				'filter' => 'select',
-				'filter_value' => isset($this->filter_values['module']) ? $this->filter_values['module'] : 'backend',
+				//'filter_value' => 'backend',
 				"sortable" => "DESC",
-				'style' => 'name', //'id'
+				'filter_style' => 'name', //'id'
 			),
 			'description' => array(
 				'id' => 'description',
 				'name' => $this->controller->t->_("text_entity_property_description"),
-				'type' => 'text',
+				//'type' => 'text',
 				'filter' => 'text',
-				'filter_value' => isset($this->filter_values['description']) ? $this->filter_values['description'] : '',
+				//'filter_value' => isset($this->filter_values['description']) ? $this->filter_values['description'] : '',
 				"sortable" => "DESC"
 			),
 			'operations' => array(
@@ -86,19 +86,18 @@ class ResourcelistController extends ControllerList {
 	*/
 	public function getPhqlSelect() {
 		// строим запрос к БД на выборку данных
-		$phql = "SELECT <TableName>.*{user_role_resource_columns} FROM <TableName>";
+		$phql = "SELECT <TableName>.* FROM <TableName>";
 		
 		//$this->logger->log('getPhqlSelect    this->filter_values["user_role_id"])=' . $this->filter_values["user_role_id"]);
 		// расширяем выборку, если переданы доп. фильтры (для связей 1-n, n-1, n-n), которые могут навязывать внешние контроллеры
 		if(isset($this->add_filter["user_role_id"]) && $this->add_filter["user_role_id"] != "") {
-			$phql = str_replace("{user_role_resource_columns}", ", UserRoleResource.*", $phql);
-			$phql .= " JOIN UserRoleResource on UserRoleResource.resource_id=<TableName>.id AND UserRoleResource.user_role_id=" . $this->add_filter["user_role_id"];
+			$phql .= " JOIN UserRoleResource AS urr ON urr.resource_id=<TableName>.id AND urr.user_role_id=" . $this->add_filter["user_role_id"];
 		}
-		else $phql = str_replace("{user_role_resource_columns}", "", $phql);
+		//$this->logger->log(__METHOD__ . ". add_filter=" . json_encode($this->add_filter));
 		
-		$this->logger->log(__METHOD__ . ". add_filter=" . json_encode($this->add_filter));
+		$phql .= " WHERE 1=1";
 		
-		return $phql . " WHERE 1=1";
+		return $phql;
 	}
 	
 	/* 
@@ -111,27 +110,27 @@ class ResourcelistController extends ControllerList {
 			"fields" => array(
 				"id" => array(
 					'id' => 'id',
-					'value' => isset($row->id) ? $row->id : $row->resource->id,
+					'value' => isset($row->resource->id) ? $row->resource->id : $row->id,
 				),
 				"group" => array(
 					'id' => 'group',
-					'value' => isset($row->group) ? $row->group : $row->resource->group,
+					'value' => isset($row->resource->group) ? $row->resource->group : $row->group,
 				),
 				"controller" => array(
 					'id' => 'controller',
-					'value' => isset($row->controller) ? $row->controller : $row->resource->controller,
+					'value' => isset($row->resource->controller) ? $row->resource->controller : $row->controller,
 				),
 				"action" => array(
 					'id' => 'action',
-					'value' => isset($row->action) ? $row->action : $row->resource->action,
+					'value' => isset($row->resource->action) ? $row->resource->action : $row->action,
 				),
 				"module" => array(
 					'id' => 'module',
-					'value' => isset($row->module) ? $row->module : $row->resource->module,
+					'value' => isset($row->resource->module) ? $row->resource->module : $row->module,
 				),
 				"description" => array(
 					'id' => 'description',
-					'value' => isset($row->description) ? $row->description : $row->resource->description,
+					'value' => isset($row->resource) ? $row->resource->description : $row->description,
 				)
 			)
 		);

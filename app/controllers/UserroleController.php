@@ -3,14 +3,20 @@ class UserroleController extends ControllerEntity {
 	public $entityName  = 'UserRole';
 	public $tableName  = 'user_role';
 	
-	protected $scrollers = [
-		'resourcelist' => [
-			'linkEntityName' => 'Resource',
-			'linkTableName' => 'UserRoleResource',
-			'linkTableLinkEntityFieldName' => 'resource_id',
-			'relationType' => 'nn'
-		]
-	];
+	protected function initScrollers() {
+		$this->scrollers = [
+			'resourcelist' => [
+				'linkEntityName' => 'Resource',
+				'linkTableName' => 'UserRoleResource',
+				'linkTableLinkEntityFieldName' => 'resource_id',
+				'controllerClass' => 'ResourcelistController',
+				'relationType' => 'nn',
+				'addStyle' => 'scroller',
+				'editStyle' => 'modal',
+				'addFilter' => function() { return ["user_role_id" => $this->fields["id"]["value"]]; },
+			]
+		];
+	}
 	
 	public function initialize() {
 		parent::initialize();
@@ -25,18 +31,21 @@ class UserroleController extends ControllerEntity {
 			'id' => array(
 				'id' => 'id',
 				'name' => $this->t->_("text_entity_property_id"),
-				'type' => 'label'
+				'type' => 'label',
+				'newEntityValue' => '-1',
 			), 
 			'active' => array(
 				'id' => 'active',
 				'name' => $this->t->_("text_entity_property_active"),
 				'type' => 'bool',
+				'newEntityValue' => '1',
 			), 
 			'name' => array(
 				'id' => 'name',
 				'name' => $this->t->_("text_entity_property_name"),
 				'type' => 'text',
 				'required' => 1,
+				'newEntityValue' => null,
 			)
 		];
 		// наполняем поля данными
@@ -70,22 +79,8 @@ class UserroleController extends ControllerEntity {
 	protected function fillNewEntityFields() {
 		// основные поля
 		$this->fields["id"]["value"] = '-1';
-		$this->fields["name"]["value"] = '1';
+		$this->fields["name"]["value"] = '';
 		$this->fields["active"]["value"] = '';
-	}
-	
-	/* 
-	* Заполняет свойство scrollers данными списков из связанных таблиц
-	* Переопределяемый метод.
-	*/
-	protected function fillScrollers() {
-		// грид доступов
-		$controller_resource_list = new ResourcelistController();
-		$scroller_resource_list = $controller_resource_list->createDescriptor($this, array("user_role_id" => $this->fields["id"]["value"]));
-		$scroller_resource_list['edit_style']  = "modal";
-		$scroller_resource_list["add_style"] = "scroller";
-		
-		$this->scrollers[$controller_resource_list->controllerNameLC] = $scroller_resource_list;
 	}
 	
 	/* 
@@ -141,39 +136,4 @@ class UserroleController extends ControllerEntity {
 		}
 		return true;
 	}
-	
-	/* 
-	* Очищает параметры запроса
-	* Расширяемый метод.
-	*/
-	protected function sanitizeSaveRqData($rq) {
-		$res = 0;
-		// id, //select, link
-		$res |= parent::sanitizeSaveRqData($rq);
-		
-		//$this->error['messages'][] = ['title' => "Debug. " . __METHOD__, 'msg' => "id=" . $this->fields['id']['value']];
-		
-		// active
-		$this->fields['active']['value'] = null;
-		if(isset($rq->fields->active) && isset($rq->fields->active->value)) {
-			$this->fields['active']['value'] = $this->filter->sanitize(urldecode($rq->fields->active->value), ["trim", "int"]);
-			if($this->fields['active']['value'] == '') $this->fields['active']['value'] = null;
-		}
-
-		// name
-		$this->fields['name']['value'] = null;
-		if(isset($rq->fields->name) && isset($rq->fields->name->value)) {
-			$this->fields['name']['value'] = $this->filter->sanitize(urldecode($rq->fields->name->value), ["trim", "string"]);
-			if($this->fields['name']['value'] == '') $this->fields['name']['value'] = null;
-		}
-		
-		// resourcelist
-		if(!$this->sanitizeSaveRqDataCheckRelations($rq)) $res |= 2;
-		
-		$res |= $this->check();
-		
-		return $res;
-	}
-	
-	
 }

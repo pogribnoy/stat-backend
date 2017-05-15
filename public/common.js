@@ -377,8 +377,8 @@ function copyDescriptor(fromObj, toObj) {
 			// если свойство - объект или массив
 			else if (typeof fromObj[key] == "object") {
 				// если массив
-				if(fromObj[key].length) {
-					if(!toObj[key]) toObj[key] = [];
+				if(1+fromObj[key].length >= 1) {
+					/*if(!toObj[key])*/ toObj[key] = [];
 					var len = fromObj[key].length;
 					for(var i = 0; i < len; i++) {
 						if(typeof fromObj[key][i] == "object") toObj[key][i] = copyDescriptor(fromObj[key][i]);
@@ -529,6 +529,11 @@ function link_entity(container_id, controllerName, field_id, select_style) {
 			rq['filter_' + field.id] = encodeURIComponent(field.filter_value);
 		}
 	}
+	// доп. фильтры, используются при фильтрации скроллеров в сущностях для передачи id сущности
+	/*if(container.data.add_filter) {
+		rq.add_filter = {};
+		for (var key in container.data.add_filter) rq.add_filter[key] = container.data.add_filter[key];
+	}*/
 	
 	if(container.data.type == 'scroller'){
 		// добавляем ID объектов, которые надо исключить из выборки
@@ -787,9 +792,11 @@ function initEntityScripts(container_id) {
 		var field = entity.fields[fieldID];
 		// инициализируем все поля для загрузки изображений
 		if(field.type == 'img') {
-			// если форма открыта на редактирование
-			if(entity.actionName == 'edit') {
+			//var ctrl = document.getElementById("#field_"+fieldID+"_"+entity.fields.id.value);
+			// если форма открыта на редактирование и элемент доступен для редактирования
+			if(entity.actionName == 'edit' && field['access'] == 'edit') {
 				// создаем контейнер для хранения локальных изменений
+				
 				if(!entity.local_data.fields) entity.local_data.fields = {};
 				if(!entity.local_data.fields[fieldID]) entity.local_data.fields[fieldID] = {};
 				//сразу создаем отложенное уведомление о завершении загрузки и помещаем уведомление в сущность
@@ -808,10 +815,10 @@ function initEntityScripts(container_id) {
 					acceptedFiles: "image/*", // ".jpeg,.jpg,.png,.gif",
 					thumbnailWidth: 500, // pixels
 					thumbnailHeight: 300,
-					previewsContainer: "#field_" + fieldID + "_" + entity.local_data.eid + "_preview",
+					previewsContainer: "#field_" + fieldID + "_" + entity.fields.id.value + "_preview",
 					maxFilesize: 2, // Mb
 					//clickable: true,
-					clickable: "#field_" + fieldID + "_" + entity.local_data.eid + ", " + "#field_" + fieldID + "_" + entity.local_data.eid + "_addbutton",
+					clickable: "#field_" + fieldID + "_" + entity.fields.id.value + ", " + "#field_" + fieldID + "_" + entity.fields.id.value + "_addbutton",
 					//clickable: "#addBtn123",
 					//addRemoveLinks: true,
 					autoProcessQueue: false,
@@ -823,8 +830,9 @@ function initEntityScripts(container_id) {
 					dictFileTooBig: "Файл имеет размер: {{filesize}}. Максимально допустимый размер: {{maxFilesize}}",
 					dictRemoveFile: "Удалить",
 					dictMaxFilesExceeded: "Выбрано максимальное количество фалов",
-					previewTemplate: '<div class="dz-preview dz-file-preview col-lg-3"><img data-dz-thumbnail class="img-thumbnail"/><div class="text-center"><!--<span data-dz-name>--></span><button data-dz-remove class="btn btn-danger delete btn-xs"><i class="glyphicon glyphicon-trash"></i><span> Удалить</span></button></div><div class="bg-danger"><span data-dz-errormessage></span></div></div>',
+					previewTemplate: '<div class="dz-preview dz-file-preview col-lg-3"><img data-dz-thumbnail class="img-thumbnail center-block"/><div class="text-center"><!--<span data-dz-name>--></span><button data-dz-remove class="btn btn-danger delete btn-xs"><i class="glyphicon glyphicon-trash"></i><span> Удалить</span></button></div><div class="bg-danger"><span data-dz-errormessage></span></div></div>',
 				};
+				
 				
 				var myDropzone = new Dropzone("#field_"+fieldID+"_"+entity.fields.id.value, opts);
 				
@@ -840,23 +848,28 @@ function initEntityScripts(container_id) {
 					
 					console.log('removedfile: id = ' + file.id);
 					
-					// если удаляем серверный файл
-					if(file.id) {
-						// если при получении с сервера в поле были файлы
-						if(entity.fields[fieldID].files && entity.fields[fieldID].files.length>0) {
-							// добавляем массив с пометками, если его нет
-							if(!entity.local_data.fields[fieldID].deletedFiles) entity.local_data.fields[fieldID].deletedFiles = [];
-							// помещаем ID файла в массив для удаления
-							entity.local_data.fields[fieldID].deletedFiles.push(file.id);
-							deletedFilesCount = entity.local_data.fields[fieldID].deletedFiles.length;
-						}
+					// если при получении с сервера в поле были файлы
+					if(entity.fields[fieldID].files && entity.fields[fieldID].files.length>0) {
+						// добавляем массив с пометками, если его нет
+						if(!entity.local_data.fields[fieldID].deletedFiles) entity.local_data.fields[fieldID].deletedFiles = [];
+						// помещаем ID файла в массив для удаления
+						// если удаляем серверный файл
+						if(file.id) entity.local_data.fields[fieldID].deletedFiles.push(file.id);
+						deletedFilesCount = entity.local_data.fields[fieldID].deletedFiles.length;
 					}
+					
 					if(field.files) serverFlesCount = field.files.length;
 					
-					var finalFilesCount = serverFlesCount + dropzoneFilesCount - deletedFilesCount;
+					var finalFilesCount = serverFlesCount - deletedFilesCount + dropzoneFilesCount;
 					// убираем кнопку "Добавить", если удален файл и количество оставшихся файлов стало меньше разрешенного
-					if(this.clickableElements.length>0 && finalFilesCount < this.options.maxFiles) this.clickableElements[0].style.display = 'none';
-					else this.clickableElements[0].style.display = 'flex';
+					var clickableElementsLength = this.clickableElements.length;
+					//this.options.maxFiles++;
+					if(clickableElementsLength>0 && finalFilesCount < this.options.maxFiles) {
+						for(var i = 0; i < clickableElementsLength; i++) this.clickableElements[i].style.display = 'flex';
+					}
+					else {
+						for(var i = 0; i < clickableElementsLength; i++) this.clickableElements[0].style.display = 'none';
+					}
 				});
 				myDropzone.on("maxfilesreached", function(file) {
 					if(this.clickableElements.length>0) this.clickableElements[0].style.display = 'none';
@@ -871,7 +884,7 @@ function initEntityScripts(container_id) {
 						if(!response.error) {
 							// добавляем данные о файлах в сущность для дальнейшей нормально обработки
 							if(!entity.fields[fieldID].files) entity.fields[fieldID].files = [];
-							for(var i = 0; i < filesLength; i++){
+							for(var i = 0; i < filesLength; i++) {
 								var file = files[i];
 								entity.fields[fieldID].files.push({
 									id: file.id,
@@ -899,11 +912,16 @@ function initEntityScripts(container_id) {
 						myDropzone.createThumbnailFromUrl(mockFile, file.url);
 						myDropzone.emit("complete", mockFile);
 					}
-					myDropzone.options.maxFiles = myDropzone.options.maxFiles - filesLength;
+					/*myDropzone.options.maxFiles = myDropzone.options.maxFiles - filesLength;
 					if(myDropzone.clickableElements.length>0 && myDropzone.options.maxFiles <= 0) {
 						myDropzone.clickableElements[0].style.display = 'none';
 						myDropzone.options.maxFiles = 0;
+					}*/
+					if(myDropzone.clickableElements.length>0 && filesLength >= myDropzone.options.maxFiles) {
+						myDropzone.clickableElements[0].style.display = 'none';
+						//myDropzone.options.maxFiles = 0;
 					}
+					entity.local_data.fields[fieldID].deletedFiles = [];
 				}
 				
 				if(!entity.local_data.fields) entity.local_data.fields = {};
@@ -942,7 +960,36 @@ function initEntityScripts(container_id) {
 				//if(/^\d{1,15}.?\d{0,2}$/.test(val)==null) {};
 			});
 		}
+		
+		// для полей recaptcha
+		else if(field.type == 'recaptcha') {
+			var verifyCallback = function(response) {
+				console.log('recaptcha response = ' + response);
+				field.value = response;
+			};
+			var expiredCallback = function(response) {
+				console.log('recaptcha expired');
+				//grecaptcha.reset(field.value_id);
+				field.value = null;
+			};
+			var widgetId1;
+			
+			// Renders the HTML element with id 'example1' as a reCAPTCHA widget.
+			// The id of the reCAPTCHA widget is assigned to 'widgetId1'.
+			field.value_id = grecaptcha.render(document.getElementById(field.id), {
+				'sitekey' : field.value,
+				'theme' : 'light',
+				//'type'
+				'callback' : verifyCallback,
+				'expired-callback' : expiredCallback,
+			});
+			//grecaptcha.reset(widgetId1);
+			
+		}
 	}
+}
+function onloadCallback() {
+	console.log("grecaptcha is ready!");
 }
 
 /* Отображает уведомления об ошибках
@@ -1021,7 +1068,7 @@ function confirmDelete(container, id) {
 	var options = {
 		placement: 'top',
 		title: 'Удалить безвозвратно?',
-		content: '<button type="button" class="btn" aria-label="Да" name="yes" onclick="">Да </button>&nbsp;<button type="button" class="btn" aria-label="Нет" name="no" onclick="">Нет</button>',
+		content: '<button type="button" class="btn btn-danger" aria-label="Да" name="yes" onclick="">Да </button>&nbsp;<button type="button" class="btn btn-success" aria-label="Нет" name="no" onclick="">Нет</button>',
 		html: true,
 	};
 	btn.popover(options);
@@ -1048,12 +1095,12 @@ function confirmDelete(container, id) {
 
 function checkPasswordStrength(ctrl, fieldID) {
 	var input = $(ctrl);
-	var result = input.parent().parent().find("#pass_strength_result");
+	var result = input.parent().parent().find("#pass_strength_result").hide();
 	var val = ctrl.value;
     var strongRegex = new RegExp("^(?=.{8,})(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*\\W).*$", "g");
     var mediumRegex = new RegExp("^(?=.{7,})(((?=.*[A-Z])(?=.*[a-z]))|((?=.*[A-Z])(?=.*[0-9]))|((?=.*[a-z])(?=.*[0-9]))).*$", "g");
 	var enoughRegex = new RegExp("(?=.{6,}).*", "g");
-	var resultClass = ' label-default';
+	var resultClass = '';//' label-default';
 	if(val && val.length > 0 && val.length < 3) {
 		result.html('слишком короткий пароль');
 		resultClass = ' label-danger';
@@ -1074,8 +1121,11 @@ function checkPasswordStrength(ctrl, fieldID) {
 		result.html('очень слабый пароль');
 		resultClass = ' label-warning';
 	}
-	result.removeClass();
-	result.addClass('label' + resultClass);
+	if (val && val.length > 0){
+		result.removeClass();
+		result.addClass('label' + resultClass);
+		result.show();
+	}
 	checkPasswordEq(ctrl, fieldID);
 }
 
@@ -1098,8 +1148,8 @@ function checkPasswordEq(ctrl, fieldID) {
 	var result = container.find("#pass_eq_result");
 	var input2Cont = input2.parent();
 	var input2Addon = input2Cont.find('.input-group-addon');
-	
 	result.removeClass();
+	result.hide();
 	if(val1 == '' && val2 == '') {
 		input2Addon.html('<span class="glyphicon glyphicon-asterisk"></span>');
 		input2Cont.removeClass('has-error');
@@ -1113,6 +1163,7 @@ function checkPasswordEq(ctrl, fieldID) {
 		input2Cont.addClass('has-success');
 		result.html('пароли совпадают');
 		result.addClass('label label-success');
+		result.show();
 		return true;
 	}
 	else {
@@ -1121,6 +1172,7 @@ function checkPasswordEq(ctrl, fieldID) {
 		input2Cont.addClass('has-error');
 		result.html('пароли не совпадают');
 		result.addClass('label label-danger');
+		result.show();
 		return false;
 	}
 }

@@ -8,6 +8,7 @@ use Phalcon\Mvc\Model\Metadata\Memory as MetaData;
 use Phalcon\Session\Adapter\Files as SessionAdapter;
 use Phalcon\Events\Manager as EventsManager;
 use Phalcon\Logger\Adapter\File as FileAdapter;
+use Phalcon\Security\Random;
 
 /**
  * The FactoryDefault Dependency Injector automatically register the right services providing a full stack framework
@@ -107,6 +108,9 @@ $di->set('modelsMetadata', function() {
 $di->set('session', function() {
 	$session = new SessionAdapter();
 	$session->start();
+	// TODO. Присваивать сессии код, чтобы его выводить в логи
+	//$random = new Random();
+	//$session->setId($random->uuid());
 	return $session;
 });
 
@@ -131,8 +135,7 @@ $di->setShared('email', function(){
 });
 
 $di->setShared('translator', function(){
-	$translator = new Translator();
-	return $translator;
+	return new Translator();
 });
 
 $di->setShared('tools', function(){

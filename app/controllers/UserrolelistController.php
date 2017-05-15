@@ -51,7 +51,17 @@ class UserrolelistController extends ControllerList{
 	*/
 	public function getPhqlSelect() {
 		// строим запрос к БД на выборку данных
-		return "SELECT <TableName>.* FROM <TableName> WHERE 1=1";
+		$phql = "SELECT <TableName>.* FROM <TableName> WHERE 1=1";
+		
+		$userRoleID = $this->controller->userData['role_id'];
+		//$this->logger->log('getPhqlSelect    this->filter_values["user_role_id"])=' . $this->filter_values["user_role_id"]);
+		// расширяем выборку, если переданы доп. фильтры (для связей 1-n, n-1, n-n), которые могут навязывать внешние контроллеры
+		if($userRoleID == $this->config->application->orgAdminRoleID) {
+			$phql .= " AND <TableName>.id IN (" . $this->config->application->orgOperatorRoleID . ", " . $this->config->application->orgAdminRoleID . ")";
+		}
+		
+		//$this->logger->log(__METHOD__ . ". add_filter=" . json_encode($this->add_filter));
+		return $phql;
 	}
 	
 	/* 

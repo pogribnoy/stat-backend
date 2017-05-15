@@ -1,7 +1,7 @@
 <?php
 class UserlistController extends ControllerList {
 	public $entityName = 'User';
-	public $controllerName = "userlist";
+	public $controllerName = "Userlist";
 	
 	public function initialize() {
 		parent::initialize();
@@ -18,43 +18,43 @@ class UserlistController extends ControllerList {
 				'id' => 'id',
 				'name' => $this->controller->t->_("text_entity_property_id"),
 				'filter' => 'number',
-				'filter_value' => isset($this->filter_values['id']) ? $this->filter_values['id'] : '',
+				//'filter_value' => isset($this->filter_values['id']) ? $this->filter_values['id'] : '',
 				"sortable" => "DESC"
 			),
 			'active' => array(
 				'id' => 'active',
 				'name' => $this->controller->t->_("text_entity_property_active"),
 				'filter' => 'bool',
-				'filter_value' => isset($this->filter_values['active']) ? $this->filter_values['active'] : '',
+				//'filter_value' => isset($this->filter_values['active']) ? $this->filter_values['active'] : '',
 				"sortable" => "DESC"
 			),
 			'email' => array(
 				'id' => 'email',
 				'name' => $this->controller->t->_("text_entity_property_email"),
 				'filter' => 'text',
-				'filter_value' => isset($this->filter_values['email']) ? $this->filter_values['email'] : '',
+				//'filter_value' => isset($this->filter_values['email']) ? $this->filter_values['email'] : '',
 				"sortable" => "DESC"
 			),
 			'user_role' => array(
 				'id' => 'user_role',
 				'name' => $this->controller->t->_("text_entity_property_role"),
 				'filter' => 'select',
-				'filter_value' => isset($this->filter_values['user_role']) ? $this->filter_values['user_role'] : '',
-				'style' => 'id',
+				//'filter_value' => isset($this->filter_values['user_role']) ? $this->filter_values['user_role'] : '',
+				'filter_style' => 'id',
 				"sortable" => "DESC"
 			),
 			'name' => array(
 				'id' => 'name',
 				'name' => $this->controller->t->_("text_entity_property_fio"),
 				'filter' => 'text',
-				'filter_value' => isset($this->filter_values['name']) ? $this->filter_values['name'] : '',
+				//'filter_value' => isset($this->filter_values['name']) ? $this->filter_values['name'] : '',
 				"sortable" => "DESC"
 			),
 			'phone' => array(
 				'id' => 'phone',
 				'name' => $this->controller->t->_("text_entity_property_phone"),
 				'filter' => 'text',
-				'filter_value' => isset($this->filter_values['phone']) ? $this->filter_values['phone'] : '',
+				//'filter_value' => isset($this->filter_values['phone']) ? $this->filter_values['phone'] : '',
 				"sortable" => "DESC"
 			),
 			'operations' => array(
@@ -69,8 +69,13 @@ class UserlistController extends ControllerList {
 	* Переопределяемый метод.
 	*/
 	public function fillColumnsWithLists() {
+		$userRoleID = $this->controller->userData['role_id'];
+		
 		// роли пользователей для фильтрации
-		$user_role_rows = UserRole::find();
+		$conditions = '';
+		//$this->logger->log(__METHOD__ . '. userRoleID=' . $userRoleID . ", orgAdminRoleID=" . $this->controller->config->application->orgAdminRoleID);
+		if($userRoleID == $this->controller->config->application->orgAdminRoleID) $conditions .= "id IN (" . $this->config->application->orgOperatorRoleID . ", " . $this->config->application->orgAdminRoleID . ")";
+		$user_role_rows = UserRole::find(['conditions' => $conditions, 'order' => 'name DESC']);
 		$user_roles = array();
 		foreach ($user_role_rows as $row) {
 			// наполняем массив
@@ -87,17 +92,27 @@ class UserlistController extends ControllerList {
 	* Переопределяемый метод.
 	*/
 	public function getPhqlSelect() {
+		$userRoleID = $this->controller->userData['role_id'];
+		$userID = $this->controller->userData['id'];
+		
 		// строим запрос к БД на выборку данных
-		$phql = "SELECT <TableName>.*, UserRole.id AS user_role_id, UserRole.name AS user_role_name{user_organization_columns} FROM <TableName> JOIN UserRole on UserRole.id=<TableName>.user_role_id";
+		$phql = "SELECT <TableName>.*, UserRole.id AS user_role_id, UserRole.name AS user_role_name FROM <TableName> JOIN UserRole ON UserRole.id=<TableName>.user_role_id";
 		
 		// уточняем выборку, если переданы доп. фильтры (для связей 1-n, n-1, n-n), которые могут навязывать внешние контроллеры
-		if(isset($this->add_filter["organization_id"])) {
-			$phql = str_replace("{user_organization_columns}", ", UserOrganization.*", $phql);
-			$phql .= " JOIN UserOrganization on UserOrganization.user_id=<TableName>.id AND UserOrganization.organization_id=" . $this->add_filter["organization_id"];
-		}
-		else $phql = str_replace("{user_organization_columns}", "", $phql);
+		if(isset($this->add_filter["organization_id"])) $phql .= " JOIN UserOrganization AS uo1 ON uo1.user_id=<TableName>.id AND uo1.organization_id=" . $this->add_filter["organization_id"];
 		
-		return $phql . " WHERE 1=1";
+		// если не супервользователь, то проверям пересечение по спискам организаций
+		if($userRoleID != $this->config->application->adminRoleID) {
+			if(isset($this->add_filter["organization_id"])) $phql .= " JOIN UserOrganization AS uo2 ON uo2.organization_id = uo1.organization_id AND uo2.user_id=" . $userID;
+			else $phql .= " JOIN UserOrganization AS uo1 ON uo1.user_id=<TableName>.id AND uo1.user_id=" . $userID;
+		}
+		
+		$phql .= " WHERE 1=1";
+		
+		// если у пользователя роль "Администратор муниципалитета", то у пользователя из списка должна быть роль "Оператор" или "Администратор муниципалитета"
+		if($userRoleID == $this->config->application->orgAdminRoleID) $phql .= " AND <TableName>.user_role_id IN (" . $this->config->application->orgOperatorRoleID . ", " . $this->config->application->orgAdminRoleID . ")";
+		
+		return $phql . ' GROUP BY <TableName>.id';
 	}
 	
 	/* 
@@ -117,33 +132,40 @@ class UserlistController extends ControllerList {
 	* Переопределяемый метод.
 	*/
 	public function fillFieldsFromRow($row) {
-		$this->items[] = array(
-			"fields" => array(
-				"id" => array(
+		$item = [
+			"fields" => [
+				"id" => [
 					'id' => 'id',
 					'value' => $row->user->id
-				),
-				"active" => array(
+				],
+				"active" => [
 					'id' => 'active',
 					'value' =>  $row->user->active
-				),
-				"phone" => array(
+				],
+				"phone" => [
 					'id' => 'phone',
 					'value' =>  $row->user->phone
-				),
-				"email" => array(
+				],
+				"email" => [
 					'id' => 'email',
 					'value' =>  $row->user->email
-				),
-				"name" => array(
+				],
+				"name" => [
 					'id' => 'name',
 					'value' =>  $row->user->name
-				),
-				"user_role" => array(
+				],
+				"user_role" => [
 					'id' => $row->user_role_id ? $row->user_role_id : '',
 					'value' => $row->user_role_name ? $row->user_role_name : ''
-				)
-			)
-		);
+				],
+			]
+		];
+		$this->items[] = $item;
 	}
+	
+	protected function addSpecificSortLimitToPhql($phql, $id) {
+		if ($id == 'user_role') return $phql .= ' ORDER BY UserRole.name ' . $this->filter_values['order'];
+		return null;
+	}
+	
 }

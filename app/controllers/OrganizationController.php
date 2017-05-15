@@ -1,21 +1,47 @@
 <?php
 class OrganizationController extends ControllerEntity {
 	public $entityName  = 'Organization';
-	public $tableName  = 'Organization';
+	public $tableName  = 'organization';
 	
-	protected $scrollers = [
-		'userlist' => [
-			'linkEntityName' => 'User',
-			'linkTableName' => 'UserOrganization',
-			'linkTableLinkEntityFieldName' => 'user_id',
-			'relationType' => 'nn'
-		],
-		'expenselist' => [
-			'linkEntityName' => 'Expense',
-			'linkEntityFieldName' => 'organization_id',
-			'relationType' => 'n'
-		]
-	];
+	protected function initScrollers() {
+		$this->scrollers = [
+			'userlist' => [
+				'linkEntityName' => 'User',
+				'linkTableName' => 'UserOrganization',
+				'linkTableLinkEntityFieldName' => 'user_id',
+				'relationType' => 'nn',
+				'controllerClass' => 'UserlistController',
+				'addStyle' => 'scroller',
+				'editStyle' => 'modal',
+				// доп. фиьлтр для выборки данных скроллера
+				'addFilter' => function() { return ["organization_id" => $this->fields["id"]["value"]]; },
+			],
+			'expenselist' => [
+				'linkEntityName' => 'Expense',
+				'linkEntityFieldName' => 'organization_id',
+				'relationType' => 'n',
+				'controllerClass' => 'ExpenselistController',
+				'entityControllerClass' => 'ExpenseController',
+				'addStyle' => 'entity',
+				'editStyle' => 'modal',
+				// доп. фиьлтр для выборки данных скроллера
+				'addFilter' => function() { return ["organization_id" => $this->fields["id"]["value"]]; },
+				'cascadeDelete' => true,
+			],
+			'organizationrequestlist' => [
+				'linkEntityName' => 'OrganizationRequest',
+				'linkEntityFieldName' => 'organization_id',
+				'relationType' => 'n',
+				'controllerClass' => 'OrganizationrequestlistController',
+				'entityControllerClass' => 'OrganizationController',
+				'addStyle' => 'scroller',
+				'editStyle' => 'modal',
+				// доп. фиьлтр для выборки данных скроллера
+				'addFilter' => function() { return ["organization_id" => $this->fields["id"]["value"]]; },
+				'cascadeDelete' => false,
+			],
+		];
+	}
 	
 	public function initialize() {
 		parent::initialize();
@@ -111,91 +137,11 @@ class OrganizationController extends ControllerEntity {
 	}
 	
 	/* 
-	* Заполняет свойство scrollers данными списков из связанных таблиц
-	* Переопределяемый метод.
-	*/
-	protected function fillScrollers() {
-		$this->logger->log(__METHOD__ . ". actionName1: " . json_encode($this->actionName));
-		$role_id = $this->userData['role_id'];
-		// TODO. Надо вынести заполнение в базовый класс в  метод initFields, зпаолнять на основании свойст полей из $this->fields
-		//$this->logger->log('fields: ' . json_encode($this->fields));
-		// грид расходов
-		// если имеется доступ к скроллеру
-		$action = ($this->acl->isAllowed($role_id, "organization_expenselist", 'edit') ? 'edit' : ($this->acl->isAllowed($role_id, "organization_expenselist", 'show') ? 'show' : null));
-		if($action) {
-			$controller_expense_list = new ExpenselistController();
-			$scroller_expense_list = $controller_expense_list->createDescriptor($this, array("organization_id" => $this->fields["id"]["value"]), $action);
-			$scroller_expense_list['relationType'] = $this->scrollers[$controller_expense_list->controllerNameLC]['relationType'];
-			$scroller_expense_list["add_style"] = "entity";
-			$scroller_expense_list["edit_style"]  = "modal";
-			
-			$this->scrollers[$controller_expense_list->controllerNameLC] = $scroller_expense_list;
-		}
-		else unset($this->scrollers['expenselist']);
-		
-		// грид пользователей
-		// если имеется доступ к скроллеру
-		$action = ($this->acl->isAllowed($role_id, "organization_userlist", 'edit') ? 'edit' : ($this->acl->isAllowed($role_id, "organization_userlist", 'show') ? 'show' : null));
-		if($action) {
-			$controller_user_list = new UserlistController();
-			$scroller_user_list = $controller_user_list->createDescriptor($this, array("organization_id" => $this->fields["id"]["value"]), $action);
-			$scroller_user_list['relationType'] = $this->scrollers[$controller_user_list->controllerName]['relationType'];
-			$scroller_user_list["add_style"] = "scroller";
-			$scroller_user_list['edit_style']  = "modal";
-			
-			$this->scrollers[$controller_user_list->controllerNameLC] = $scroller_user_list;
-		}
-		else unset($this->scrollers['userlist']);
-		
-		$this->logger->log(__METHOD__ . ". actionName2: " . json_encode($this->actionName));
-	}
-	
-	/* 
-	* Очищает параметры запроса
-	* Расширяемый метод.
-	*/
-	protected function sanitizeSaveRqData($rq) {
-		$res = 0;
-		// id, //select, link
-		$res |= parent::sanitizeSaveRqData($rq);
-		
-		//$this->error['messages'][] = ['title' => "Debug. " . __METHOD__, 'msg' => "id=" . $this->fields['id']['value']];
-		
-		// name
-		$this->fields['name']['value'] = null;
-		if(isset($rq->fields->name) && isset($rq->fields->name->value)) {
-			$this->fields['name']['value'] = $this->filter->sanitize(urldecode($rq->fields->name->value), ["trim", "string"]);
-			if($this->fields['name']['value'] == '') $this->fields['name']['value'] = null;
-		}
-		
-		// email
-		$this->fields['email']['value'] = null;
-		if(isset($rq->fields->email) && isset($rq->fields->email->value)) {
-			$this->fields['email']['value'] = $this->filter->sanitize(urldecode($rq->fields->email->value), ["trim", "string"]);
-			if($this->fields['email']['value'] == '') $this->fields['email']['value'] = null;
-		}
-		
-		// contacts
-		$this->fields['contacts']['value'] = null;
-		if(isset($rq->fields->contacts) && isset($rq->fields->contacts->value)) {
-			$val = $this->filter->sanitize(urldecode($rq->fields->contacts->value), ["trim", "string"]);
-			if($this->fields['contacts']['value'] == '') $this->fields['contacts']['value'] = null;
-		}
-		
-		// userlist, expenselist
-		if(!$this->sanitizeSaveRqDataCheckRelations($rq)) $res |= 2;
-		
-		$res |= $this->check();
-		
-		return $res;
-	}
-	
-	/* 
 	* Удаляет ссылки на сущность ($this->entity, если не передано отдельная сущность) из связанных таблиц
 	* Переопределяемый метод.
 	*/
 	protected function deleteEntityLinks($entity) {
-		if(!isset($entity)) $entity = $this->entity;
+		if(!$entity) $entity = $this->entity;
 		// пользователи организации, удаляются только связи
 		$userOrganizations = UserOrganization::find([
 			"conditions" => "organization_id = ?1",
@@ -215,41 +161,35 @@ class OrganizationController extends ControllerEntity {
 				return false;
 			}
 		}
+		//$this->logger->log(__METHOD__ . '. userOrganizations deleted');
 		// расходы  организации, удаляются сущнности, т.к. они создаются только для конкретной организации
 		$exp = new ExpenseController();
 		$expenses = Expense::find([
 			"conditions" => "organization_id = ?1",
-			"bind" => array(1 => $this->entity->id)
+			"bind" => array(1 => $entity->id)
 		]);
-		foreach($expenses as $expense) {
+		foreach ($expenses as $expense) {
+			//$this->logger->log(__METHOD__ . '. expense_id = ' . $expense->id);
 			// удаляем расход
 			$res = $exp->deleteEntity($expense);
+			//$this->logger->log(__METHOD__ . '. res = ' . $res . '. error = ' . json_encode($res));
 			// если в процессе удаления возникла ошибка, то транзакция уже откачена, копируем сообщения
-			if($res && count($res['error']['messages']>0)) {
+			if(isset($res['error']) && count($res['error']['messages'])>0) {
+				//$this->logger->log(__METHOD__ . '. return false');
 				foreach($res['error']['messages'] as $message) {
 					$this->error['messages'][] = $message;
 				}
-				foreach($res['success']['messages'] as $message) {
+				/*foreach($res['success']['messages'] as $message) {
+					$this->success['messages'][] = $message;
+				}*/
+				return false;
+			}
+			else if(isset($res['success'])) {
+				// если ошибок не было, то копируем только успешные сообщения
+				foreach ($res['success']['messages'] as $message) {
 					$this->success['messages'][] = $message;
 				}
-				return false;
 			}
-			// если ошибок не было, то копируем только успешные сообщения
-			foreach($res['success']['messages'] as $message) {
-				$this->success['messages'][] = $message;
-			}
-			/*if ($expense->delete() == false) {
-				$this->db->rollback();
-				$dbMessages = '';
-				foreach ($n->getMessages() as $message) {
-					$dbMessages .= "<li>" . $message . "</li>";
-				}
-				$this->error['messages'][] = [
-					'title' => "Не удалось удалить расход id=" . $expense->id,
-					'msg' => "<ul>" . $dbMessages . "</ul>"
-				];
-				return false;
-			}*/
 		}
 		return true;
 	}

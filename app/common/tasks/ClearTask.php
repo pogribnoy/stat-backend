@@ -32,7 +32,7 @@ class ClearTask extends Task {
 				foreach ($row->getMessages() as $message) {
 					$dbMessages .= "<li>" . $message . "</li>";
 				}
-				echo __METHOD__ . ". Unassigned expense with id = " . $id . " can't be deleted: " $dbMessage;
+				echo __METHOD__ . ". Unassigned expense with id = " . $id . " can't be deleted: " . $dbMessage;
 			}
 			else echo __METHOD__ . '. Expense with id=' . $row->id . " has been deleted" . PHP_EOL;
 			

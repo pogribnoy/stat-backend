@@ -50,30 +50,6 @@ class Organizationrequesttopiccontroller extends ControllerEntity {
 	}
 	
 	/* 
-	* Очищает параметры запроса
-	* Расширяемый метод.
-	*/
-	protected function sanitizeSaveRqData($rq) {
-		// id, select, link
-		if(!parent::sanitizeSaveRqData($rq)) return false;
-		// name
-		if(isset($rq->fields->name) && isset($rq->fields->name->value)) {
-			$val = $this->filter->sanitize(urldecode($rq->fields->name->value), ["trim", "string"]);
-			if($val != '') $this->fields['name']['value'] = $val;
-			else {
-				$this->error['messages'][] = [
-					'title' => "Ошибка",
-					'msg' => 'Поле "'. $this->fields['name']['name'] .'" обязательно для указания'
-				];
-				return false;
-			}
-		}
-		else return false;
-		
-		return true;
-	}
-	
-	/* 
 	* Удаляет ссылки на сущность ($this->entity, если не передано отдельная сущность) из связанных таблиц
 	* Переопределяемый метод.
 	*/
