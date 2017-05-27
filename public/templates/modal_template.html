@@ -1,0 +1,32 @@
+<div class="modal" id="{{:modal_container_id}}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel_{{:modal_container_id}}" data-backdrop="static">
+	<div class="modal-dialog modal-lg" {{if (descriptor.type=='scroller' || (descriptor.scrollers && ~utilities.getOjectKeysCount(descriptor.scrollers) > 0)) }}style="width: 95%" {{/if}} role="document">
+		<div class="modal-content">
+			<div class="modal-header bg-primary">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title" id="myModalLabel_{{:descriptor.local_data.udid}}">{{:descriptor.title}}</h4>
+			</div>
+			<div class="modal-body">
+				<div class="container-fluid">
+					<div class="row">
+						<div class="pull-right">
+							{{if descriptor.type == "entity"}}
+								{{if descriptor.operations ~descriptor=descriptor}}
+									{{for descriptor.operations tmpl="operation" /}}									
+								{{/if}}
+								<button type="button" class="btn btn-default" data-dismiss="modal" onclick="hideModal('{{:modal_container_id}}');">Отмена</button>
+							{{else}}
+								<button type="button" class="btn btn-primary" onclick="linkSelectedRows('{{:descriptor.local_data.container_id}}');">Выбрать</button>
+								<button type="button" class="btn btn-default" data-dismiss="modal" onclick="hideModal('{{:modal_container_id}}');">Отмена</button>
+							{{/if}}
+							<div>&nbsp;</div>
+						</div><!-- /.pull-right -->
+					</div><!-- /.row -->
+					<div class="row">
+						{{include tmpl=tmplName ~inModal=1/}}
+					</div><!-- /.row -->
+				</div><!-- /.container-fluid -->
+			</div>
+			<div class="modal-footer"></div>
+		</div><!-- /.modal-content -->
+	</div><!-- /.modal-dialog -->
+</div><!-- /.modal -->

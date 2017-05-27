@@ -7,6 +7,30 @@ class ProfileController extends ControllerEntity{
 		parent::initialize();
 	}
 	
+	public function passwordprintAction() {
+		if($this->request->isAjax()) {
+			$this->view->disable();
+			$this->response->setContentType('application/json', 'UTF-8');
+			$data = [
+				'success' => [
+					'messages' => [[
+						'title' => "Операция успешна",
+						'msg' => "Пароль отправлен на принтер",
+					]],
+				],
+			];
+			return json_encode($data);
+		}
+		else {
+			$this->logger->error(__METHOD__ . '. AJAX method is only supported' . $this->request->getURI());
+			$this->dispatcher->forward(array(
+				'controller' => 'errors',
+				'action' => 'show404',
+				'sourceURL' => $this->request->getURI(),
+			));
+		}
+	}
+	
 	/* 
 	* Заполняет (инициализирует) свойство fields
 	* Переопределяемый метод.
@@ -102,21 +126,26 @@ class ProfileController extends ControllerEntity{
 		$this->fields["email"]["value"] = $row->user->email;
 	}
 	
-	/* 
-	* Заполняет свойство fields данными списков из связанных таблиц
-	* Переопределяемый метод.
-	*/
-	public function fillFieldsWithLists() {
-		// роли
-		/*$user_role_rows = UserRole::find();
-		$user_roles = array();
-		foreach ($user_role_rows as $row) {
-			// наполняем массив
-			$user_roles[] = array(
-				'id' => $row->id,
-				"name" => $row->name
-			);
+	
+	protected function getEntityFormOperations() {
+		
+		parent::getEntityFormOperations();
+		
+		$exludeOps = $this->exludeOps;
+		$controllerNameLC = $this->controllerNameLC;
+		$userRoleID = $this->userData['role_id'];
+		$acl = $this->acl;
+		$t = $this->t;
+		
+		// редактирование должно быть доступным, если доступно редактирование самой сущности или ее скроллеров
+		if(!in_array('passwordprint', $exludeOps)) {
+			if($acl->isAllowed($userRoleID, $controllerNameLC, 'passwordprint')) {
+				$this->logger->log(__METHOD__ . ". test2");
+				$this->operations[] = [
+					'id' => 'password_print',
+					'name' => $t->_('button_password_print'),
+				];
+			}
 		}
-		$this->fields['user_role']['values'] = $user_roles;*/
 	}
 }

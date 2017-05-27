@@ -1,85 +1,3 @@
-<script id="entity_template" type="text/x-jsrender">
-<span></span>
-<!--<br>templates\form_template-->
-<div class="container-fluid" id="{{:descriptor.local_data.container_id}}"><!---->
-	<div class="row-fluid">
-		<div class="pull-right">
-			{{if !~inModal}}
-				{{if descriptor.operations ~descriptor=descriptor}}
-					{{for descriptor.operations tmpl="operation" /}}
-				{{/if}}
-				<button type="button" class="btn btn-default" data-dismiss="modal" onclick="hideModal('{{:descriptor.local_data.container_id}}');">Отмена</button>
-			{{/if}}
-			<div>&nbsp;</div>
-		</div><!-- /.pull-right -->
-	</div><!-- /.row -->
-	<div class="row">
-		{{include tmpl = "entity_fields_form" /}}
-		
-		{{if descriptor.scrollers ~scrollers=~utilities.objectToArray(descriptor.scrollers)}}
-			{{for ~scrollers }}
-				<div class="row-fluid">
-					<div id="placeholder_{{:local_data.container_id}}"></div>
-				</div><!-- /.row -->
-				<!--<p>placeholder_{{:type}}_{{:controllerName}}_{{:udid}}</p>-->
-			{{/for}}
-		{{/if}}
-	</div><!-- /.row -->
-</div><!-- /.container-fluid -->
-</script>
-
-<script id="ckecks_modal_template" type="text/x-jsrender">
-<span></span>
-<!--<br>templates\modal_template-->
-<div class="modal" id="{{:modal_container_id}}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel_{{:modal_container_id}}" data-backdrop="static">
-	<div class="modal-dialog modal-md" role="document">
-		<div class="modal-content">
-			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-				<h4 class="modal-title" id="myModalLabel_{{:modal_container_id}}">{{:descriptor.title}}</h4>
-			</div>
-			<div class="modal-body">
-				<div class="container-fluid">
-					<div class="row">
-						<div class="pull-right">
-							{{if !~utilities.checksHasError(descriptor.checkResult) }}
-								<button type="button" class="btn btn-success" data-dismiss="modal" onclick="hideModal('{{:modal_container_id}}'); mandatorySave('{{:descriptor.local_data.container_id}}')">Сохранить</button>
-							{{/if}}
-							<button type="button" class="btn btn-default" data-dismiss="modal" onclick="hideModal('{{:modal_container_id}}');">Назад</button>
-							<div>&nbsp;</div>
-						</div><!-- /.pull-right -->
-					</div><!-- /.row -->
-						{{if descriptor.checkResult}}
-							{{for descriptor.checkResult}}
-								<div class="row">
-									<div class="col-lg-12">
-										{{if type == "error"}}
-											<p class="text-danger">{{:msg}}</p>
-										{{else type == "warning"}}
-											<p class="text-warning">{{:msg}}</p>
-										{{else}}
-											<p>{{:msg}}</p>
-										{{/if}}
-									</div>
-								</div><!-- /.row -->
-							{{/for}}
-						{{else}}
-							<div class="row">
-								<div class="col-lg-12">
-									<p class="text-success">Все проверки прошли успешно</p>
-								</div>
-							</div><!-- /.row -->
-						{{/if}}
-				</div><!-- /.container-fluid -->
-			</div>
-			<div class="modal-footer"></div>
-		</div><!-- /.modal-content -->
-	</div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
-</script>
-
-<script type="text/javascript"><!--
-
 /* Cохраняет данные сущности с ЭФ локально, а затем на сервер. Предварительно проверяет данные
 * @container_id - идентификатор контейнера сущности (располагается либо на отдельной странице, либо в модалке)
 */
@@ -233,17 +151,20 @@ function showChecksModal(data) {
 			
 	data.descriptor.checkResult = data.json.checkResult;
 	
-	var tmpl = $.templates("#ckecks_modal_template");
-	var html = tmpl.render({descriptor:data.descriptor, modal_container_id:modal_container_id});
+	var tmplLoader = getTemplateByName('ckecks_modal_template');
+	tmplLoader.done(function(tmplLoader) {
+		
+		var html = tmplLoader.tmpl.render({descriptor:data.descriptor, modal_container_id:modal_container_id});
 
-	var modalsJQ = $("#container_modals");
-	var mJQ = modalsJQ.find("#" + modal_container_id);
-	if(mJQ.length>0) mJQ.replaceWith(html);
-	else modalsJQ.append(html);
-	containers[modal_container_id] = {jqobj:modalsJQ.find("#" + modal_container_id), data: data.descriptor};
-				
-	// показываем модалку
-	showModal(modal_container_id);
+		var modalsJQ = $("#container_modals");
+		var mJQ = modalsJQ.find("#" + modal_container_id);
+		if(mJQ.length>0) mJQ.replaceWith(html);
+		else modalsJQ.append(html);
+		containers[modal_container_id] = {jqobj:modalsJQ.find("#" + modal_container_id), data: data.descriptor};
+					
+		// показываем модалку
+		showModal(modal_container_id);
+	});
 }
 
 function entityCheck(container_id) {
@@ -445,7 +366,7 @@ function entityDelete(container_id, id) {
 							//deleteItemFromScroller(entity, container.data, {confirmFromServer:true});
 							
 							// перерисовываем скроллер
-							//renderScroller(container.data);
+							//renderScroller(container.data, false);
 							def.resolve();
 						}
 						// если удаляем сущность
@@ -786,4 +707,3 @@ function deleteEntityFiles(descriptor, fieldName) {
 	//}
 }
 
-//--></script>

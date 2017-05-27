@@ -130,6 +130,11 @@ class SecurityPlugin extends Plugin {
 		$this->logger->log(__METHOD__ . ". ControllerClass = " . $dispatcher->getControllerClass() . ', Action class = ' . $dispatcher->getActionName());
 		//$this->logger->log(__METHOD__ . ". sessionID = " . var_dump($this->session->getId()));
 		
+		//$this->logger->log(__METHOD__ . ". session = " . json_encode($this->session->getOptions()));
+		//var_dump($this->session);
+		ini_set('session.gc_maxlifetime', $this->config->application->sessionTimeout);
+		//$t2 = ini_get('session.gc_maxlifetime');
+		
 		// проверяем время жизни сессии
 		$auth = $this->session->get('auth');
 		//$this->logger->log(__METHOD__ . ". Auth = " . json_encode($auth));
@@ -303,6 +308,7 @@ class SecurityPlugin extends Plugin {
 					$this->user['id'] = $u->id;
 					$this->user['role_id'] = $u->user_role_id;
 					$this->user['name'] = $u->name;
+					$this->user['email'] = $u->email;
 					
 				}
 			}

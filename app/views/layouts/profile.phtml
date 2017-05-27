@@ -1,0 +1,58 @@
+
+<script type="text/javascript"><!--
+
+function passwordPrint(container_id) {
+	var data = containers[container_id].data;
+	
+	var rqDefferred = $.get({
+		url: '/' + data.controllerNameLC + '/passwordprint?user_id=' + data.local_data.eid,
+		beforeSend: function() {
+			// показываем прогрессбар
+			setTimeout(function() {
+				if(rqDefferred.state() == 'pending') {
+					var blockedJQ = $('#' + container_id);
+					var spinnerJQ = blockedJQ.find('#spinner');
+					if(spinnerJQ.length == 0) blockedJQ.prepend('<div id="spinner" class="LockOn"><button class="btn btn-default center-block"><span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Обработка запроса</button></div>');
+					else {
+						//spinnerJQ.show();
+						spinnerJQ.removeClass('LockOff');
+						spinnerJQ.addClass('LockOn');
+					}
+					//var getHeight = document.getElementById(container_id + 'CollapseDiv').clientHeight;
+					//document.getElementById("spinner").style.height = getHeight*2;
+					spinnerJQ.height(blockedJQ.height());
+				}
+			}, 500);
+			
+		},
+		complete: function() {
+			// скрываем прогрессбар
+			//clearTimeout(jqobj.data.timeoutID);
+			//$('#spinner').hide();
+			var blockedJQ = $('#' + container_id + 'CollapseDiv');
+			var spinnerJQ = blockedJQ.find('#spinner');
+			spinnerJQ.removeClass('LockOn');
+			spinnerJQ.addClass('LockOff');
+		},			
+		success: function(json) {
+			if(!handleAjaxError(json.error)) {
+				
+			}
+			handleAjaxSuccess(json.success);
+		},
+		error: function(xhr, ajaxOptions, thrownError) {
+			console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+			handleAjaxError({
+				messages: [{
+					title: 'Ошибка обмена данными',
+					msg: 'Ошибка обработки запроса на стороне сервера. Обратитесь в службу поддержки',
+				}],
+			});
+		}
+	});
+	
+	alert('Функционал в процессе реализации');
+}
+
+//--></script>
+

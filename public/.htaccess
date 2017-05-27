@@ -2,8 +2,12 @@ AddDefaultCharset UTF-8
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
+	RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^e55d8a40b3f5.html$ e55d8a40b3f5.html [L]
+	
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^(.*)$ index.php?_url=/$1 [QSA,L]
+	
 </IfModule>
 

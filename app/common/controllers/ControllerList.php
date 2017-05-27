@@ -34,6 +34,9 @@ class ControllerList extends ControllerBase {
 	// количество страниц для скроллеров
 	public $pager = ["page_sizes" => [30, 50, 100]];
 	
+	// шаблон по умолчанию
+	public $templateName = "scroller_template";
+	
 	public function initialize() {
 		parent::initialize();
 	}
@@ -188,17 +191,17 @@ class ControllerList extends ControllerBase {
 	* Переопределяемый метод.
 	*/
 	public function parseAddFilters($add_filters) {
-		if (isset($add_filters)) {
+		if (isset($add_filters) && $add_filters != null) {
 			// доп. фильтры, передаваемые из других контроллеров
-			if(isset($add_filters["user_role_id"])) $this->add_filter["user_role_id"] = $this->filter->sanitize($add_filters["user_role_id"], "int");
-			if(isset($add_filters["user_id"])) $this->add_filter["user_id"] = $this->filter->sanitize($add_filters["user_id"], "int");
-			if(isset($add_filters["organization_id"])) $this->add_filter["organization_id"] = $this->filter->sanitize($add_filters["organization_id"], "int");
+			if(isset($add_filters["user_role_id"])) $this->add_filter["user_role_id"] = $this->filter->sanitize($add_filters["user_role_id"], ["trim", "int"]);
+			if(isset($add_filters["user_id"])) $this->add_filter["user_id"] = $this->filter->sanitize($add_filters["user_id"], ["trim", "int"]);
+			if(isset($add_filters["organization_id"])) $this->add_filter["organization_id"] = $this->filter->sanitize($add_filters["organization_id"], ["trim", "int"]);
 		}
 		else {
 			// TODO. Если с киента не переданы id, то надо проверять на доступность пользователю данного скроллера
 			if(isset($_REQUEST["add_filter"])) {
-				if(isset($_REQUEST["add_filter"]['organization_id'])) $this->add_filter["organization_id"] = $this->filter->sanitize(urldecode($_REQUEST["add_filter"]['organization_id']), "int"); 
-				if(isset($_REQUEST["add_filter"]['user_role_id'])) $this->add_filter["user_role_id"] = $this->filter->sanitize(urldecode($_REQUEST["add_filter"]['user_role_id']), "int"); 
+				if(isset($_REQUEST["add_filter"]['organization_id'])) $this->add_filter["organization_id"] = $this->filter->sanitize(urldecode($_REQUEST["add_filter"]['organization_id']), ["trim", "int"]); 
+				if(isset($_REQUEST["add_filter"]['user_role_id'])) $this->add_filter["user_role_id"] = $this->filter->sanitize(urldecode($_REQUEST["add_filter"]['user_role_id']), ["trim", "int"]); 
 			}
 		}
 	}
@@ -249,6 +252,7 @@ class ControllerList extends ControllerBase {
 			"template" => $this->getTmpl(),
 			"newCount" => $this->newCount,
 		);
+		if(isset($this->templateName)) $this->descriptor['templateName'] = $this->templateName;
 		if(isset($this->notCollapsible)) $this->descriptor["notCollapsible"] = $this->notCollapsible;
 		//$this->logger->log(json_encode($this->descriptor));
 	}
@@ -325,144 +329,7 @@ class ControllerList extends ControllerBase {
 		
 		$this->addNonColumnsFilters();
 		
-		$this->logger->log(__METHOD__ . '. filter_values = ' . json_encode($this->filter_values));
-		
-		/*if(isset($_REQUEST["filter_organization"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_organization"]), ['trim',"int"]);
-			if($val != '') $this->filter_values["organization"] =  $val;
-		}*/
-		
-		/*if(isset($_REQUEST["filter_id"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_id"]), ['trim',"int"]);
-			if($val != '') $this->filter_values["id"] =  $val;
-		}
-		if(isset($_REQUEST["filter_name"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_name"]), "string");
-			if($val != '') $this->filter_values["name"] =  $val;
-		}
-		if(isset($_REQUEST["filter_active"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_active"]), ['trim',"int"]);
-			//$this->logger->log("aasdasd = " . $val);
-			if($val != '') $this->filter_values["active"] =  $val;
-			//$this->logger->log(json_encode($this->filter_values));
-		}
-		if(isset($_REQUEST["filter_email"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_email"]), ['trim',"int"]);
-			if($val != '') $this->filter_values["email"] =  $val;
-		}
-		if(isset($_REQUEST["filter_contacts"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_contacts"]), "string");
-			if($val != '') $this->filter_values["contacts"] =  $val;
-		}
-		if(isset($_REQUEST["filter_phone"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_phone"]), "string");
-			if($val != '') $this->filter_values["phone"] =  $val;
-		}
-		if(isset($_REQUEST["filter_code"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_code"]), "string");
-			if($val != '') $this->filter_values["code"] =  $val;
-		}
-		if(isset($_REQUEST["filter_value"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_value"]), "string");
-			if($val != '') $this->filter_values["value"] =  $val;
-		}
-		if(isset($_REQUEST["filter_description"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_description"]), "string");
-			if($val != '') $this->filter_values["description"] =  $val;
-		}
-		if(isset($_REQUEST["filter_organization"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_organization"]), ['trim',"int"]);
-			if($val != '') $this->filter_values["organization"] =  $val;
-		}
-		if(isset($_REQUEST["filter_group"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_group"]), "string");
-			if($val != '') $this->filter_values["group"] =  $val;
-		}
-		if(isset($_REQUEST["filter_controller"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_controller"]), "string");
-			if($val != '') $this->filter_values["controller"] =  $val;
-		}
-		if(isset($_REQUEST["filter_action"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_action"]), "string");
-			if($val != '') $this->filter_values["action"] =  $val;
-		}
-		if(isset($_REQUEST["filter_module"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_module"]), "string");
-			if($val != '') $this->filter_values["module"] =  $val;
-		}
-		if(isset($_REQUEST["filter_amount"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_amount"]), "string");
-			if($val != '') $this->filter_values["amount"] =  $val;
-			//$this->logger->log(__METHOD__ . ". val = " . json_encode($val));
-		}
-		if(isset($_REQUEST["filter_date"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_date"]), "string");
-			if($val != '') $this->filter_values["date"] =  $val;
-		}
-		if(isset($_REQUEST["filter_settlement"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_settlement"]), "string");
-			if($val != '') $this->filter_values["settlement"] =  $val;
-		}
-		if(isset($_REQUEST["filter_street"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_street"]), "string");
-			if($val != '') $this->filter_values["street"] =  $val;
-		}
-		if(isset($_REQUEST["filter_house"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_house"]), "string");
-			if($val != '') $this->filter_values["house"] =  $val;
-		}
-		if(isset($_REQUEST["filter_executor"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_executor"]), "string");
-			if($val != '') $this->filter_values["executor"] =  $val;
-		}
-		if(isset($_REQUEST["filter_target_date"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_target_date"]), ['trim',"string"]);
-			if($val != '') $this->filter_values["target_date"] =  $val;
-		}
-		if(isset($_REQUEST["filter_created_at"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_created_at"]), ['trim',"string"]);
-			if($val != '') $this->filter_values["created_at"] =  $val;
-		}
-		
-		// фильтры по справочникам
-		if(isset($_REQUEST["filter_region"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_region"]), ['trim',"int"]);
-			if($val != '') $this->filter_values["region"] =  $val;
-		}
-		if(isset($_REQUEST["filter_expense_type"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_expense_type"]), ['trim',"int"]);
-			if($val != '') $this->filter_values["expense_type"] =  $val;
-		}
-		if(isset($_REQUEST["filter_expense_status"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_expense_status"]), ['trim',"int"]);
-			if($val != '') $this->filter_values["expense_status"] =  $val;
-		}
-		if(isset($_REQUEST["filter_organization"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_organization"]), ['trim',"int"]);
-			if($val != '') $this->filter_values["organization"] =  $val;
-		}
-		if(isset($_REQUEST["filter_street_type"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_street_type"]), ['trim',"int"]);
-			if($val != '') $this->filter_values["street_type"] =  $val;
-			else {
-				$val = $this->filter->sanitize(urldecode($_REQUEST["filter_street_type"]), ['trim',"string"]);
-				if($val == '**') $this->filter_values["street_type"] = "**";
-			}
-		}
-		if(isset($_REQUEST["filter_organization_name"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_organization_name"]), "string");
-			if($val != '') $this->filter_values["organization_name"] =  $val;
-		}
-		if(isset($_REQUEST["filter_user_role"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_user_role"]), ['trim',"int"]);
-			if($val != '') $this->filter_values["user_role"] =  $val;
-		}
-		if(isset($_REQUEST["filter_created_by_id"])) {
-			$val = $this->filter->sanitize(urldecode($_REQUEST["filter_created_by_id"]), ['trim',"int"]);
-			if($val != '') $this->filter_values["created_by_id"] =  $val;
-		}*/
-		
-		
+		//$this->logger->log(__METHOD__ . '. filter_values = ' . json_encode($this->filter_values));
 	}
 	
 	protected function addNonColumnsFilters() {}

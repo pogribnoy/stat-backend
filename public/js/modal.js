@@ -58,31 +58,31 @@ function renderModal(descriptor, targetContainer) {
 	descriptor.local_data.container_id = createUDID(descriptor);
 	if(targetContainer) descriptor.local_data.target_container_id = targetContainer.data.local_data.container_id;
 	
-	var tmplName = getTemplateName(descriptor);
-	
-	// рисуем модалку, а в ней сущность или скроллер
-	var tmpl = $.templates("#modal_template");
-	var html = tmpl.render({descriptor:descriptor, tmplName:tmplName, modal_container_id:modal_container_id});
-	
-	$("#container_modals").append(html);
-	containers[modal_container_id] = {jqobj:$("#container_modals").find("#" + modal_container_id), data: descriptor};
-	
-	// указываем отдельный контейнер для сущности или скроллера в модалке
-	if(descriptor.type == 'entity') {
-		containers[descriptor.local_data.container_id] = {jqobj:containers[modal_container_id].jqobj.find("#" + descriptor.local_data.container_id), data: descriptor, parent_container_id: modal_container_id};
-		// обрабатываем полученные скроллеры сущности, если они есть
-		renderEntityScrollers(descriptor);
-		initEntityScripts(descriptor.local_data.container_id);
+	return {
+		dfd: $.when(getTemplateByName('modal_template'), getTemplate(descriptor)).done(function(data, data2) {
+		
+			// отрисовываем основные данные сущности
+			var html = data.tmpl.render({descriptor:descriptor, tmplName: data2.tmplName, modal_container_id: modal_container_id});
+			
+			$("#container_modals").append(html);
+			containers[modal_container_id] = {jqobj:$("#container_modals").find("#" + modal_container_id), data: descriptor};
+			
+			// указываем отдельный контейнер для сущности или скроллера в модалке
+			if(descriptor.type == 'entity') {
+				containers[descriptor.local_data.container_id] = {jqobj:containers[modal_container_id].jqobj.find("#" + descriptor.local_data.container_id), data: descriptor, parent_container_id: modal_container_id};
+				// обрабатываем полученные скроллеры сущности, если они есть
+				renderEntityScrollers(descriptor);
+				initEntityScripts(descriptor.local_data.container_id);
+			}
+			else if(descriptor.type == 'scroller') {
+				containers[descriptor.local_data.container_id] = {jqobj:containers[modal_container_id].jqobj.find("#" + descriptor.local_data.container_id), data: descriptor, parent_container_id: modal_container_id};
+				initScrollerScripts(descriptor.local_data.container_id);
+			}
+			
+			initModalScripts(modal_container_id);
+		}),
+		container_id: modal_container_id,
 	}
-	else if(descriptor.type == 'scroller') {
-		containers[descriptor.local_data.container_id] = {jqobj:containers[modal_container_id].jqobj.find("#" + descriptor.local_data.container_id), data: descriptor, parent_container_id: modal_container_id};
-		initScrollerScripts(descriptor.local_data.container_id);
-	}
-	
-	initModalScripts(modal_container_id);
-	
-	
-	return modal_container_id;
 }
 
 /* Находит сущность/скроллер, для которого было открыто модальное окно.
@@ -167,17 +167,120 @@ function linkSelectedRows(source_container_id){
 				
 				addItemToScroller(entities[sContainer.data.entityNameLC][entity_id], tScroller, {confirmFromServer:false});
 			}
+			
 			// перерисовываем грид/скроллер, для которого выполнено добавление
-			var tmpl = $.templates("#"+getTemplateName(tScroller));
-			
-			var html = tmpl.render({descriptor:tScroller});
-			
-			//tContainer.jqobj.replaceWith(html);
-			tContainer.jqobj.html(html);
+			$.when(getTemplate(tScroller)).done(function(data) {
+				var html = data.tmpl.render({descriptor:tScroller});
+				tContainer.jqobj.html(html);
+			});
 		}
 		hideModal(sContainer.parent_container_id);
 	}
 }
+
+var modalModule = (function (app) {
+	"use strict";
+	
+	var modalСontainers = {};
+	
+	var body = document.getElementsByTagName('body');
+	
+	/* Инициализирует скрипты для модального окна
+	* @containerID - идентификатор контейнера модального окна
+	*/
+	function initModalScripts(containerID) {
+		//console.log ('initModalScripts');
+		// при закрытии окна через крестик или клике мимо окна необходимо выполнить операцию закрытия
+		modalСontainers[containerID].jqobj.on('hidden.bs.modal', function (e) {
+			//console.log ('hidden.bs.modal');
+			closeModal(containerID);
+			//$(this).removeData("modal");
+		});
+	}
+
+	// Скрываем модальное окно
+	function hideModal(containerID) {
+		$(modalСontainers[containerID].dom).modal('hide');
+	}
+	
+	// Показывает контейнр в модальном окне
+	function showModal(containerID) {
+		$.notifyClose();
+		$(modalСontainers[containerID].dom).modal('show');
+	}
+
+	// Закрывает модальное окно
+	function closeModal(containerID) {
+		// контейнер модалки
+		var modalContainer = modalСontainers[containerID];
+		
+		// TODO. Скроллеры и сущность должны удалять соответствующие модули скроллеров и сущностей
+		// удаляем контейнер основной сущности или скроллера, отрисованного в модалке (в модалке в data.local_data хранится ID контейнера основной сущности или скроллера)
+		delete containers[modalContainer.data.local_data.containerID];
+		// удаляем контейнеры скроллеров
+		if(modalContainer.data.scrollers) {
+			for (var key in modalContainer.data.scrollers) {
+				delete containers[modalContainer.data.scrollers[key].local_data.containerID];
+			}
+		}
+		
+		// удаляем контейнер модалки из DOM
+		modalContainer.dom.parentNode.removeChild(modalContainer.dom);
+		// удаляем контейнер модалки из контейнеров
+		delete modalСontainers[containerID];
+	}
+
+	/*
+	* Рисует сущность в модальном окне, создает контейнер и возвращает его ID. Не отображает ничего пользователю, для этого используется отдельная функция showModal
+	* descriptor - описатель основных скроллера или сущности, которые открываются в модалке
+	* targetContainer - контейнер, в который будет подставлено выбранное в модалке значение (если это модалка для выбора)
+	*/
+	function renderModal(descriptor, targetContainer, afterRenderCallback) {
+		var modalContainerID = createUDID();
+		// сохраняем в сущности идентификатор будущего контейнера
+		descriptor.local_data.container_id = createUDID(descriptor);
+		if(targetContainer) descriptor.local_data.target_container_id = targetContainer.data.local_data.container_id;
+		
+		var dfd = $.when(getTemplateByName('modal_template'), getTemplate(descriptor)).done(function(data, data2) {
+			
+			// отрисовываем основные данные сущности
+			var html = data.tmpl.render({descriptor:descriptor, tmplName: data2.tmplName, modal_container_id: modalContainerID});
+			
+			// вставляем html в DOM
+			body.innerHTML += html;
+			
+			modalСontainers[modalContainerID] = {
+				dom: document.getElementsById(modalContainerID),
+				data: descriptor
+			};
+			
+			// указываем отдельный контейнер для сущности или скроллера в модалке
+			containers[descriptor.local_data.container_id] = {
+				dom: document.getElementsById(descriptor.local_data.container_id),
+				data: descriptor, parent_container_id: modalContainerID,
+			};
+			
+			afterRenderCallback();
+			
+			initModalScripts(modalContainerID);
+			
+			showModal(modalContainerID);
+		});
+		
+		return {
+			dfd: dfd,
+			container_id: modal_container_id,
+		}
+	}
+	
+	return {
+		initModalScripts: initModalScripts,
+		hideModal: hideModal,
+		showModal: showModal,
+		closeModal: closeModal,
+		renderModal: renderModal,
+	};
+}(app));
 
 /* Грязный хак для мультимодальности Bootstrap
 * Ввзят отсюда: http://www.bootply.com/cObcYInvpq#

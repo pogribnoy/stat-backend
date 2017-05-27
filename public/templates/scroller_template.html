@@ -1,0 +1,160 @@
+<div class="container-fluid">
+	<div class="row">
+		<div class="panel panel-default panel-primary panel-info" id="{{:descriptor.local_data.container_id}}">
+			<div class="panel-heading stat-scroller-header"{{if !(descriptor.notCollapsible == "1")}} data-toggle="collapse" data-target="#{{:descriptor.local_data.container_id}}CollapseDiv{{/if}}">
+				{{:descriptor.title}}
+				{{if !(descriptor.notCollapsible == "1")}}<span class="pull-right "><button type="button" class="btn btn-default btn-xs"><i class="glyphicon glyphicon-minus"></i></button></span>{{/if}}
+			</div><!-- /.panel-heading -->
+			<!--<div class="panel-body"> не используется с таблицей в panel-->
+			{{if !(descriptor.notCollapsible == "1")}}<div id="{{:descriptor.local_data.container_id}}CollapseDiv" class="collapse in">{{/if}}<!---->
+			<!--<div class="panel-body">-->
+				<input hidden="" id="page" value="{{:descriptor.filter_values.page}}">
+				<input hidden="" id="sort" value="{{:descriptor.filter_values.sort}}">
+				<input hidden="" id="order" value="{{:descriptor.filter_values.order}}">
+				<input hidden="" id="page_size" value="{{:descriptor.filter_values.page_size}}">
+				
+				{{if descriptor.columns ~columns=~utilities.objectToArray(descriptor.columns) ~descriptor=descriptor}}
+				<div class="table-responsive"> 
+					<table id="{{:descriptor.local_data.container_id}}" class="table table-striped table-bordered table-hover table-condensed">
+						<thead>
+							{{if descriptor.group_operations.length > 0 || descriptor.common_operations > 0 ~descriptor=descriptor}}
+								<!-- строка общих операций -->
+								<tr>
+									<th colspan="{{:~utilities.getVisibleColumns(~columns)+2}}">
+									<div class="row-fluid"><div class="col-lg-12">
+										<div class="pull-right" role="group" aria-label="...">&nbsp;
+											{{for descriptor.common_operations tmpl="common_operation" /}}
+										
+											{{for descriptor.group_operations}}
+												<div class="btn-group"><button type="button" class="btn btn-xs dropdown-toggle" data-toggle="dropdown">С выбранными<span class="caret"></span></button><ul class="dropdown-menu">{{include tmpl="button_group_delete"/}}</ul></div>
+											{{/for}}
+										</div><!-- /.btn-group -->
+									</div></div>
+									</th>
+								</tr>
+							{{/if}}
+							<!-- строка заголовков -->
+							<tr>
+								{{if descriptor.group_operations.length > 0}}<th>{{if ~descriptor.local_data.select_style == "radio"}}{{else}}<input type="checkbox" name="{{:~descriptor.local_data.container_id}}" class="toggle-all"/>{{/if}}</th>{{/if}}
+								{{for ~columns}}
+									{{if !hidden }}
+										<th{{if hideble}} class="hidden-xs hidden-sm hidden-md"{{/if}}>
+											{{if sortable}}
+												<span onclick="change_sort('{{:~descriptor.local_data.container_id}}', '{{:id}}');"><u>{{:name}}</u></span>
+												{{if id === ~descriptor.filter_values.sort}}
+													<button type="button" class="btn btn-default btn-xs" aria-label="{{:name}}" name="{{:id}}" onclick="change_sort('{{:~descriptor.local_data.container_id}}', '{{:id}}');">
+													{{if ~descriptor.filter_values.order === "DESC"}}
+														<span class="glyphicon glyphicon-sort-by-attributes-alt" aria-hidden="true"></span>
+													{{else}}
+														<span class="glyphicon glyphicon-sort-by-attributes" aria-hidden="true"></span>
+													{{/if}}
+													</button>
+												{{/if}}
+											{{else}}
+												{{:name}}
+											{{/if}}
+										</th>
+									{{/if}}
+								{{/for}}
+							</tr>
+						</thead>
+						<tbody>
+							{{if descriptor.filter_operations && descriptor.filter_operations.length>0}}
+								<!-- строка фильтров -->
+								<tr>
+									{{if descriptor.group_operations.length > 0}}<td class="stat-row-checkbox-td"></td>{{/if}}
+									{{for ~columns}}
+										{{if !hidden }}
+											<td class="{{if hideble}}hidden-xs hidden-sm hidden-md {{/if}}{{if id == 'id'}}stat-id-td{{else id == 'active'}}stat-active-td{{else id == 'operations'}}stat-operations-td{{/if}}">
+												{{if filter}} 
+													{{if filter==='text'}} <input type="text" name="filter_{{:id}}" value="{{:filter_value}}" class="form-control input-sm"/>
+													{{else filter==='number'}} <input type="number" name="filter_{{:id}}" value="{{:filter_value}}"{{if id == "id"}} class="form-control input-sm stat-id-input-field"{{/if}} min="0"/>
+													{{else filter==="email"}} <input type="email" name="filter_{{:id}}" value="{{:filter_value}}" class="form-control input-sm"/>
+													{{else filter==="select"}}
+														{{if filter_values.length>10}}<div class="input-group-sm">{{/if}}
+															<select name="filter_{{if filter_id }}{{:filter_id}}{{else}}{{:id}}{{/if}}" class="form-control input-sm {{if filter_values.length>15}}extended{{/if}}" style="width:100%;">
+																<option value="*" {{if filter_value===""}} selected="selected"{{/if}}></option>
+																{{if nullSubstitute && nullSubstitute != "undefined"}}<option value="**" {{if filter_value=='**'}} selected="selected"{{/if}}>{{:nullSubstitute}}</option>{{/if}}
+																{{if filter_style === "id"}}
+																	{{for filter_values ~filter_value=filter_value}}<option value="{{:id}}" {{if id==~filter_value}}selected="selected"{{/if}}>{{:name}}</option>{{/for}}
+																{{else }}
+																	{{for filter_values ~filter_value=filter_value}}<option value="{{:#data}}" {{if #data==~filter_value}}selected="selected"{{/if}}>{{:#data}}</option>{{/for}}
+																{{/if}}
+															</select>
+														{{if filter_values.length>2}}</div>{{/if}}
+													{{else filter==="bool"}}
+														<select name="filter_{{:id}}" class="form-control input-sm">
+															<option value="*" {{if filter_value == "*" || filter_value == ""}} selected="selected"{{/if}}></option>
+															<option value="1" {{if filter_value == "1"}} selected="selected"{{/if}}>Да</option>
+															<option value="0" {{if filter_value == "0"}} selected="selected"{{/if}}>Нет</option>
+														</select>
+													{{else filter==='period'}} <input type="text" name="filter_{{:id}}" value="{{:filter_value}}" class="form-control input-sm"/>
+													{{/if}}
+												{{else id==="operations"}}
+													{{for ~descriptor.filter_operations tmpl="filter_operation" /}}
+												{{/if}}
+											</td>
+										{{/if}}
+									{{/for}}
+								</tr>
+							{{/if}}
+							
+							<!-- строки с данными -->
+							<!-- добавленные строки -->
+							{{if ~descriptor.local_data.added_items && ~descriptor.local_data.added_items.length>0  }}
+								{{for ~descriptor.local_data.added_items}}
+									<tr class="odd gradeX success{{if ~descriptor.local_data.status=='actual' && fields.id.value != -1}} status-actual{{/if}} {{:fields.id.value}}">
+										{{include tmpl=~descriptor.controllerName+"_row" /}}
+									</tr>
+								{{/for}}
+							{{/if}}	
+							<!-- удаленные строки -->
+							{{if ~descriptor.local_data.deleted_items && ~descriptor.local_data.deleted_items.length>0  }}
+								{{for ~descriptor.local_data.deleted_items }}
+									<tr class="odd gradeX danger">
+										{{include tmpl=~descriptor.controllerName+"_row" /}}
+									</tr>
+								{{/for}}
+							{{/if}}	
+							<!-- стандартные строки -->
+							{{if ~descriptor.items && ~descriptor.items.length>0 }}
+								{{for ~descriptor.items }}
+									<tr class="odd gradeX {{if local_data.status=='edited'}}warning{{/if}}">
+										{{include tmpl=~descriptor.controllerName+"_row" /}}
+									</tr>
+								{{/for}}
+							{{else (!~descriptor.local_data.added_items || ~descriptor.local_data.added_items.length==0) && (!~descriptor.local_data.deleted_items || ~descriptor.local_data.deleted_items.length==0) }}	
+								<!-- если данных нет -->
+								<tr ><td colspan="{{if descriptor.group_operations.length > 0}}{{:~columns.length+2}}{{else}}{{:~columns.length+1}}{{/if}}"><p class="text-center">{{:~utilities.t('text_no_data')}}</p></td></tr>
+							{{/if}}
+						</tbody>
+					</table>
+					</div>
+				{{/if}}
+				<!--</div> /.panel-body -->
+				<div class="panel-footer">
+					<!-- записей на странице -->
+					<span class="pull-right">{{:~utilities.t('text_page_sizes')}}&nbsp;{{include tmpl="page_size" ~descriptor=descriptor /}}</span>
+					{{for descriptor.pager ~descriptor=descriptor }}
+						<nav>
+							<ul class="pagination stat-pager">
+								{{if ~descriptor.filter_values.page>1}}
+									<li onClick="change_page('{{:~descriptor.local_data.container_id}}', {{:~descriptor.filter_values.page}}-1);"><a href="#" aria-label="pager_prev"><span aria-hidden="true">&laquo;</span></a></li>
+								{{else}}
+									<li class="disabled"><span aria-label="Previous"><span aria-hidden="true">&laquo;</span></span></li>
+								{{/if}}
+								<!-- выводим номера страниц -->
+								{{:~utilities.getPagerHtml(~descriptor)}}
+								{{if ~descriptor.filter_values.page<~descriptor.pager.total_pages}}
+									<li onClick="change_page('{{:~descriptor.local_data.container_id}}', {{:~descriptor.filter_values.page}}+1);"><a href="#" aria-label="pager_next"><span aria-hidden="true">&raquo;</span></a></li>
+								{{else}}
+									<li class="disabled"><span aria-label="Next"><span aria-hidden="true">&raquo;</span></span></li>
+								{{/if}}
+							</ul>
+						</nav>
+					{{/for}}
+				</div>
+			{{if !(descriptor.notCollapsible == "1")}}</div>{{/if}} <!--/#{{:descriptor.local_data.container_id}}CollapseDiv -->
+		</div><!-- /.panel -->
+	</div><!-- /.row -->
+</div><!-- /.container-fluid -->

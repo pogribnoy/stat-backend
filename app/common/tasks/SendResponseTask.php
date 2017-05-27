@@ -27,18 +27,42 @@ class SendResponseTask extends Task {
 		foreach($rows as $row) {
 			echo __METHOD__ . '. row id: ' . $row->id . PHP_EOL;
 			$id = $row->id;
+			$expenseTypeName = null;
 			$expenseName = null;
+			$expenseSettlement = null;
+			$expenseStreetTypeName = null;
+			$expenseStreet = null;
+			$expenseHouse = null;
 			$organizationName = null;
-			if($row->expense_id != null && $row->expense_id != '') $expenseName = $row->getExpense()->name;
+			if($row->expense_id != null && $row->expense_id != '') {
+				$expense = $row->getExpense();
+				$expenseName = $expense->name;
+				$expenseSettlement = $expense->settlement;
+				if($expense->street_type_id != null && $expense->street_type_id != '') {
+					$expenseStreetTypeName = $expense->getStreetType()->name;
+				}
+				$expenseStreet = $expense->street;
+				$expenseHouse = $expense->house;
+				if($expense->expense_type_id != null && $expense->expense_type_id != '') {
+					$expenseTypeName = $expense->getExpenseType()->name;
+				}
+			}
 			if($row->organization_id != null && $row->organization_id != '') $organizationName = $row->getOrganization()->name;
 			
 			// отправка письма
 			$msg = 'Ваше обращение № ' . $id . ' обработано' . PHP_EOL . 
 				($organizationName == null ? '' : 'Муниципалитет: ' . $organizationName . PHP_EOL) . 
-				($expenseName == null ? '' : 'Тема: ' . $expenseName . PHP_EOL) . 
+				($expenseTypeName == null ? '' : 'Тема: ' . $expenseTypeName . PHP_EOL) . 
+				($expenseName == null ? '' : 'Наименование расхода: ' . $expenseName . PHP_EOL) . 
+				($expenseSettlement == null ? '' : 'Наименование нас. пункта: ' . $expenseSettlement . PHP_EOL) . 
+				($expenseStreet == null ? '' : 'Улица: ' . ($expenseStreetTypeName == null ? '' : mb_strtolower($expenseStreetTypeName) . ' ') . $expenseStreet . PHP_EOL) . 
+				($expenseHouse == null ? '' : 'Дом, стр.: ' . $expenseHouse . PHP_EOL) . PHP_EOL .
+				
 				'Вопрос: ' . $row->request . PHP_EOL . 
 				'Ответ: ' . $row->response . PHP_EOL . 
+				'Дата: ' . $curDate->format("Y-m-d H:i:s") . PHP_EOL . 
 				PHP_EOL . PHP_EOL . 'Письмо сформировано автоматически, не пытайтесь ответить на него.';
+			$msgAlt = $msg;
 			
 			$res = false;
 			$res = $this->email->sendEmail(['email' => $row->response_email, 'name' => ''], 'Ваше обращение (id=' . $id . ') обработано', $msg, $msgAlt);

@@ -1,5 +1,7 @@
+var app = {};
 var containers = {};
 var entities = {};
+//var dbg = 0;
 
 $(document).ready(function() {
 	$.views.settings.debugMode(true); // DEBUG
@@ -21,7 +23,7 @@ $(document).ready(function() {
 		},
 	});
 	
-	if (typeof descriptor !== 'undefined') {
+	if (typeof descriptor != 'undefined') {
 		console.log(descriptor);
 		// если разбираем данные сущности
 		if (descriptor.type == 'entity') {
@@ -34,11 +36,14 @@ $(document).ready(function() {
 			initEntityScrollers(entity);
 			
 			// рисуем сущность
-			var container_id = renderEntity(entity);
-			
-			// рисуем  скроллеры сущности
-			renderEntityScrollers(entity);
-			initEntityScripts(container_id);
+			var renderData = renderEntity(entity);
+			renderData.dfd.done(function(data){
+				var container_id = renderData.container_id;
+				
+				// рисуем  скроллеры сущности
+				renderEntityScrollers(entity);
+				initEntityScripts(container_id);
+			});
 		}
 		else if(descriptor.type == 'scroller') {
 			// присваиваем идентификаторы скролеру
@@ -48,7 +53,7 @@ $(document).ready(function() {
 			saveScrollerItems(descriptor);
 			
 			// рисуем  скроллер
-			renderScroller(descriptor, true);
+			var renderData = renderScroller(descriptor, true);
 		}
 	}
 	
@@ -92,18 +97,21 @@ $(document).ready(function() {
 		'</div>'
 	});
 	*/
-	Dropzone.autoDiscover = false;
-	/*Dropzone.options.field_img2 = {
-	paramName: "file", // The name that will be used to transfer the file
-	maxFilesize: 2, // MB
-	clickable: true,
-	accept: function(file, done) {
-		if (file.name == "justinbieber.jpg") {
-			done("Naha, you don't.");
-		}
-		else { done(); }
-	  }
-	};*/
+	if(typeof Dropzone != 'undefined') {
+		Dropzone.autoDiscover = false;
+		/*Dropzone.options.field_img2 = {
+		paramName: "file", // The name that will be used to transfer the file
+		maxFilesize: 2, // MB
+		clickable: true,
+		accept: function(file, done) {
+			if (file.name == "justinbieber.jpg") {
+				done("Naha, you don't.");
+			}
+			else { done(); }
+		  }
+		};*/
+	}
+	
 });
 
 /* Инициализирует скроллеры сущности
@@ -144,41 +152,74 @@ function renderEntity(descriptor) {
 		containers[container_id] = {jqobj: $("#entity_form_placeholder"), data: descriptor};
 	} 
 	
-	// отрисовываем основные данные сущности
-	var tmpl = $.templates("#"+getTemplateName(descriptor));
-	// отрисовываем
-	var html = tmpl.render({descriptor:descriptor});
-	
-	// вставляем отрисованную сущность на место метки
-	containers[container_id].jqobj.html(html);
-	return container_id
+	return {
+		dfd: $.when(getTemplate(descriptor)).done(function(data) {
+		
+			// отрисовываем основные данные сущности
+			var html = data.tmpl.render({descriptor:descriptor});
+			
+			// вставляем отрисованную сущность на место метки
+			containers[container_id].jqobj.html(html);
+		}),
+		container_id: container_id,
+	}
 }
 
 function renderEntityScrollers(descriptor) {
 	// обрабатываем скроллеры сущности, если они есть
-	for (var key in descriptor.scrollers) {
-		renderScroller(descriptor.scrollers[key]);
-		containers[descriptor.scrollers[key].local_data.container_id].parent_container_id = descriptor.local_data.container_id;
+	var dfd, key;
+	
+	for (key in descriptor.scrollers) {
+		dfd = renderScroller(descriptor.scrollers[key], false);
+		
+		dfd.done(function(data){
+			containers[data.containerID].parent_container_id = descriptor.local_data.container_id;
+		});
 	}
 }
 
 function renderScroller(descriptor, isRoot) {
 	// обновляем описатель скроллера
-	var container_id = descriptor.local_data.container_id;
-
-	var tmpl = $.templates("#"+getTemplateName(descriptor));
-	var html = tmpl.render({descriptor:descriptor});
+	var container_id = descriptor.local_data.container_id,
+		deferred = $.Deferred();
 	
-	// если для скроллера еще не был создан контейнер (первая отрисовка)
-	if(!containers[container_id]) {
-		// создаем контейнер для сущности
-		if(isRoot) containers[container_id] = {jqobj: $("#scroller_form_placeholder"), data: descriptor};
-		else containers[container_id] = {jqobj: $("#placeholder_" + container_id), data: descriptor};
-	} 
+	/*return {
+		dfd: $.when(getTemplate(descriptor)).done(function(data) {
+			
+			var html = data.tmpl.render({descriptor:descriptor});
+			
+			// если для скроллера еще не был создан контейнер (первая отрисовка)
+			if(!containers[container_id]) {
+				// создаем контейнер для сущности
+				if(isRoot) containers[container_id] = {jqobj: $("#scroller_form_placeholder"), data: descriptor};
+				else containers[container_id] = {jqobj: $("#placeholder_" + container_id), data: descriptor};
+			} 
+			
+			containers[container_id].jqobj.html(html); 
+			
+			initScrollerScripts(container_id);
+		}),
+		container_id: container_id,
+	}*/
 	
-	containers[container_id].jqobj.html(html); 
+	$.when(getTemplate(descriptor)).done(function(data) {
+			
+		var html = data.tmpl.render({descriptor:descriptor});
+		
+		// если для скроллера еще не был создан контейнер (первая отрисовка)
+		if(!containers[container_id]) {
+			// создаем контейнер для сущности
+			if(isRoot) containers[container_id] = {jqobj: $("#scroller_form_placeholder"), data: descriptor};
+			else containers[container_id] = {jqobj: $("#placeholder_" + container_id), data: descriptor};
+		} 
+		
+		containers[container_id].jqobj.html(html); 
+		
+		initScrollerScripts(container_id);
+		deferred.resolve({dfd: deferred, containerID: container_id});
+	});
 	
-	initScrollerScripts(container_id);
+	return deferred.promise();
 }
 
 function saveScrollerItems(descriptor) {
@@ -487,22 +528,92 @@ function saveCustomTemplate(descriptor){
 /* Проверяет, есть ли специализированный шаблон для отрисовки и берет его. Если нет, то берет стандартный
 * @descriptor - описатель, для которого необходимо проверить наличие пециализированного шаблона
 */
-function getTemplateName(descriptor) {
+/*function getTemplateName(descriptor) {
 	if(descriptor) {
-		var tmplName = descriptor.controllerName + "_template";
+		var tmplName = descriptor.entityNameLC + "_template";
 		var tmpl= $.templates("#" + tmplName);
 	
 		// если специализированного шаблона нет, то берем стандартный
-		if(!tmpl.tmplName) {
-			tmplName = "entity_template";
-			if(descriptor.controllerName.indexOf("list") > -1) tmplName = "scroller_template";
-			//else tmplName = "entity_template";
+		if(!$.templates[tmplName]) {
+			if(descriptor.controllerName.indexOf("list") > -1) tmplName = "1scroller_template";
+			else tmplName = "entity_template";
 		}
 		return tmplName;
 	}
 	else console.log("Запрошено создание шаблона для несуществующего дескриптора");
 	return null;
+}*/
+
+function getTemplateByName(tmplName) {
+	var deferred = $.Deferred();
+	if(!$.templates[tmplName]) {
+			// получаем шаблон с сервера
+		$.get('../../templates/' + tmplName + '.html', function (data, textStatus, jqXHR) {
+			//console.log(data);
+			$.templates(tmplName, data);
+		}).done(function() {
+			deferred.resolve({tmplName: tmplName, tmpl: $.templates[tmplName]});
+		}).fail(function() {
+			deferred.reject();
+		});
+	}
+	else deferred.resolve({tmplName: tmplName, tmpl: $.templates[tmplName]});
+	
+	return deferred.promise();
 }
+
+function getTemplate(descriptor) {
+	var deferred = $.Deferred();
+	if(descriptor) {
+		var tmplName;
+		// если предусмотрен специфичный шаблон
+		if(descriptor.templateName) {
+			// проверка на существование шаблонов в виде блоков скриптов
+			var tmpl = $.templates("#" + descriptor.templateName);
+			
+			if($.templates[descriptor.templateName]) deferred.resolve({tmplName: descriptor.templateName, tmpl: $.templates[descriptor.templateName]});
+			else if(tmpl.tmplName) deferred.resolve({tmplName: descriptor.templateName, tmpl: $.templates("#" + descriptor.templateName)});
+			else {
+				// получаем шаблон с сервера
+				$.get('../../templates/' + descriptor.templateName + '.html', function (data, textStatus, jqXHR) {
+					//console.log(data);
+					$.templates(descriptor.templateName, data);
+				}).done(function() {
+					deferred.resolve({tmplName: descriptor.templateName, tmpl: $.templates[descriptor.templateName]});
+				}).fail(function() {
+					deferred.reject();
+				});
+			}
+		}
+		else {
+			// если специализированного шаблона нет, то берем стандартный
+			if(descriptor.controllerNameLC.indexOf("list") > -1) tmplName = "scroller_template";
+			else tmplName = "entity_template";
+			
+			// проверка на существование шаблонов в виде блоков скриптов
+			var tmpl = $.templates("#" + tmplName);
+			
+			// стандартный шаблон еще не был загружен
+			if($.templates[tmplName]) deferred.resolve({tmplName: tmplName, tmpl: $.templates[tmplName]});
+			else if(tmpl.tmplName) deferred.resolve({tmplName: tmplName, tmpl: $.templates("#" + tmplName)});
+			else {
+				// получаем шаблон с сервера
+				$.get('../../templates/' + tmplName + '.html', function (data, textStatus, jqXHR) {
+					//console.log(data);
+					$.templates(tmplName, data);
+				}).done(function() {
+					deferred.resolve({tmplName: tmplName, tmpl: $.templates[tmplName]});
+				}).fail(function() {
+					deferred.reject();
+				});
+			}
+		}
+	}
+	else deferred.reject();
+	
+	return deferred.promise();
+}
+
 
 /* Открывает модалку со скроллером для заполнения поля/грида/скроллера
 * @container_id - контейнер, в котором размещено поле/грид/скроллер
@@ -579,21 +690,6 @@ function link_entity(container_id, controllerName, field_id, select_style) {
 			if(!handleAjaxError(json.error)) {
 				//var descriptor = json;
 				var descriptor = copyDescriptor(json);
-				/*
-				// инициализируем локальные данные
-				descriptor.local_data = {
-					udid: createID(),
-					select_style: this.data.local_data.selectTarget.select_style
-				}
-				createUDID(descriptor);
-				
-				// сохраняем сущности скроллера, при наличии записей в скроллере
-				if(descriptor.items) {
-					var descriptor_items_length = descriptor.items.length;
-					for (var i = 0; i<descriptor_items_length; i++) {
-						descriptor.items[i] = copyServerEntityDataToEntities(descriptor.items[i], descriptor.entity);
-					}
-				}*/
 				
 				initScroller(descriptor);
 				descriptor.local_data.select_style = this.data.local_data.selectTarget.select_style;
@@ -606,10 +702,11 @@ function link_entity(container_id, controllerName, field_id, select_style) {
 				saveScrollerItems(descriptor);
 							
 				// рисуем модалку
-				var modal_container_id = renderModal(descriptor, this);
-				
-				// показываем модалку
-				showModal(modal_container_id);
+				var renderData = renderModal(descriptor, this);
+				renderData.dfd.done(function(data){
+					// показываем модалку
+					showModal(renderData.container_id);
+				});
 			}
 		}).bind(container),
 		error: function(xhr, ajaxOptions, thrownError) {
@@ -830,7 +927,7 @@ function initEntityScripts(container_id) {
 					dictFileTooBig: "Файл имеет размер: {{filesize}}. Максимально допустимый размер: {{maxFilesize}}",
 					dictRemoveFile: "Удалить",
 					dictMaxFilesExceeded: "Выбрано максимальное количество фалов",
-					previewTemplate: '<div class="dz-preview dz-file-preview col-lg-3"><img data-dz-thumbnail class="img-thumbnail center-block"/><div class="text-center"><!--<span data-dz-name>--></span><button data-dz-remove class="btn btn-danger delete btn-xs"><i class="glyphicon glyphicon-trash"></i><span> Удалить</span></button></div><div class="bg-danger"><span data-dz-errormessage></span></div></div>',
+					previewTemplate: '<div class="dz-preview dz-file-preview col-lg-3"><p><img data-dz-thumbnail class="img-thumbnail center-block"/></p><p class="text-center"><button data-dz-remove class="btn btn-danger delete btn-xs"><i class="glyphicon glyphicon-trash"></i><span> Удалить</span></button></p><div class="bg-danger"><span data-dz-errormessage></span></div></div>',
 				};
 				
 				
@@ -990,6 +1087,7 @@ function initEntityScripts(container_id) {
 }
 function onloadCallback() {
 	console.log("grecaptcha is ready!");
+	//dbg = 1;
 }
 
 /* Отображает уведомления об ошибках
@@ -1175,4 +1273,13 @@ function checkPasswordEq(ctrl, fieldID) {
 		result.show();
 		return false;
 	}
+}
+
+function t(text) {
+	t = {
+		text_no_data: 'Нет данных для отображения',
+		text_page_sizes: 'Показывать по',
+	};
+	if(t[text]) return t[text];
+	else return text;
 }

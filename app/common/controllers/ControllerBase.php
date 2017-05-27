@@ -56,7 +56,8 @@ class ControllerBase extends Controller {
 		$this->view->setTemplateAfter('index');
 		
 		$this->filter = new Filter();
-		$this->viewCacheKey = $this->controllerName . "_" . $this->actionName . ".html";
+		$this->viewCacheKey = $this->controllerNameLC . "_" . $this->actionNameLC . ".html";
+		//$this->logger->log(__METHOD__ . '. viewCacheKey = ' . $this->viewCacheKey);
 	}
 	
 	public function beforeExecuteRoute($dispatcher){

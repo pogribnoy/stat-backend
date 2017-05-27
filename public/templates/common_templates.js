@@ -63,10 +63,14 @@ organizationrequestlist_row: '{{include tmpl="scroller_row" /}}',
 
 /*** Шаблоны сущностей ***/
 // кнопки формы
-operation: '{{if id==="save" tmpl="entity_button_save"}}{{else id==="delete" tmpl="entity_button_delete"}}{{else id==="check" tmpl="entity_button_check"}}{{/if}}\n',
+operation: '{{if id==="save" tmpl="entity_button_save"}}\
+{{else id==="delete" tmpl="entity_button_delete"}}\
+{{else id==="password_print" tmpl="entity_button_password_print"}}\
+{{else id==="check" tmpl="entity_button_check"}}{{/if}}\n',
 entity_button_save: '<button type="button" class="btn btn-success" aria-label="{{:name}}" name="{{:id}}{{:~descriptor.local_data.eid}}" onclick="entitySave(\'{{:~descriptor.local_data.container_id}}\');">{{:name}}</button>\n',
 entity_button_delete: '<button type="button" class="btn btn-danger" aria-label="{{:name}}" name="{{:id}}{{:~descriptor.local_data.eid}}" onclick="entityDelete(\'{{:~descriptor.local_data.container_id}}\', \'{{:~descriptor.local_data.eid}}\');">{{:name}}</button>\n',
 entity_button_check: '<button type="button" class="btn" aria-label="{{:name}}" name="{{:id}}{{:~descriptor.local_data.eid}}" onclick="entityCheckOnly(\'{{:~descriptor.local_data.container_id}}\', \'{{:~descriptor.local_data.eid}}\');">{{:name}}</button>\n',
+entity_button_password_print: '<button type="button" class="btn" aria-label="{{:name}}" name="{{:id}}{{:~descriptor.local_data.eid}}" onclick="passwordPrint(\'{{:~descriptor.local_data.container_id}}\');">{{:name}}</button>\n',
 
 // поля порм
 entity_fields_form: '<div class="form-horizontal">{{if descriptor.fields ~fields=~utilities.objectToArray(descriptor.fields) ~descriptor=descriptor}}{{for ~fields}}{{if !(access && access == "hidden") }}<div class="form-group" name="field_{{:id}}">\
@@ -183,6 +187,7 @@ $.views.helpers({
 		return count;
 	},
 	checksHasError: checksHasError,
+	t: t,
   }
 });
 

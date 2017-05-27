@@ -61,7 +61,14 @@
 		</div><!-- /.navbar-collapse -->
 		<ul class="nav navbar-nav navbar-right">
 			<li>
-				<p class="navbar-text"><?php if(isset($controller->userData['name'])) { echo $controller->userData['name']; ?> (<a href="/session/end" class="navbar-link"><?php echo $t->_("main_menu_exit_link"); ?></a>)<?php }else echo "Гость"; ?></p>
+				<p class="navbar-text">
+					<?php if(isset($controller->userData['name'])) { 
+						echo $controller->userData['name']; ?> (<a href="/session/end" class="navbar-link"><?php echo $t->_("main_menu_exit_link"); ?></a>)
+						<?php if(isset($controller->userData['email']) && mb_strpos(mb_strtolower($controller->userData['email']), "@" . $controller->config->application->host)) {  ?>
+							<a href="https://mail.yandex.ru/?pdd_domain=<?php echo $controller->config->application->host; ?>" class="navbar-link"><?php echo "Перейти в почту"; ?></a>
+						<?php } ?>
+					<?php } else echo "Гость"; ?>
+				</p>
 			</li>
 		</ul>
 	</div><!-- /.container-fluid -->

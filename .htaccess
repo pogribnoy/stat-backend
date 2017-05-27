@@ -1,5 +1,6 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    RewriteRule ^e55d8a40b3f5.html$ public/e55d8a40b3f5.html     [L]
     RewriteRule ^$ public/     [L]
     RewriteRule (.*) public/$1 [L]
 </IfModule>

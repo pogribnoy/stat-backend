@@ -9,6 +9,7 @@ class SessionController extends ControllerBase {
         $this->session->set('auth', array(
             'id' => $user->id,
             'name' => $user->name,
+            'email' => $user->email,
 			'sessionLastUpdate' => new DateTime('now'),
         ));
     }

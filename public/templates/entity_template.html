@@ -1,0 +1,29 @@
+<!--<br>templates\form_template-->
+<div class="container-fluid" id="{{:descriptor.local_data.container_id}}"><!---->
+	<div class="row-fluid">
+		<div class="col-lg-12">
+			<div class="pull-right">
+				{{if !~inModal}}
+					{{if descriptor.operations ~descriptor=descriptor}}
+						{{for descriptor.operations tmpl="operation" /}}
+					{{/if}}
+					<button type="button" class="btn btn-default" data-dismiss="modal" onclick="hideModal('{{:descriptor.local_data.container_id}}');">Отмена</button>
+				{{/if}}
+			</div><!-- /.pull-right -->
+		</div><!-- /.col -->
+	</div><!-- /.row -->
+	<div class="row">
+		<div class="col-lg-12">
+			{{include tmpl = "entity_fields_form" /}}
+			
+			{{if descriptor.scrollers ~scrollers=~utilities.objectToArray(descriptor.scrollers)}}
+				{{for ~scrollers }}
+					<div class="row-fluid">
+						<div id="placeholder_{{:local_data.container_id}}"></div>
+					</div><!-- /.row -->
+					<!--<p>placeholder_{{:type}}_{{:controllerName}}_{{:udid}}</p>-->
+				{{/for}}
+			{{/if}}
+		</div><!-- /.col -->
+	</div><!-- /.row -->
+</div><!-- /.container-fluid -->

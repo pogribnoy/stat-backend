@@ -21,16 +21,22 @@ class ControllerEntity extends ControllerBase {
 	public $entity = false;
 	
 	// поля сущности, включая и связанные данные
-	protected $fields;
+	protected $fields = null;
 	
 	// операции, достыпные для сущности
-	protected $operations;
+	protected $operations = null;
+	
+	// операции, которые по тем или иным причинам не должны быть доступны для сущности
+	protected $exludeOps = null;
 	
 	// скроллеры сущности
-	protected $scrollers;
+	protected $scrollers = null;
 	
 	// описатель скроллера
-	public $descriptor;
+	public $descriptor = null;
+	
+	// шаблон по умолчанию
+	public $templateName = "entity_template";
 	
 	public function initialize() {
 		parent::initialize();
@@ -485,13 +491,12 @@ class ControllerEntity extends ControllerBase {
 	protected function fillOperations() {
 		// добавляем действия, доступные пользователям с разными ролями
 		// формируем список действий, который не должен быть доступен
-		$exludeOps = $this->getExludeOps();
+		$this->getExludeOps();
 		
 		// получаем действия, доступные пользователю
 		// TODO. Вроде tools и так внедрен, как сервис
-		//$this->tools = Phalcon\DI::getDefault()->getTools();
 		//$this->logger->log(__METHOD__ . ". actionName1: " . json_encode($this->actionName));
-		$this->operations = $this->getEntityFormOperations($this, $exludeOps, $this->actionName);
+		$this->getEntityFormOperations();
 		//$this->logger->log(__METHOD__ . ". actionName2: " . json_encode($this->actionName));
 	}
 	
@@ -499,12 +504,18 @@ class ControllerEntity extends ControllerBase {
 	* Предоставляет массив операций для сущности, которые надо исключить
 	*/
 	protected function getExludeOps() {
-		$exludeOps[] = array();
+		if($this->exludeOps == null) $this->exludeOps[] = array();
+		
 		// если запрошена пустая сущность, то не нужна операция удаления
-		if($this->filter_values["id"] == "") {
-			$exludeOps[] = 'delete';
+		if($this->filter_values["id"] == null || $this->filter_values["id"] == "") {
+			$this->exludeOps[] = 'delete';
 		}
-		return $exludeOps;
+		
+		// если запрошен просмотр, то надо убрать остальные операции с сущностью
+		if($this->actionNameLC == "show") {
+			$this->exludeOps[] = "edit";
+			$this->exludeOps[] = "delete";
+		}
 	}
 	
 	/* 
@@ -514,6 +525,7 @@ class ControllerEntity extends ControllerBase {
 		//$this->logger->log(json_encode($this->fields["name"]));
 		$this->descriptor = [
 			"controllerName" => $this->controllerNameLC,
+			"controllerNameLC" => $this->controllerNameLC,
 			"entityNameLC" => $this->entityNameLC,
 			"entityName" => $this->entityName,
 			"type" => "entity",
@@ -527,6 +539,7 @@ class ControllerEntity extends ControllerBase {
 			'data' => $this->data,
 			'actionName' => $this->actionName,
 		];
+		if(isset($this->templateName)) $this->descriptor['templateName'] = $this->templateName;
 		if(!$this->request->isAjax()) $this->view->page_header = $this->descriptor['title'];
 		//$this->logger->log(__METHOD__ . 'fields_id = ' . json_encode($this->descriptor['fields']['id']));
 		//$this->logger->log(__METHOD__ . 'title = ' . $this->descriptor['title']);
@@ -1209,10 +1222,11 @@ class ControllerEntity extends ControllerBase {
 				//$this->logger->log(__METHOD__ . ". fieldID = " . $fieldID . ". value_id = " . $field['value_id']);
 				if(isset($this->rq->fields->$fieldID) && isset($this->rq->fields->$fieldID->value_id)) {
 					// выбрано не пустое значение 
-					if($this->rq->fields->$fieldID->value_id != '*' && $this->rq->fields->$fieldID->value_id != '') {
-						$field['value_id'] = $this->filter->sanitize($this->rq->fields->$fieldID->value_id, ['trim', "int"]);
+					if($this->rq->fields->$fieldID->value_id != '') {
+						if($this->rq->fields->$fieldID->value_id == '*') $field['value_id'] = '*';
+						else $field['value_id'] = $this->filter->sanitize($this->rq->fields->$fieldID->value_id, ['trim', "int"]);
 						//$this->logger->log(__METHOD__ . ". fieldID = " . $fieldID . ". value_id = " . $field['value_id']);
-						if($field['value_id']=='') $field['value_id'] = null;
+						if($field['value_id'] == '' || $field['value_id'] == '*') $field['value_id'] = null;
 						else {
 							// если select style=id
 							if($field['type'] == 'select' && isset($field['style']) && $field['style'] == "id") {
@@ -1233,7 +1247,7 @@ class ControllerEntity extends ControllerBase {
 					else {
 						$this->error['messages'][] = [
 							'title' => $this->t->_("msg_error_title"),
-							'msg' => $this->t->_("msg_check_field_invalid_value", ['field_name' => $field['name']]) . '. value_id=' . $field['value_id'] . ', rq_id=' . $this->rq->fields->$fieldID->value_id,
+							'msg' => $this->t->_("msg_check_field_invalid_value", ['field_name' => $field['name']]) . '. value_id2=' . $field['value_id'] . ', rq_id2=' . $this->rq->fields->$fieldID->value_id,
 						];
 					}
 					
@@ -1596,48 +1610,37 @@ class ControllerEntity extends ControllerBase {
 	}
 
 	// операции
-	public function getEntityFormOperations($controller, $exludeOps = null, $actionName="show") {
-		$controllerNameLC = $controller->controllerNameLC;
-		$role_id = $controller->userData['role_id'];
-		$acl = $controller->acl;
-		$t = $controller->t;
+	protected function getEntityFormOperations() {
+		$exludeOps = $this->exludeOps;
+		$controllerNameLC = $this->controllerNameLC;
+		$userRoleID = $this->userData['role_id'];
+		$acl = $this->acl;
+		$t = $this->t;
 		
-		//$entity = strtolower($entity);
-		$operations = array();
-		if(!$exludeOps) $exludeOps = array();
-		
-		// если запрошен просмотр, то надо убрать остальные операции с сущностью
-		if($actionName == "show") {
-			$exludeOps[] = "edit";
-			//$exludeOps[] = "send";
-			$exludeOps[] = "delete";
-		}
+		if($this->operations == null) $this->operations = array();
 		
 		// редактирование должно быть доступным, если доступно редактирование самой сущности или ее скроллеров
 		if(!in_array('edit', $exludeOps)) {
 			$editAllowed = false;
 			// кнопки "Сохранить" и "Проверить"
-			//$controller->logger->log(__METHOD__ . ". role_id = " . $role_id . ". controllerNameLC = " . $controllerNameLC);
-			if($acl->isAllowed($role_id, $controllerNameLC, 'edit')) {
-				$editAllowed = true;
-				//$controller->logger->log(__METHOD__ . ". test2");
-			}
+			//$controller->logger->log(__METHOD__ . ". userRoleID = " . $userRoleID . ". controllerNameLC = " . $controllerNameLC);
+			if($acl->isAllowed($userRoleID, $controllerNameLC, 'edit')) $editAllowed = true;
 			// проверяем скроллеры
 			else if(isset($controller->scrollers)) {
 				foreach($controller->scrollers as $scrollerNameLC => $scroller) {
 					//$controller->logger->log(__METHOD__ . ". scrollers: " .  $controllerNameLC . "_" . $scrollerNameLC);
-					if($acl->isAllowed($role_id, $controllerNameLC . "_" . $scrollerNameLC, 'edit')) {
+					if($acl->isAllowed($userRoleID, $controllerNameLC . "_" . $scrollerNameLC, 'edit')) {
 						$editAllowed = true;
 						break;
 					}
 				}
 			}
 			if($editAllowed) {
-				$operations[] = array(
+				$this->operations[] = array(
 					'id' => 'save',
 					'name' => $t->_('button_save'),
 				);
-				$operations[] = array(
+				$this->operations[] = array(
 					'id' => 'check',
 					'name' => $t->_('button_check'),
 				);
@@ -1645,13 +1648,11 @@ class ControllerEntity extends ControllerBase {
 		}
 		
 		// кнопка "Удалить"
-		if($acl->isAllowed($role_id, $controllerNameLC, 'delete') && !in_array('delete', $exludeOps)) {
-			$operations[] = array(
+		if($acl->isAllowed($userRoleID, $controllerNameLC, 'delete') && !in_array('delete', $exludeOps)) {
+			$this->operations[] = array(
 				'id' => 'delete',
 				'name' => $t->_('button_delete'),
 			);
 		}
-		
-		return $operations;
 	}
 }

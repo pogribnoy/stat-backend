@@ -3,6 +3,8 @@ class OrganizationController extends ControllerEntity {
 	public $entityName  = 'Organization';
 	public $tableName  = 'organization';
 	
+	public $templateName = 'organization';
+	
 	protected function initScrollers() {
 		$this->scrollers = [
 			'userlist' => [
