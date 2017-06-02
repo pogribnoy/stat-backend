@@ -2,8 +2,9 @@
 error_reporting(E_ALL);
 use Phalcon\Mvc\Application;
 
-//$_GET['_url'] = '/contact/send';
-//$_SERVER['REQUEST_METHOD'] = 'POST';
+//define('PROFILE', TRUE);
+
+if(defined('PROFILE')) xhprof_enable(XHPROF_FLAGS_CPU + XHPROF_FLAGS_MEMORY);
 
 try {
 
@@ -40,4 +41,17 @@ try {
 
 } catch (Exception $e){
 	echo $e->getMessage();
+}
+
+if(defined('PROFILE')) {
+	$xhprof_data = xhprof_disable('/tmp');
+
+	$XHPROF_ROOT = "/var/www/xhprof/";
+	include_once $XHPROF_ROOT . "/xhprof_lib/utils/xhprof_lib.php";
+	include_once $XHPROF_ROOT . "/xhprof_lib/utils/xhprof_runs.php";
+
+	$xhprof_runs = new XHProfRuns_Default();
+	$run_id = $xhprof_runs->save_run($xhprof_data, "backend");
+
+	//echo "http://178.215.86.165:83/index.php?run={$run_id}&source=backend\n";
 }

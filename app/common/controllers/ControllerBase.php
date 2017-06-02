@@ -75,7 +75,7 @@ class ControllerBase extends Controller {
 		$this->language = $this->request->getBestLanguage();
 		
 		$this->translator = DI::getDefault()->getTranslator();
-		$this->t = $this->translator->getTranslation($this->language, $this->controllerNameLC);
+		$this->t = $this->translator->getTranslation($this->language/*, $this->controllerNameLC*/);
 		
 		if(!$this->request->isAjax()) {
 			// передаем данные, зависящие от пути, в представление
@@ -142,5 +142,13 @@ class ControllerBase extends Controller {
 		//$this->logger->log(__METHOD__ . ". resource = " . $this->controllerNameLC . "_field_" . $field['id'] . ". access = " . $field['access']);
 		if(isset($field["access"]) && $field["access"] == $this::editAccess) return true;
 		return false;
+	}
+	
+	protected function createButtonDescriptor($id) {
+		return [
+			'id' => $id,
+			'name' => $this->controller->t->_('button_' . $id),
+			'title' => $this->controller->t->exists('button_' . $id . '_title') ? $this->controller->t->_('button_' . $id . '_title') : null,
+		];
 	}
 }

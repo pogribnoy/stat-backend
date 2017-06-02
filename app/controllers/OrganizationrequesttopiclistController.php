@@ -17,22 +17,18 @@ class OrganizationrequesttopiclistController extends ControllerList {
 			'id' => array(
 				'id' => 'id',
 				'name' => $this->controller->t->_("text_entity_property_id"),
-				'type' => 'number',
 				'filter' => 'number',
-				'filter_value' => isset($this->filter_values['id']) ? $this->filter_values['id'] : '',
-				"sortable" => "DESC"
+				"sortable" => "DESC",
 			),
 			'name' => array(
 				'id' => 'name',
 				'name' => $this->controller->t->_("text_entity_property_name"),
-				'type' => 'text',
 				'filter' => 'text',
-				'filter_value' => isset($this->filter_values['name']) ? $this->filter_values['name'] : '',
-				"sortable" => "DESC"
+				"sortable" => "DESC",
 			),
 			'operations' => array(
 				'id' => 'operations',
-				'name' => $this->controller->t->_("text_entity_property_actions")
+				'name' => $this->controller->t->_("text_entity_property_actions"),
 			)
 		);
 	}

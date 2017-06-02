@@ -38,10 +38,6 @@ class ControllerEntity extends ControllerBase {
 	// шаблон по умолчанию
 	public $templateName = "entity_template";
 	
-	public function initialize() {
-		parent::initialize();
-	}
-	
 	/* 
 	* Используется при открытии сущности на просмотр/редактирование, когда непонятно, какие права на нее имеются
 	*/
@@ -475,17 +471,6 @@ class ControllerEntity extends ControllerBase {
 	}
 	
 	/* 
-	* Предоставляет текст шаблона для рисования сущности, если он есть
-	*/
-	protected function getTmpl() {
-		// передаем шаблон, если он есть
-		$tmplFileName = APP_PATH . $this->config->application->templatesDir . $this->controllerNameLC . ".phtml";
-		//$this->logger->log(json_encode($tmplFileName));
-		if (file_exists($tmplFileName)) return file_get_contents($tmplFileName);
-		else return null;
-	}
-	
-	/* 
 	* Наполняет массив доступных операций для сущности
 	*/
 	protected function fillOperations() {
@@ -523,27 +508,59 @@ class ControllerEntity extends ControllerBase {
 	*/
 	protected function createDescriptorObject() {
 		//$this->logger->log(json_encode($this->fields["name"]));
+		$fields = [];
+		foreach($this->fields as $columnID => $field) {
+			$publicField = [
+				'id' => $field['id'],
+				'name' => $field['name'],
+			];
+			if(isset($field['name1'])) $publicField['name1'] = $field['name1'];
+			if(isset($field['name2'])) $publicField['name2'] = $field['name2'];
+			if(isset($field['value'])) $publicField['value'] = $field['value'];
+			if(isset($field['values'])) $publicField['values'] = $field['values'];
+			if(isset($field['value1'])) $publicField['value1'] = $field['value1'];
+			if(isset($field['value2'])) $publicField['value2'] = $field['value2'];
+			if(isset($field['value_id'])) $publicField['value_id'] = $field['value_id'];
+			if(isset($field['type'])) $publicField['type'] = $field['type'];
+			if(isset($field['style'])) $publicField['style'] = $field['style'];
+			if(isset($field['required'])) $publicField['required'] = $field['required'];
+			if(isset($field['min'])) $publicField['min'] = $field['min'];
+			if(isset($field['max'])) $publicField['max'] = $field['max'];
+			if(isset($field['min_count'])) $publicField['min_count'] = $field['min_count'];	// используется в изображениях организации
+			if(isset($field['max_count'])) $publicField['max_count'] = $field['max_count'];	// используется в изображениях организации
+			if(isset($field['files'])) $publicField['files'] = $field['files'];	// используется в изображениях организации
+			if(isset($field['nullSubstitute'])) $publicField['nullSubstitute'] = $field['nullSubstitute'];
+			if(isset($field['access'])) $publicField['access'] = $field['access'];
+			
+			// TODO. На клиенте испольщуется только в полях link. Надо убрать
+			if(isset($field['controllerName'])) $publicField['controllerName'] = $field['controllerName'];
+			if(isset($field['field'])) $publicField['field'] = $field['field'];
+			
+			$fields[$columnID] = $publicField;
+		}
+		
 		$this->descriptor = [
 			"controllerName" => $this->controllerNameLC,
 			"controllerNameLC" => $this->controllerNameLC,
 			"entityNameLC" => $this->entityNameLC,
 			"entityName" => $this->entityName,
 			"type" => "entity",
-			"fields" => $this->fields,
+			"fields" => $fields,
 			"scrollers" => $this->scrollers,
 			"operations" => $this->operations,
 			"filter_values" => $this->filter_values,
 			"title" => (isset($this->fields["name"]) && $this->fields["name"]["value"] != '') ? $this->fields["name"]["value"] : 
 				(($this->fields["id"]['value'] == '-1') ? $this->t->_("text_" . $this->controllerNameLC . "_new_entity_title") : $this->t->_("text_" . $this->controllerNameLC . "_title")),
-			"template" => $this->getTmpl(),
+			//"template" => $this->getTmpl(),
 			'data' => $this->data,
 			'actionName' => $this->actionName,
 		];
 		if(isset($this->templateName)) $this->descriptor['templateName'] = $this->templateName;
 		if(!$this->request->isAjax()) $this->view->page_header = $this->descriptor['title'];
-		//$this->logger->log(__METHOD__ . 'fields_id = ' . json_encode($this->descriptor['fields']['id']));
-		//$this->logger->log(__METHOD__ . 'title = ' . $this->descriptor['title']);
-		//$this->logger->log(__METHOD__ . 'value=-1 = ' . $this->fields["id"]['value'] == '-1');
+		
+		//$this->logger->log(__METHOD__ . '. fields_id = ' . json_encode($this->descriptor['fields']['id']));
+		//$this->logger->log(__METHOD__ . '. title = ' . $this->descriptor['title']);
+		//$this->logger->log(__METHOD__ . '. value=-1 = ' . $this->fields["id"]['value'] == '-1');
 	}
 	
 	/* 
@@ -1639,10 +1656,12 @@ class ControllerEntity extends ControllerBase {
 				$this->operations[] = array(
 					'id' => 'save',
 					'name' => $t->_('button_save'),
+					'title' => $this->t->exists('button_save_title') ? $this->t->_('button_save_title') : null,
 				);
 				$this->operations[] = array(
 					'id' => 'check',
 					'name' => $t->_('button_check'),
+					'title' => $this->t->exists('button_check_title') ? $this->t->_('button_check_title') : null,
 				);
 			}
 		}
@@ -1652,6 +1671,7 @@ class ControllerEntity extends ControllerBase {
 			$this->operations[] = array(
 				'id' => 'delete',
 				'name' => $t->_('button_delete'),
+				'title' => $this->t->exists('button_delete_title') ? $this->t->_('button_delete_title') : null,
 			);
 		}
 	}

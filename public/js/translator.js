@@ -1,9 +1,9 @@
-(function (app) {
+/*(function (app) {
 	"use strict";
 	
 	var currLanguage = 'ru';
 	
-	var codes = {
+	var messages = {
 		ru: {
 			text_no_data: 'Нет данных для отображения',
 			text_page_sizes: 'Показывать по',
@@ -13,11 +13,11 @@
 	var t = {};
 	
 	t._ = function(code, params = null) {
-		if(!code || typeof code != 'string' || (params != null && typeof params != 'object')) return '<Translator. Wrong params>';
+		if(!code || typeof code != 'string' || (params !== null && typeof params !== 'object')) return '<Translator. Wrong params>';
 		
 		var result = code;
-		if(codes[currLanguage][code]) {
-			result = codes[currLanguage][code];
+		if(messages[currLanguage][code]) {
+			result = messages[currLanguage][code];
 			for (var key in params) {
 				var value = params[key];
 				result = result.replace(new RegExp('{' + key + '}', 'g') , value);
@@ -26,12 +26,15 @@
 		return result;
 	};
 	
-	t.addTranslation = function(translations, language) {
-		for (var key in translations) {
-			if(!codes[language]) codes[language] = {};
-			codes[language][key] = translations[key];
+	t.addTranslation = function(translation, language) {
+		for (var key in translation) {
+			if(!messages[language]) messages[language] = {};
+			messages[language][key] = translation[key];
 		}
 	};
 	
+	t.messages = messages;
+	
 	app.t = t;
-}(app));
+	
+}(app));*/

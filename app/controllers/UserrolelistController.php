@@ -17,25 +17,19 @@ class UserrolelistController extends ControllerList{
 			'id' => array(
 				'id' => 'id',
 				'name' => $this->controller->t->_("text_entity_property_id"),
-				'type' => 'number',
 				'filter' => 'number',
-				'filter_value' => isset($this->filter_values['id']) ? $this->filter_values['id'] : '',
 				"sortable" => "DESC"
 			),
 			'active' => array(
 				'id' => 'active',
 				'name' => $this->controller->t->_("text_entity_property_active"),
-				'type' => 'bool',
 				'filter' => 'bool',
-				'filter_value' => isset($this->filter_values['active']) ? $this->filter_values['active'] : '',
 				"sortable" => "DESC"
 			),
 			'name' => array(
 				'id' => 'name',
 				'name' => $this->controller->t->_("text_entity_property_name"),
-				'type' => 'text',
 				'filter' => 'text',
-				'filter_value' => isset($this->filter_values['name']) ? $this->filter_values['name'] : '',
 				"sortable" => "DESC"
 			),
 			'operations' => array(

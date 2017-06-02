@@ -17,51 +17,41 @@ class ResourcelistController extends ControllerList {
 			'id' => array(
 				'id' => 'id',
 				'name' => $this->controller->t->_("text_entity_property_id"),
-				//'type' => 'number',
 				'filter' => 'number',
-				//'filter_value' => isset($this->filter_values['id']) ? $this->filter_values['id'] : '',
 				"sortable" => "DESC"
 			),
 			'group' => array(
 				'id' => 'group',
 				'name' => $this->controller->t->_("text_resourcelist_group"),
-				//'type' => 'text',
 				'filter' => 'select',
-				//'filter_value' => 'acl',
 				"sortable" => "DESC",
 				'filter_style' => 'name', //'id'
+				'filter_values' => ['base', 'acl'],
 			),
 			'controller' => array(
 				'id' => 'controller',
 				'name' => $this->controller->t->_("text_resourcelist_controller"),
-				//'type' => 'text',
 				'filter' => 'text',
-				//'filter_value' => isset($this->filter_values['controller']) ? $this->filter_values['controller'] : '',
 				"sortable" => "DESC"
 			),
 			'action' => array(
 				'id' => 'action',
 				'name' => $this->controller->t->_("text_resourcelist_action"),
-				//'type' => 'text',
 				'filter' => 'text',
-				//'filter_value' => isset($this->filter_values['action']) ? $this->filter_values['action'] : '',
 				"sortable" => "DESC"
 			),
 			'module' => array(
 				'id' => 'module',
 				'name' => $this->controller->t->_("text_resourcelist_module"),
-				//'type' => 'text',
 				'filter' => 'select',
-				//'filter_value' => 'backend',
 				"sortable" => "DESC",
 				'filter_style' => 'name', //'id'
+				'filter_values' => ['backend', 'frontend'],
 			),
 			'description' => array(
 				'id' => 'description',
 				'name' => $this->controller->t->_("text_entity_property_description"),
-				//'type' => 'text',
 				'filter' => 'text',
-				//'filter_value' => isset($this->filter_values['description']) ? $this->filter_values['description'] : '',
 				"sortable" => "DESC"
 			),
 			'operations' => array(
@@ -69,15 +59,6 @@ class ResourcelistController extends ControllerList {
 				'name' => $this->controller->t->_("text_entity_property_actions")
 			)
 		);
-	}
-	
-	/* 
-	* Заполняет свойство columns данными списков из связанных таблиц
-	* Переопределяемый метод.
-	*/
-	public function fillColumnsWithLists() {
-		$this->columns['group']['filter_values'] = ['base', 'acl'];
-		$this->columns['module']['filter_values'] = ['backend', 'frontend'];
 	}
 	
 	/* 

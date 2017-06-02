@@ -325,10 +325,12 @@ function apply_filter(container_id) {
 		}
 		else {
 			field = columns.eq(i).find("select[name^='filter_']");
-			if(field.val() && field.val() == "**") //url += '&'+field.attr("name")+'=' + encodeURIComponent(field.val());
+			if(field.val() && field.val() == "**") {
 				rq[field.attr("name")] = encodeURIComponent(field.val());
-			else if(field.val() && field.val() != "*") //url += '&'+field.attr("name")+'=' + encodeURIComponent(field.val());
+			}
+			else if(field.val() && field.val() != "*") {
 				rq[field.attr("name")] = encodeURIComponent(field.val());
+			}
 			else {
 				// TODO: checkbox и пр.
 			}

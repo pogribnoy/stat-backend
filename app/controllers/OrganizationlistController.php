@@ -14,24 +14,6 @@ class OrganizationlistController extends ControllerList {
 	}
 	
 	/* 
-	* Заполняет свойство fields данными списков из связанных таблиц
-	* Переопределяемый метод.
-	*/
-	public function fillFieldsWithLists() {
-		// регионы
-		$regions_rows = Region::find();
-		$regions = array();
-		foreach ($regions_rows as $row) {
-			// наполняем массив
-			$regions[] = array(
-				'id' => $row->id,
-				"name" => $row->name
-			);
-		}
-		$this->fields['region']['values'] = $regions;
-	}
-	
-	/* 
 	* Заполняет (инициализирует) свойство colmns
 	* Переопределяемый метод.
 	*/
@@ -42,35 +24,31 @@ class OrganizationlistController extends ControllerList {
 				'id' => 'id',
 				'name' => $this->controller->t->_("text_entity_property_id"),
 				'filter' => 'number',
-				//'filter_value' => isset($this->filter_values['id']) ? $this->filter_values['id'] : '',
 				"sortable" => "DESC"
 			],
 			'name' => [
 				'id' => 'name',
 				'name' => $this->controller->t->_("text_entity_property_name"),
 				'filter' => 'text',
-				//'filter_value' => isset($this->filter_values['name']) ? $this->filter_values['name'] : '',
 				"sortable" => "DESC"
 			],
 			'region' => [
 				'id' => 'region',
 				'name' => $this->controller->t->_("text_organizationlist_region"),
 				'filter' => 'select',
-				//'filter_value' => isset($this->filter_values['region']) ? $this->filter_values['region'] : '',
 				'filter_style' => 'id',
+				'filterLinkEntityName' => 'Region',
 				"sortable" => "DESC"
 			],
 			'contacts' => [
 				'id' => 'contacts',
 				'name' => $this->controller->t->_("text_entity_property_contacts"),
 				'filter' => 'text',
-				//'filter_value' => isset($this->filter_values['contacts']) ? $this->filter_values['contacts'] : ''
 			],
 			'email' => [
 				'id' => 'email',
 				'name' => $this->controller->t->_("text_entity_property_email"),
 				'filter' => 'email',
-				//'filter_value' => isset($this->filter_values['email']) ? $this->filter_values['email'] : '',
 				"sortable" => "DESC"
 			],
 			'operations' => [
@@ -78,24 +56,6 @@ class OrganizationlistController extends ControllerList {
 				'name' => $this->controller->t->_("text_entity_property_actions")
 			],
 		];
-	}
-	
-	/* 
-	* Заполняет свойство columns данными списков из связанных таблиц
-	* Переопределяемый метод.
-	*/
-	public function fillColumnsWithLists() {
-		// регионы для фильтрации
-		$regions_rows = Region::find();
-		$regions = array();
-		foreach ($regions_rows as $row) {
-			// наполняем массив
-			$regions[] = array(
-				'id' => $row->id,
-				"name" => $row->name
-			);
-		}
-		$this->columns['region']['filter_values'] = $regions;
 	}
 	
 	/* 
@@ -121,7 +81,7 @@ class OrganizationlistController extends ControllerList {
 		
 		$phql .= " WHERE 1=1";
 		
-		return $phql . ' GROUP BY <TableName>.id';
+		return $phql;// . ' GROUP BY <TableName>.id';
 	}
 	
 	/* 

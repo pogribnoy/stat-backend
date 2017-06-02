@@ -17,54 +17,35 @@ class OrganizationrequestlistController extends ControllerList {
 			'id' => array(
 				'id' => 'id',
 				'name' => $this->controller->t->_("text_entity_property_id"),
-				//'type' => 'number',
 				'filter' => 'number',
-				'filter_value' => isset($this->filter_values['id']) ? $this->filter_values['id'] : '',
 				"sortable" => "DESC",
 			),
 			'expense' => array(
 				'id' => 'expense',
 				'name' => $this->controller->t->_("text_organizationrequestlist_expense"),
-				//'type' => 'text',
-				//'filter' => 'text',
-				//'filter_value' => isset($this->filter_values['topic']) ? $this->filter_values['topic'] : '',
-				//'filter_style' => 'id',
-				//"sortable" => "DESC",
 			),
-			/*'organization' => array(
-				'id' => 'organization',
-				'name' => $this->controller->t->_("text_organizationrequestlist_organization"),
-				//'type' => 'text',
-				'filter' => 'text',
-				'filter_value' => isset($this->filter_values['organization']) ? $this->filter_values['organization'] : '',
-				"sortable" => "DESC",
-			),*/
 			'request' => array(
 				'id' => 'request',
 				'name' => $this->controller->t->_("text_organizationrequestlist_request"),
 				'filter' => 'text',
-				'filter_value' => isset($this->filter_values['request']) ? $this->filter_values['request'] : '',
 				"sortable" => "DESC",
 			),
 			'response' => array(
 				'id' => 'response',
 				'name' => $this->controller->t->_("text_organizationrequestlist_response"),
 				'filter' => 'text',
-				'filter_value' => isset($this->filter_values['response']) ? $this->filter_values['response'] : '',
 				"sortable" => "DESC",
 			),
 			'response_email' => array(
 				'id' => 'response_email',
 				'name' => $this->controller->t->_("text_organizationrequestlist_response_email"),
 				'filter' => 'text',
-				'filter_value' => isset($this->filter_values['response_email']) ? $this->filter_values['response'] : '',
 				"sortable" => "DESC",
 			),
 			'status' => array(
 				'id' => 'status',
 				'name' => $this->controller->t->_("text_entity_property_status"),
 				'filter' => 'select',
-				'filter_value' => isset($this->filter_values['status']) ? $this->filter_values['status'] : '',
 				'filter_style' => 'id',
 				"sortable" => "DESC",
 			),
@@ -72,7 +53,6 @@ class OrganizationrequestlistController extends ControllerList {
 				'id' => 'created_at',
 				'name' => $this->controller->t->_("text_entity_property_date"),
 				'filter' => 'text',
-				'filter_value' => isset($this->filter_values['created_at']) ? $this->filter_values['created_at'] : '',
 				"sortable" => "DESC",
 			),
 			'operations' => array(
@@ -82,22 +62,7 @@ class OrganizationrequestlistController extends ControllerList {
 		);
 	}
 	
-	/* 
-	* Заполняет свойство columns данными списков из связанных таблиц
-	* Переопределяемый метод.
-	*/
 	public function fillColumnsWithLists() {
-		// темы запросов для фильтрации
-		/*$topic_rows = OrganizationRequestTopic::find();
-		$topics = array();
-		foreach ($topic_rows as $row) {
-			// наполняем массив
-			$topics[] = array(
-				'id' => $row->id,
-				"name" => $row->name
-			);
-		}
-		$this->columns['topic']['filter_values'] = $topics;*/
 		
 		// статусы запросов для фильтрации
 		$request_status_rows = RequestStatus::find();

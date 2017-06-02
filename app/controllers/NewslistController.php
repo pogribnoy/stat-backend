@@ -18,62 +18,38 @@ class NewslistController extends ControllerList {
 				'id' => 'id',
 				'name' => $this->controller->t->_("text_entity_property_id"),
 				'filter' => 'number',
-				'filter_value' => isset($this->filter_values['id']) ? $this->filter_values['id'] : '',
 				"sortable" => "DESC",
 			),
 			'name' => array(
 				'id' => 'name',
 				'name' => $this->controller->t->_("text_entity_property_name"),
 				'filter' => 'text',
-				'filter_value' => isset($this->filter_values['name']) ? $this->filter_values['name'] : '',
-				"sortable" => "DESC"
+				"sortable" => "DESC",
 			),
 			'description' => array(
 				'id' => 'description',
 				'name' => $this->controller->t->_("text_entity_property_description"),
 				'filter' => 'text',
-				'filter_value' => isset($this->filter_values['amount']) ? $this->filter_values['amount'] : '',
 			),
 			'publication_date' => array(
 				'id' => 'publication_date',
 				'name' => $this->controller->t->_("text_newslist_publication_date"),
 				'filter' => 'text',
-				'filter_value' => isset($this->filter_values['publication_date']) ? $this->filter_values['publication_date'] : '',
-				"sortable" => "DESC"
+				"sortable" => "DESC",
 			),
 			'created_by' => array(
 				'id' => 'created_by',
 				'name' => $this->controller->t->_("text_entity_property_created_by"),
 				'filter' => 'text',
-				'filter_value' => isset($this->filter_values['created_by']) ? $this->filter_values['created_by'] : '',
-				//'filter_id' => 'created_by_id', // задается, если отличается от id
-				//'filter_style' => 'id',
-				"sortable" => "DESC"
+				"sortable" => "DESC",
 			),
 			'operations' => array(
 				'id' => 'operations',
-				'name' => $this->controller->t->_("text_entity_property_actions")
+				'name' => $this->controller->t->_("text_entity_property_actions"),
 			)
 		);
 	}
 	
-	/* 
-	* Заполняет свойство columns данными списков из связанных таблиц
-	* Переопределяемый метод.
-	*/
-	public function fillColumnsWithLists() {
-		// типы расходов для фильтрации
-		$user_rows = User::find();
-		$users = array();
-		foreach ($user_rows as $row) {
-			// наполняем массив
-			$users[] = array(
-				'id' => $row->id,
-				"name" => $row->name
-			);
-		}
-		$this->columns['created_by']['filter_values'] = $users;
-	}
 	
 	/* 
 	* Предоставляет базовый текст запроса к БД

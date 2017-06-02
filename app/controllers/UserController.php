@@ -60,7 +60,8 @@ class UserController extends ControllerEntity{
 				//'type' => 'select',
 				//'style' => 'id' //name
 				'type' => 'link',
-				'controllerName' => 'UserRoleList',
+				// TODO. Переделать поля controllerName и field в linkControllerName и linkField
+				'controllerName' => 'userrolelist',
 				'field' => 'name',
 				'linkEntityName' => 'UserRole',
 				'required' => 1,

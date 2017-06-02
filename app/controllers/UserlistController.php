@@ -18,48 +18,50 @@ class UserlistController extends ControllerList {
 				'id' => 'id',
 				'name' => $this->controller->t->_("text_entity_property_id"),
 				'filter' => 'number',
-				//'filter_value' => isset($this->filter_values['id']) ? $this->filter_values['id'] : '',
-				"sortable" => "DESC"
+				"sortable" => "DESC",
 			),
 			'active' => array(
 				'id' => 'active',
 				'name' => $this->controller->t->_("text_entity_property_active"),
 				'filter' => 'bool',
-				//'filter_value' => isset($this->filter_values['active']) ? $this->filter_values['active'] : '',
-				"sortable" => "DESC"
+				"sortable" => "DESC",
 			),
 			'email' => array(
 				'id' => 'email',
 				'name' => $this->controller->t->_("text_entity_property_email"),
 				'filter' => 'text',
-				//'filter_value' => isset($this->filter_values['email']) ? $this->filter_values['email'] : '',
-				"sortable" => "DESC"
+				"sortable" => "DESC",
 			),
 			'user_role' => array(
 				'id' => 'user_role',
 				'name' => $this->controller->t->_("text_entity_property_role"),
 				'filter' => 'select',
-				//'filter_value' => isset($this->filter_values['user_role']) ? $this->filter_values['user_role'] : '',
 				'filter_style' => 'id',
-				"sortable" => "DESC"
+				'filterLinkEntityName' => 'UserRole',
+				'filterFillConditions' => function() { 
+					$userRoleID = $this->controller->userData['role_id'];
+					$conditions = ''; 
+
+					if($userRoleID == $this->controller->config->application->orgAdminRoleID) $conditions .= "id IN (" . $this->config->application->orgOperatorRoleID . ", " . $this->config->application->orgAdminRoleID . ")";
+					return $conditions; 
+				},
+				"sortable" => "DESC",
 			),
 			'name' => array(
 				'id' => 'name',
 				'name' => $this->controller->t->_("text_entity_property_fio"),
 				'filter' => 'text',
-				//'filter_value' => isset($this->filter_values['name']) ? $this->filter_values['name'] : '',
-				"sortable" => "DESC"
+				"sortable" => "DESC",
 			),
 			'phone' => array(
 				'id' => 'phone',
 				'name' => $this->controller->t->_("text_entity_property_phone"),
 				'filter' => 'text',
-				//'filter_value' => isset($this->filter_values['phone']) ? $this->filter_values['phone'] : '',
-				"sortable" => "DESC"
+				"sortable" => "DESC",
 			),
 			'operations' => array(
 				'id' => 'operations',
-				'name' => $this->controller->t->_("text_entity_property_actions")
+				'name' => $this->controller->t->_("text_entity_property_actions"),
 			)
 		);
 	}
@@ -68,14 +70,14 @@ class UserlistController extends ControllerList {
 	* Заполняет свойство columns данными списков из связанных таблиц
 	* Переопределяемый метод.
 	*/
-	public function fillColumnsWithLists() {
+	/**/public function fillColumnsWithLists() {
 		$userRoleID = $this->controller->userData['role_id'];
 		
 		// роли пользователей для фильтрации
 		$conditions = '';
 		//$this->logger->log(__METHOD__ . '. userRoleID=' . $userRoleID . ", orgAdminRoleID=" . $this->controller->config->application->orgAdminRoleID);
 		if($userRoleID == $this->controller->config->application->orgAdminRoleID) $conditions .= "id IN (" . $this->config->application->orgOperatorRoleID . ", " . $this->config->application->orgAdminRoleID . ")";
-		$user_role_rows = UserRole::find(['conditions' => $conditions, 'order' => 'name DESC']);
+		$user_role_rows = UserRole::find(['conditions' => $conditions, 'order' => 'name ASC']);
 		$user_roles = array();
 		foreach ($user_role_rows as $row) {
 			// наполняем массив
@@ -112,7 +114,7 @@ class UserlistController extends ControllerList {
 		// если у пользователя роль "Администратор муниципалитета", то у пользователя из списка должна быть роль "Оператор" или "Администратор муниципалитета"
 		if($userRoleID == $this->config->application->orgAdminRoleID) $phql .= " AND <TableName>.user_role_id IN (" . $this->config->application->orgOperatorRoleID . ", " . $this->config->application->orgAdminRoleID . ")";
 		
-		return $phql . ' GROUP BY <TableName>.id';
+		return $phql;
 	}
 	
 	/* 

@@ -11,7 +11,7 @@
 		<meta property="og:title" content="Новость!" />
 		<meta property="og:description" content="Опросы на сайте <?php //echo $controller->config->application->host;?>" />-->
 		
-		<!--<title>##Наименование сайта - служебная часть</title>-->
+		<title><?php echo $controller->t->_('text_site_short_name'); ?></title>
 		
 		<!--<link rel="shortcut icon" type="image/png" href="../../public/favicon.png"/>
 		<link rel="shortcut icon" type="image/png" href="<?php //echo $controller->config->application->commonHost; ?>/favicon.png"/>-->
@@ -49,10 +49,13 @@
 		<script type="text/javascript" src="<?php echo $controller->config->application->commonHost; ?>/js/modal.js"></script>
 		<script type="text/javascript" src="<?php echo $controller->config->application->commonHost; ?>/js/scroller.js"></script>
 		<script type="text/javascript" src="<?php echo $controller->config->application->commonHost; ?>/js/entity.js"></script>
+		<?php $this->partial($controller->config->application->commonPartialsDir . "translator"); ?>
+		
+		
 		<script type="text/javascript"> <?php  
-			$common_templates = file_get_contents($controller->config->application->commonHost . '/templates/common_templates.js');
+			$common_templates = file_get_contents(APP_PATH . $controller->config->application->commonTemplatesDir . 'common_templates.js');
 			if($common_templates !== FALSE) echo $common_templates;
-			else echo 'console.error("Error. No commot templates");';
+			else echo 'console.error("Error. No commot templates: ' .  APP_PATH . $controller->config->application->commonTemplatesDir . 'common_templates.js' . '");';
 		?></script>
 		
 		<?php 
@@ -69,7 +72,7 @@
 					}
 				}
 				else if($descriptor['type'] == 'entity') {
-					$entity_template = file_get_contents($controller->config->application->commonTemplatesDir . 'entity_template.html');
+					$entity_template = file_get_contents(APP_PATH . $controller->config->application->commonTemplatesDir . 'entity_template.html');
 					if($entity_template !== FALSE) { 
 					?>
 						<script id="entity_template" type="text/x-jsrender">
@@ -80,7 +83,12 @@
 				}
 			}
 		?>
-		<script type="text/javascript" src="<?php echo $controller->config->application->commonHost; ?>/js/translator.js"></script>
+		
+		<?php if(isset($t)) { ?>
+			<script type="text/javascript">
+				<?php //echo "app.translation = { messages: " . json_encode($t->messages) . ", language: " . json_encode($t->language) . "};";  ?>
+			</script>
+		<?php } ?>
 		
 		<div id="container_modals"></div>
 		

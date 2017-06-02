@@ -1,7 +1,7 @@
 <div class="container-fluid">
 	<div class="row">
 		<div class="panel panel-default panel-primary panel-info" id="{{:descriptor.local_data.container_id}}">
-			<div class="panel-heading stat-scroller-header"{{if !(descriptor.notCollapsible == "1")}} data-toggle="collapse" data-target="#{{:descriptor.local_data.container_id}}CollapseDiv{{/if}}">
+			<div class="panel-heading text-center"{{if !(descriptor.notCollapsible == '1')}} data-toggle="collapse" data-target="#{{:descriptor.local_data.container_id}}CollapseDiv"{{/if}}>
 				{{:descriptor.title}}
 				{{if !(descriptor.notCollapsible == "1")}}<span class="pull-right "><button type="button" class="btn btn-default btn-xs"><i class="glyphicon glyphicon-minus"></i></button></span>{{/if}}
 			</div><!-- /.panel-heading -->
@@ -12,7 +12,6 @@
 				<input hidden="" id="sort" value="{{:descriptor.filter_values.sort}}">
 				<input hidden="" id="order" value="{{:descriptor.filter_values.order}}">
 				<input hidden="" id="page_size" value="{{:descriptor.filter_values.page_size}}">
-				
 				{{if descriptor.columns ~columns=~utilities.objectToArray(descriptor.columns) ~descriptor=descriptor}}
 				<div class="table-responsive"> 
 					<table id="{{:descriptor.local_data.container_id}}" class="table table-striped table-bordered table-hover table-condensed">
@@ -38,7 +37,7 @@
 								{{if descriptor.group_operations.length > 0}}<th>{{if ~descriptor.local_data.select_style == "radio"}}{{else}}<input type="checkbox" name="{{:~descriptor.local_data.container_id}}" class="toggle-all"/>{{/if}}</th>{{/if}}
 								{{for ~columns}}
 									{{if !hidden }}
-										<th{{if hideble}} class="hidden-xs hidden-sm hidden-md"{{/if}}>
+										<th class="text-center{{if hideble}} hidden-xs hidden-sm hidden-md{{/if}}">
 											{{if sortable}}
 												<span onclick="change_sort('{{:~descriptor.local_data.container_id}}', '{{:id}}');"><u>{{:name}}</u></span>
 												{{if id === ~descriptor.filter_values.sort}}
@@ -88,7 +87,7 @@
 															<option value="1" {{if filter_value == "1"}} selected="selected"{{/if}}>Да</option>
 															<option value="0" {{if filter_value == "0"}} selected="selected"{{/if}}>Нет</option>
 														</select>
-													{{else filter==='period'}} <input type="text" name="filter_{{:id}}" value="{{:filter_value}}" class="form-control input-sm"/>
+													{{else filter==='period'}} <input type="text" name="filter_{{:id}}" value="{{:filter_value}}" class="form-control input-sm" title="Укажите значение вида:&#10;&quot;2017&quot;&#10;&quot;2017-12&quot;&#10;&quot;2017-12-25&quot;"/>
 													{{/if}}
 												{{else id==="operations"}}
 													{{for ~descriptor.filter_operations tmpl="filter_operation" /}}

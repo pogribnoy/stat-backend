@@ -1,0 +1,1 @@
+a:1:{i:0;a:3:{s:2:"id";s:2:"22";s:4:"name";s:14:"Лакинск";s:3:"img";s:53:"upload/files/organization/22/organization_22_1783.png";}}

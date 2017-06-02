@@ -4,8 +4,12 @@ var entities = {};
 //var dbg = 0;
 
 $(document).ready(function() {
-	$.views.settings.debugMode(true); // DEBUG
+	//app.initJSRender();
+	
 	//$.views.settings.debugMode(onErrorHandler);
+	
+	//app.t.addTranslation(app.translation.messages, app.translation.language);
+	//$('body').prepend(app.t._('text_password_recover_title'));
 	
 	$.notifyDefaults({
 		type: 'danger',// warning, success
@@ -25,6 +29,9 @@ $(document).ready(function() {
 	
 	if (typeof descriptor != 'undefined') {
 		console.log(descriptor);
+		
+		app.descriptor = descriptor;
+		
 		// если разбираем данные сущности
 		if (descriptor.type == 'entity') {
 			// сохраняем полученные данные
@@ -548,7 +555,7 @@ function getTemplateByName(tmplName) {
 	var deferred = $.Deferred();
 	if(!$.templates[tmplName]) {
 			// получаем шаблон с сервера
-		$.get('../../templates/' + tmplName + '.html', function (data, textStatus, jqXHR) {
+		$.get('/templates/' + tmplName + '.html', function (data, textStatus, jqXHR) {
 			//console.log(data);
 			$.templates(tmplName, data);
 		}).done(function() {
@@ -572,10 +579,10 @@ function getTemplate(descriptor) {
 			var tmpl = $.templates("#" + descriptor.templateName);
 			
 			if($.templates[descriptor.templateName]) deferred.resolve({tmplName: descriptor.templateName, tmpl: $.templates[descriptor.templateName]});
-			else if(tmpl.tmplName) deferred.resolve({tmplName: descriptor.templateName, tmpl: $.templates("#" + descriptor.templateName)});
+			else if(tmpl.tmplName) deferred.resolve({tmplName: '#' + descriptor.templateName, tmpl: $.templates("#" + descriptor.templateName)});
 			else {
 				// получаем шаблон с сервера
-				$.get('../../templates/' + descriptor.templateName + '.html', function (data, textStatus, jqXHR) {
+				$.get('/templates/' + descriptor.templateName + '.html', function (data, textStatus, jqXHR) {
 					//console.log(data);
 					$.templates(descriptor.templateName, data);
 				}).done(function() {
@@ -595,10 +602,10 @@ function getTemplate(descriptor) {
 			
 			// стандартный шаблон еще не был загружен
 			if($.templates[tmplName]) deferred.resolve({tmplName: tmplName, tmpl: $.templates[tmplName]});
-			else if(tmpl.tmplName) deferred.resolve({tmplName: tmplName, tmpl: $.templates("#" + tmplName)});
+			else if(tmpl.tmplName) deferred.resolve({tmplName: '#' + tmplName, tmpl: $.templates("#" + tmplName)});
 			else {
 				// получаем шаблон с сервера
-				$.get('../../templates/' + tmplName + '.html', function (data, textStatus, jqXHR) {
+				$.get('/templates/' + tmplName + '.html', function (data, textStatus, jqXHR) {
 					//console.log(data);
 					$.templates(tmplName, data);
 				}).done(function() {
@@ -613,7 +620,6 @@ function getTemplate(descriptor) {
 	
 	return deferred.promise();
 }
-
 
 /* Открывает модалку со скроллером для заполнения поля/грида/скроллера
 * @container_id - контейнер, в котором размещено поле/грид/скроллер
@@ -1273,13 +1279,4 @@ function checkPasswordEq(ctrl, fieldID) {
 		result.show();
 		return false;
 	}
-}
-
-function t(text) {
-	t = {
-		text_no_data: 'Нет данных для отображения',
-		text_page_sizes: 'Показывать по',
-	};
-	if(t[text]) return t[text];
-	else return text;
 }

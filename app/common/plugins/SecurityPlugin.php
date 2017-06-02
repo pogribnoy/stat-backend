@@ -31,9 +31,10 @@ class SecurityPlugin extends Plugin {
 		//var_dump($this->loader);
 		
 		// Создание регистратора с поддержкой записи
-		$aclName = "acl_" . $this->config['application']['module'];
-		//if (!isset($this->persistent->$aclName) && $this->config->application->cacheACL == 1) {
-		//if (!isset($this->persistent->acl)) {
+		$cacheKey = "acl_" . $this->config->application->module . '.php';
+		$cachedData = $this->dataCache->get($cacheKey, $this->config->application->caching->aclCacheDedaultTime);
+		
+		if ($cachedData === null) {
 			$roles = array();
 			$resources = array();
 			
@@ -108,14 +109,13 @@ class SecurityPlugin extends Plugin {
 						foreach($resources as $r) if($r['group'] == 'base') $acl->allow($ur->id, $r['controller'], $r['action']);
 					}
 				}
-
-				//The acl is stored in session, APC would be useful here too
-				$this->persistent->$aclName = $acl;
-				//$this->persistent->acl = $acl;
+				
+				$cachedData = $acl;
+				$this->dataCache->save($cacheKey, $cachedData);
 			}
-		//}
-		return $this->persistent->$aclName;
-		//return $this->persistent->acl;
+		}
+		
+		return $cachedData;
 	}
 	
 
@@ -127,7 +127,7 @@ class SecurityPlugin extends Plugin {
 	 */
 	public function beforeDispatch(Event $event, Dispatcher $dispatcher) {
 		$userData = $this->getUserData();
-		$this->logger->log(__METHOD__ . ". ControllerClass = " . $dispatcher->getControllerClass() . ', Action class = ' . $dispatcher->getActionName());
+		//$this->logger->log(__METHOD__ . ". ControllerClass = " . $dispatcher->getControllerClass() . ', Action class = ' . $dispatcher->getActionName());
 		//$this->logger->log(__METHOD__ . ". sessionID = " . var_dump($this->session->getId()));
 		
 		//$this->logger->log(__METHOD__ . ". session = " . json_encode($this->session->getOptions()));
@@ -143,8 +143,8 @@ class SecurityPlugin extends Plugin {
 			$sessionLastUpdateTime = isset($auth['sessionLastUpdate']) ? $auth['sessionLastUpdate'] : $curDateTime;
 			$timeout = $curDateTime->diff($sessionLastUpdateTime);
 			$sessionSeconds = $timeout->days*86400 + $timeout->h*3600 + $timeout->i*60 + $timeout->s;
-			$this->logger->log(__METHOD__ . ". Session inactivity = " . $sessionSeconds . " (max: " . $this->config['application']['sessionTimeout'] . ")");
-			if($sessionSeconds > $this->config['application']['sessionTimeout']) {
+			$this->logger->log(__METHOD__ . ". Session inactivity = " . $sessionSeconds . " (max: " . $this->config->application->sessionTimeout . ")");
+			if($sessionSeconds > $this->config->application->sessionTimeout) {
 				$this->logger->log(__METHOD__ . ". User (" . ( $this->user!=null && isset($this->user['id']) ? "id=" . $this->user['id'] . ", name=" . $this->user['name'] : "guest") .  "). Session timeout = " . $sessionSeconds . ". Redirect to _/session/end_");
 				if ($this->request->isAjax()) {
 					$this->view->disable();
@@ -183,7 +183,7 @@ class SecurityPlugin extends Plugin {
 		
 		if ($allowed != Acl::ALLOW) {
 			// админка, гость
-			if($role == $this->config['application']['guestRoleID'] && $this->config['application']['module'] === "backend") {
+			if($role == $this->config->application->guestRoleID && $this->config->application->module === "backend") {
 				if ($this->request->isAjax()) {
 					$this->logger->log(__METHOD__ . ". AJAX. Redirect to _/login/index_");
 					$this->view->disable();
@@ -219,7 +219,7 @@ class SecurityPlugin extends Plugin {
 				}
 			}
 			// общедоступная часть, не важно, какая роль
-			else if($this->config['application']['module'] === "frontend") {
+			else if($this->config->application->module === "frontend") {
 				if ($this->request->isAjax()) {
 					$this->logger->log(__METHOD__ . ". AJAX. Redirect to _/index/index_");
 					$this->view->disable();
@@ -294,7 +294,7 @@ class SecurityPlugin extends Plugin {
 		if($this->user != null) return $this->user;
 		else {
 			$this->user = array();
-			$this->user['role_id'] = $this->config['application']['guestRoleID'];	// по умолчанию - гость
+			$this->user['role_id'] = $this->config->application->guestRoleID;	// по умолчанию - гость
 			
 			$auth = $this->session->get('auth');
 			if ($auth) {

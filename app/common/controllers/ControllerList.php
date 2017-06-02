@@ -37,10 +37,6 @@ class ControllerList extends ControllerBase {
 	// шаблон по умолчанию
 	public $templateName = "scroller_template";
 	
-	public function initialize() {
-		parent::initialize();
-	}
-	
 	public function indexAction() {
 		$this->createDescriptor();
 		
@@ -86,8 +82,7 @@ class ControllerList extends ControllerBase {
 		}
 		else {
 			// передаем в представление имеющиеся данные
-			//$this->view->setVar("page_header", $this->t->_('text_'.$this->controllerName.'_title'));
-			$this->view->setVar("descriptor", $this->descriptor);
+			$this->view->descriptor = $this->descriptor;
 		}
 	}
 	
@@ -114,7 +109,7 @@ class ControllerList extends ControllerBase {
 			$this->entityNameLC = strtolower($this->entityName);
 			
 			$this->namespace = __NAMESPACE__;
-			//$this->controller->t = $this->controller->translator->addTranslation($this->controllerNameLC);
+			
 			// фильтр для значений
 			$this->filter = new Phalcon\Filter();
 			// инициализируем лог
@@ -149,7 +144,7 @@ class ControllerList extends ControllerBase {
 		
 		// выбираем данные с фильтром, сортировкой и лимитом
 		$rows = false;
-		$this->logger->log(__METHOD__ . ". phql=" . $phql);
+		//$this->logger->log(__METHOD__ . ". phql=" . $phql);
 		$rows = $this->modelsManager->executeQuery($phql);
 		
 		// считаем количество записей
@@ -200,20 +195,11 @@ class ControllerList extends ControllerBase {
 		else {
 			// TODO. Если с киента не переданы id, то надо проверять на доступность пользователю данного скроллера
 			if(isset($_REQUEST["add_filter"])) {
-				if(isset($_REQUEST["add_filter"]['organization_id'])) $this->add_filter["organization_id"] = $this->filter->sanitize(urldecode($_REQUEST["add_filter"]['organization_id']), ["trim", "int"]); 
 				if(isset($_REQUEST["add_filter"]['user_role_id'])) $this->add_filter["user_role_id"] = $this->filter->sanitize(urldecode($_REQUEST["add_filter"]['user_role_id']), ["trim", "int"]); 
+				if(isset($_REQUEST["add_filter"]["user_id"])) $this->add_filter["user_id"] = $this->filter->sanitize($_REQUEST["add_filter"]["user_id"], ["trim", "int"]);
+				if(isset($_REQUEST["add_filter"]['organization_id'])) $this->add_filter["organization_id"] = $this->filter->sanitize(urldecode($_REQUEST["add_filter"]['organization_id']), ["trim", "int"]); 
 			}
 		}
-	}
-	
-	/* 
-	* Предоставляет текст шаблона для рисования сущности, если он есть
-	*/
-	public function getTmpl() {
-		// передаем шаблон, если он есть
-		$tmplFileName = APP_PATH . $this->config->application->templatesDir . $this->controllerName . ".phtml";
-		if (file_exists($tmplFileName)) return file_get_contents($tmplFileName);
-		else return null;
 	}
 	
 	/* 
@@ -232,12 +218,30 @@ class ControllerList extends ControllerBase {
 	* Заполняет свойство descriptor данными
 	*/
 	public function createDescriptorObject() {
+		$columns = [];
+		foreach($this->columns as $columnID => $column) {
+			$publicColumn = [
+				'id' => $column['id'],
+				'name' => $column['name'],
+			];
+			if(isset($column['filter'])) $publicColumn['filter'] = $column['filter'];
+			if(isset($column['filter_style'])) $publicColumn['filter_style'] = $column['filter_style'];
+			if(isset($column['filter_values'])) $publicColumn['filter_values'] = $column['filter_values'];
+			if(isset($column['sortable'])) $publicColumn['sortable'] = $column['sortable'];
+			if(isset($column['nullSubstitute'])) $publicColumn['nullSubstitute'] = $column['nullSubstitute'];
+			if(isset($column['hideble'])) $publicColumn['hideble'] = $column['hideble'];
+			if(isset($column['hidden'])) $publicColumn['hidden'] = $column['hidden'];
+			
+			$columns[$columnID] = $publicColumn;
+		}
+		
 		$this->descriptor = array(
 			"controllerName" => $this->controllerNameLC,
 			"controllerNameLC" => $this->controllerNameLC,
 			"entityNameLC" => $this->entityNameLC,
 			"type" => "scroller",
-			"columns" => $this->columns,
+			//"columns" => $this->columns,
+			"columns" => $columns,
 			"item_operations" => $this->operations["item_operations"], // действия над строками
 			"group_operations" => $this->operations["group_operations"], // групповые действия над строками
 			"common_operations" => $this->operations["common_operations"], // действия, не связанные с конкретными строками таблицы (общие для всей таблицы)
@@ -249,7 +253,7 @@ class ControllerList extends ControllerBase {
 			"title" => $this->controller->t->_("text_" . $this->controllerNameLC . "_title"),
 			"add_style" => "entity", //scroller
 			"edit_style" => 'modal', //url
-			"template" => $this->getTmpl(),
+			//"template" => $this->getTmpl(),
 			"newCount" => $this->newCount,
 		);
 		if(isset($this->templateName)) $this->descriptor['templateName'] = $this->templateName;
@@ -323,7 +327,8 @@ class ControllerList extends ControllerBase {
 					else if ($_REQUEST[$filterID] == "**") $this->filter_values[$columnID] = "**";
 				}
 				
-				if(isset($this->filter_values[$columnID])) $column['filter_value'] = $val;
+				if(isset($this->filter_values[$columnID])) $column['filter_value'] = $this->filter_values[$columnID];
+				//$this->logger->log(__METHOD__ . '. columnID = ' . $columnID . '' . );
 			}
 		}
 		
@@ -357,7 +362,7 @@ class ControllerList extends ControllerBase {
 					if($column['filter'] == 'select' && isset($column['filter_style']) && $column['filter_style'] == "id") $field .= '_id';
 					if($id == 'group') $field = '[' . $id . ']';
 					
-					if(isset($column["nullSubstitute"]) && $value == $column["nullSubstitute"]) $phql .= " AND (<TableName>." . $field . " IS NULL OR <TableName>." . $field . " = '' OR <TableName>." . $field . " = '" . $column["nullSubstitute"] . "')";
+					if(isset($column["nullSubstitute"]) && $value == '**') $phql .= " AND (<TableName>." . $field . " IS NULL OR <TableName>." . $field . " = '' OR <TableName>." . $field . " = '" . $column["nullSubstitute"] . "')";
 					else if ($column['filter'] == 'select' && isset($column['filter_style']) && $column['filter_style'] == "id") $phql .= " AND <TableName>." . $field . " = " . $value;
 					else if ($column['filter'] == 'bool') $phql .= " AND <TableName>." . $field . " = " . $value;
 					else  $phql .= " AND <TableName>." . $field . " LIKE '%" . $value . "%'";
@@ -377,71 +382,9 @@ class ControllerList extends ControllerBase {
 			else $phql .= " AND <TableName>.street_type_id = '" . $this->filter_values["street_type"] . "'";
 		}
 		
-		
-		
 		// исключаем записи, которые не нужны
 		// TODO. !!!Необходимо парсить массив и собирать заново, чтобы не столкнуться с SQL-инъекцией
 		if(isset($this->filter_values["exclude_ids"])) $phql .= " AND <TableName>.id NOT IN (" . $this->filter_values["exclude_ids"] . ")";
-		
-		/*if(isset($this->filter_values["id"])) $phql .= " AND <TableName>.id LIKE '%" . $this->filter_values["id"] . "%'";
-		if(isset($this->filter_values["name"]) && isset($this->columns['name'])) $phql .= " AND <TableName>.name LIKE '%" . $this->filter_values["name"] . "%'";
-		if(isset($this->filter_values["email"]) && isset($this->columns['email'])) $phql .= " AND <TableName>.email LIKE '%" . $this->filter_values["email"] . "%'";
-		if(isset($this->filter_values["contacts"]) && isset($this->columns['contacts'])) $phql .= " AND <TableName>.contacts LIKE '%" . $this->filter_values["contacts"] . "%'";
-		if(isset($this->filter_values["code"]) && isset($this->columns['code'])) $phql .= " AND <TableName>.code LIKE '%" . $this->filter_values["code"] . "%'";
-		if(isset($this->filter_values["value"]) && isset($this->columns['value'])) $phql .= " AND <TableName>.value LIKE '%" . $this->filter_values["value"] . "%'";
-		if(isset($this->filter_values["description"]) && isset($this->columns['description'])) $phql .= " AND <TableName>.description LIKE '%" . $this->filter_values["description"] . "%'";
-		if(isset($this->filter_values["active"]) && isset($this->columns['active'])) $phql .= " AND <TableName>.active =" . $this->filter_values["active"];
-		if(isset($this->filter_values["controller"]) && isset($this->columns['controller'])) $phql .= " AND <TableName>.controller LIKE '%" . $this->filter_values["controller"] . "%'";
-		if(isset($this->filter_values["action"]) && isset($this->columns['action'])) $phql .= " AND <TableName>.action LIKE '%" . $this->filter_values["action"] . "%'";
-		if(isset($this->filter_values["module"]) && isset($this->columns['module'])) $phql .= " AND <TableName>.module LIKE '%" . $this->filter_values["module"] . "%'";
-		if(isset($this->filter_values["group"]) && isset($this->columns['group'])) $phql .= " AND <TableName>.[group] LIKE '%" . $this->filter_values["group"] . "%'";
-		if(isset($this->filter_values["date"]) && isset($this->columns['date'])) $phql .= " AND <TableName>.date LIKE '%" . $this->filter_values["date"] . "%'";
-		if(isset($this->filter_values["created_at"]) && isset($this->columns['created_at'])) $phql .= " AND <TableName>.created_at LIKE '%" . $this->filter_values["created_at"] . "%'";
-		if(isset($this->filter_values["organization"])) $phql .= " AND <TableName>.organization_id = '" . $this->filter_values["organization"] . "'";
-		
-		if(isset($this->filter_values["amount"]) && isset($this->columns['amount'])) {
-			if(isset($this->columns['amount']["nullSubstitute"]) && $this->filter_values["amount"] == $this->columns['amount']["nullSubstitute"]) $phql .= " AND (<TableName>.amount IS NULL OR <TableName>.amount = '' OR <TableName>.amount = '" . $this->columns['amount']["nullSubstitute"] . "')";
-			else $phql .= " AND <TableName>.amount LIKE '%" . str_replace([".", ",", "-"], "", $this->filter_values["amount"]) . "%'";
-		}
-		if(isset($this->filter_values["target_date"]) && isset($this->columns['target_date'])) {
-			if(isset($this->columns['street']["nullSubstitute"]) && $this->filter_values["target_date"] == $this->columns['target_date']["nullSubstitute"]) $phql .= " AND (<TableName>.target_date_from IS NULL OR <TableName>.target_date_from = '' OR <TableName>.target_date_from = '" . $this->columns['target_date']["nullSubstitute"] . "' OR (<TableName>.target_date_to IS NULL OR <TableName>.target_date_to = '' OR <TableName>.target_date_to = '" . $this->columns['target_date']["nullSubstitute"] . "'))";
-			else $phql .= " AND (<TableName>.target_date_from LIKE '%" . $this->filter_values["target_date"] . "%' OR <TableName>.target_date_to LIKE '%" . $this->filter_values["target_date"] . "%')";
-		}
-		if(isset($this->filter_values["settlement"]) && isset($this->columns['settlement'])) {
-			if(isset($this->columns['settlement']["nullSubstitute"]) && $this->filter_values["settlement"] == $this->columns['settlement']["nullSubstitute"]) $phql .= " AND (<TableName>.settlement IS NULL OR <TableName>.settlement = '' OR <TableName>.settlement = '" . $this->columns['settlement']["nullSubstitute"] . "')";
-			else $phql .= " AND <TableName>.settlement LIKE '%" . $this->filter_values["settlement"] . "%'";
-		}
-		if(isset($this->filter_values["street"]) && isset($this->columns['street'])) {
-			if(isset($this->columns['street']["nullSubstitute"]) && $this->filter_values["street"] == $this->columns['street']["nullSubstitute"]) $phql .= " AND (<TableName>.street IS NULL OR <TableName>.street = '' OR <TableName>.street = '" . $this->columns['street']["nullSubstitute"] . "')";
-			else $phql .= " AND <TableName>.street LIKE '%" . $this->filter_values["street"] . "%'";
-		}
-		if(isset($this->filter_values["house"]) && isset($this->columns['house'])) {
-			if(isset($this->columns['street']["nullSubstitute"]) && $this->filter_values["house"] == $this->columns['house']["nullSubstitute"]) $phql .= " AND (<TableName>.house IS NULL OR <TableName>.house = '' OR <TableName>.house = '" . $this->columns['house']["nullSubstitute"] . "')";
-			else $phql .= " AND <TableName>.house LIKE '%" . $this->filter_values["house"] . "%'";
-		}
-		if(isset($this->filter_values["executor"]) && isset($this->columns['executor'])) {
-			if(isset($this->columns['executor']["nullSubstitute"]) && $this->filter_values["executor"] == $this->columns['street_type']["nullSubstitute"]) $phql .= " AND (<TableName>.executor IS NULL OR <TableName>.executor = '' OR <TableName>.executor = '" . $this->columns['executor']["nullSubstitute"] . "')";
-			else $phql .= " AND <TableName>.executor LIKE '%" . $this->filter_values["executor"] . "%'";
-		}
-		if(isset($this->filter_values["street_type_id"])) {
-			if($this->filter_values["street_type_id"] == "**") {
-				$phql .= " AND (<TableName>.street_type_id IS NULL OR <TableName>.street_type_id = '')";
-				//if(isset($this->columns['street_type']["nullSubstitute"])) $this->filter_values["street_type_id"] = $this->columns['street_type']["nullSubstitute"];
-			}
-			else $phql .= " AND <TableName>.street_type_id = '" . $this->filter_values["street_type_id"] . "'";
-		}
-		*/
-		//else $this->logger->log($this->filter_values["street_type_id"]);
-		
-		// фильтры по справочникам
-		//if(isset($this->filter_values["region"])) $phql .= " AND Region.id = '" . $this->filter_values["region"] . "'";
-		//if(isset($this->filter_values["expense_type_id"])) $phql .= " AND ExpenseType.id = '" . $this->filter_values["expense_type_id"] . "'";
-		//if(isset($this->filter_values["expense_status_id"])) $phql .= " AND ExpenseStatus.id = '" . $this->filter_values["expense_status_id"] . "'";
-		//if(isset($this->filter_values["organization_id"])) $phql .= " AND Organization.id = '" . $this->filter_values["organization_id"] . "'";
-		//if(isset($this->filter_values["organization_name"])) $phql .= " AND Organization.name LIKE '%" . $this->filter_values["organization_name"] . "%'";
-		//if(isset($this->filter_values["user_role"])) $phql .= " AND UserRole.id = '" . $this->filter_values["user_role"] . "'";
-		//if(isset($this->filter_values["created_by_id"])) $phql .= " AND User.id = '" . $this->filter_values["created_by_id"] . "'";
-		
 		
 		//$this->logger->log(__METHOD__ . '. phql = ' . $phql);
 		return $phql;
@@ -512,7 +455,52 @@ class ControllerList extends ControllerBase {
 	* Заполняет свойство columns данными списков из связанных таблиц для фильтрации
 	* Переопределяемый метод.
 	*/
-	public function fillColumnsWithLists() {}
+	public function fillColumnsWithLists() {
+		$cacheKey = $this->controllerNameLC . "_" . $this->actionNameLC . "_filter_lists.php";
+		$cachedData = $this->dataCache->get($cacheKey);
+		
+		if ($cachedData === null) {
+			$cachedData = [];
+			foreach($this->columns as $columnID => &$column) {	
+			
+				if(isset($column['filter']) && $column['filter'] == 'select' && isset($column['filter_style']) && $column['filter_style'] == 'id' && isset($column['filterLinkEntityName']) && $column['filterLinkEntityName'] != null) {
+					$filterLinkEntityName = $column['filterLinkEntityName'];
+					$filterLinkEntityFieldID = 'name';
+					
+					if(isset($column['filterLinkEntityFieldID']) && $column['filterLinkEntityFieldID'] != null) $filterLinkEntityFieldID = $column['filterLinkEntityFieldID'];
+						
+					$params = ['order' => $filterLinkEntityFieldID . ' ASC'];
+					if(isset($column['filterFillConditions']) && $column['filterFillConditions'] != null && is_object($column['filterFillConditions'])) $params['conditions'] = $column['filterFillConditions']();
+					
+					$rows = $filterLinkEntityName::find($params);
+					
+					//$this->logger->log('rows: ' . json_encode($rows));// DEBUG
+					$filterValues = array();
+					foreach ($rows as $row) {
+						// наполняем массив
+						$filterValues[] = array(
+							'id' => $row->id,
+							"name" => $row->$filterLinkEntityFieldID,
+						);
+					}
+					//$this->data['asd'] = json_encode($rows);
+					$column['filter_values'] = $filterValues;
+					
+					// Сохраняем в кэше
+					$cachedData[$columnID] = [
+						'filter_values' => $filterValues,
+					];
+				}
+			}
+			$this->dataCache->save($cacheKey, $cachedData);
+		}
+		else {
+			//$this->logger->log(__METHOD__ . '. cachedData=' . json_encode());
+			foreach($cachedData as $columnID => $column) {
+				$this->columns[$columnID]['filter_values'] = $column['filter_values'];
+			}
+		}
+	}
 	
 	public function getScrollerOperations($controller, $entityNameLC, $actionName="show") {
 		//$entityName = strtolower($entityName);
@@ -528,28 +516,16 @@ class ControllerList extends ControllerBase {
 		$addOp = null;
 		
 		if($acl->isAllowed($role_id, $entityNameLC, 'show')) {
-			$showOp = array(
-				'id' => 'show',
-				'name' => $t->_('button_show'),
-			);
+			$showOp = $this->createButtonDescriptor('show');
 		}
 		if($acl->isAllowed($role_id, $entityNameLC, 'edit')) {
-			$editOp = array(
-				'id' => 'edit',
-				'name' => $t->_('button_edit'),
-			);
+			$editOp = $this->createButtonDescriptor('edit');
 		}
 		if($acl->isAllowed($role_id, $entityNameLC, 'delete')) {
-			$deleteOp = array(
-				'id' => 'delete',
-				'name' => $t->_('button_delete'),
-			);
+			$deleteOp = $this->createButtonDescriptor('delete');
 		}
 		if($acl->isAllowed($role_id, $entityNameLC, 'add')) {
-			$addOp = array(
-				'id' => 'add',
-				'name' => $t->_('button_add'),
-			);
+			$addOp = $this->createButtonDescriptor('add');
 		}
 		
 		$operations = array();
@@ -570,10 +546,7 @@ class ControllerList extends ControllerBase {
 			// для скроллера
 			$operations["common_operations"][] = $addOp;
 			// для грида
-			$operations["common_operations"][] = array(
-				'id' => 'select',
-				'name' => $t->_('button_select'),
-			);
+			$operations["common_operations"][] = $this->createButtonDescriptor('select');
 		}
 		
 		// массив групповых операций
@@ -583,14 +556,10 @@ class ControllerList extends ControllerBase {
 		}
 		
 		// массив операций для фильтра
-		$operations["filter_operations"] = [[
-			'id' => 'apply',
-			'name' => $t->_('button_apply')
-		],
-		[
-			'id' => 'clear',
-			'name' => $t->_('button_clear')
-		]];
+		$operations["filter_operations"] = [
+			$this->createButtonDescriptor('apply'),
+			$this->createButtonDescriptor('clear'),
+		];
 		return $operations;
 	}
 }
