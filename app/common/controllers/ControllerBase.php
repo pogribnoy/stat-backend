@@ -23,6 +23,8 @@ class ControllerBase extends Controller {
 	const editAccess = 'edit';
 	// скрытое поле
 	const hiddenAccess = 'hidden';
+	// Подмена значения на клиенте
+	const nullSubstitute = '-';
 	// запрос, полученный с клиента
 	public $rq;
 
@@ -48,7 +50,7 @@ class ControllerBase extends Controller {
 		
 		if(!$this->request->isAjax()) {
 			// передаем данные, не зависящие от пути, в представление
-			$this->view->setVar("controller", $this);
+			$this->view->controller = $this;
 		}
 		
 		// устанавливаем макет по умолчанию
@@ -85,6 +87,10 @@ class ControllerBase extends Controller {
 			$this->view->controllerName = $this->controllerNameLC;
 			$this->view->actionName = $this->actionNameLC;
 			$this->view->page_header = $this->t->_('text_' . $this->controllerNameLC . '_title');
+			$this->view->pageTitle = $this->t->_('text_' . $this->controllerNameLC . '_title');
+			if($this->t->exists('text_' . $this->controllerNameLC . '_description')) $this->view->pageDescription = $this->t->_('text_' . $this->controllerNameLC . '_description', ['param1' => '']);
+			if($this->t->exists('text_' . $this->controllerNameLC . '_subtitle')) $this->view->page_subheader = $this->t->_('text_' . $this->controllerNameLC . '_subtitle');
+			
 		}
 	}
 
@@ -134,7 +140,16 @@ class ControllerBase extends Controller {
 				//$this->logger->log(__METHOD__ . ". asd3 = "); 
 				return $this::editAccess; 
 			}
-			$this->logger->log(__METHOD__ . ". asd4 = ");
+			else if($this->acl->isAllowed($userRoleID, $this->controllerNameLC . "_field_" . $fieldID, 'show')) { 
+				//$this->logger->log(__METHOD__ . ". asd1 = "); 
+				return $this::showAccess; 
+			}
+			else if($this->acl->isAllowed($userRoleID, $this->controllerNameLC . "_field_*", 'show')) { 
+				//$this->logger->log(__METHOD__ . ". asd2 = "); 
+				return $this::showAccess; 
+			}
+			//$this->logger->log(__METHOD__ . ". asd4 = ");
+			//return $this::hiddenAccess;
 		}
 		return $this::readonlyAccess;
 	}
@@ -150,5 +165,10 @@ class ControllerBase extends Controller {
 			'name' => $this->controller->t->_('button_' . $id),
 			'title' => $this->controller->t->exists('button_' . $id . '_title') ? $this->controller->t->_('button_' . $id . '_title') : null,
 		];
+	}
+	
+	protected function isAllowedResource($userRoleID, $resource, $action) {
+		if($userRoleID == $this->config->application->adminRoleID || $this->acl->isAllowed($userRoleID, $resource, $action)) return true;
+		return false;
 	}
 }

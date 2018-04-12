@@ -295,7 +295,6 @@ function apply_filter(container_id) {
 		}
 	}
 	
-	
 	// собираем служебные поля фильтра скроллера
 	var page = jqobj.find('#page').val();
 	//url += 'page=' +  encodeURIComponent(page ? page : 1);
@@ -314,11 +313,12 @@ function apply_filter(container_id) {
 	if (page_size) rq.page_size = encodeURIComponent(page_size);
 	
 	// пробегаемся по столбцам, чтобы собрать данные фильтров в столбцах данных
-	var tr_offs = (data.group_operations && data.group_operations.length > 0) ? 2 : 1;
+	var tr_offs = (data.group_operations && data.group_operations.length > 0) || (data.common_operations && data.common_operations.length > 0) ? 2 : 1;
 	var columns = jqobj.find("table tr:eq("+tr_offs+") td");
 	var columns_length = columns.length;
 	for(var i=0; i<columns_length; i++){
 		var field = columns.eq(i).find("input[name^='filter_']").filter("[type='text'], [type='number'], [type='email']");
+		//var filterFld = getFieldById();
 		if(field.val()) {//url += '&'+field.attr("name")+'=' + encodeURIComponent(field.val());
 			rq[field.attr("name")] = encodeURIComponent(field.val());
 			//console.log('filter = ' + rq[field.attr("name")]);
@@ -399,7 +399,7 @@ function apply_filter(container_id) {
 				var add_style = this.data.add_style;
 				
 				copyDescriptor(json, this.data);
-				delete json;
+				//delete json;
 				
 				// восстанавливаем способ редактирования после копирования
 				this.data.add_style = add_style;
@@ -466,7 +466,7 @@ function change_page(container_id, p){
 function change_sort(container_id, id){
 	var order = containers[container_id].jqobj.find("#order");
 	var sort = containers[container_id].jqobj.find("#sort");
-	if(sort.val()==id) order.val() == "DESC" ? order.val("ASC") : order.val("DESC");
+	if(sort.val()==id) order.val() == "desc" ? order.val("asc") : order.val("desc");
 	else sort.val(id);
 	apply_filter(container_id);
 }
@@ -490,4 +490,95 @@ function clear_filter(container_id) {
 	}
 	apply_filter(container_id);
 }
+
+function addCSSClassFix(element, cssClass) {
+	var currentClassStr = '';
+	if(element.classList) currentClassStr = element.classList;
+	else currentClassStr = element.className;
+		
+	var CSSClasses = cssClass.split(" ");
+	var CSSClassesLength = CSSClasses.length;
+	for(var i = 0; i < CSSClassesLength; i++) {
+		if(element.classList) element.classList.add(CSSClasses[i]);
+		else if(!currentClassStr.indexOf(CSSClasses[i]) !== -1)	element.className += ' ' +	CSSClasses[i];
+	}
+}
+
+function deleteCSSClassFix(element, cssClass) {
+	var currentClassStr = '';
+	if(element.classList) currentClassStr = element.classList;
+	else currentClassStr = element.className;
+		
+	var CSSClasses = cssClass.split(" ");
+	var CSSClassesLength = CSSClasses.length;
+		
+	if(element.classList) {
+		for(var i = 0; i < CSSClassesLength; i++) {
+			element.classList.remove(CSSClasses[i]);
+		}
+	}
+	else {
+		for(var i = 0; i < CSSClassesLength; i++) {
+			var regexp = new RegExp(CSSClasses[i], "g");
+			currentClassStr.replace(regexp, '');
+		}
+	}
+		
+	if(!element.classList) element.className = currentClassStr;
+	
+	
+	var currentClassStr = '';
+	if(element.hasAttribute('class')) currentClassStr = element.getAttribute('class');
+	
+	var CSSClasses = cssClass.split(" ");
+	var CSSClassesLength = CSSClasses.length;
+	for(var i = 0; i < CSSClassesLength; i++) {
+		var regexp = new RegExp(CSSClasses[i], "g");
+		currentClassStr.replace(regexp, '');
+	}
+	element.setAttribute('class', currentClassStr);
+}
+
+function toggleScrollerFilter(containerID, fieldID, command, onof) {
+	var toggleBtnID = containerID + '_filter_' + fieldID + '_empty_toggle_btn';
+	var emptyBtnID = containerID + '_filter_' + fieldID + '_empty_btn';
+	var notEmptyBtnID = containerID + '_filter_' + fieldID + '_notempty_btn';
+	
+	var toggleBtn = document.getElementById(toggleBtnID);
+	var emptyBtn = document.getElementById(emptyBtnID);
+	var notEmptyBtn = document.getElementById(notEmptyBtnID);
+	var inputFld = toggleBtn.parentNode.parentNode.getElementsByTagName('input')[0];
+	if(command == 'empty') {
+		if(onof) {
+			addCSSClassFix(notEmptyBtn, 'hidden');
+			deleteCSSClassFix(emptyBtn, 'hidden');
+			inputFld.value = '';
+			inputFld.disabled = true;
+		}
+		else {
+			addCSSClassFix(emptyBtn, 'hidden');
+			addCSSClassFix(notEmptyBtn, 'hidden');
+			inputFld.disabled = false;
+		}
+	}
+	else if(command == 'notempty') {
+		if(onof) {
+			addCSSClassFix(emptyBtn, 'hidden');
+			deleteCSSClassFix(notEmptyBtn, 'hidden');
+			inputFld.value = '';
+			inputFld.disabled = true;
+		}
+		else {
+			addCSSClassFix(emptyBtn, 'hidden');
+			addCSSClassFix(notEmptyBtn, 'hidden');
+			inputFld.disabled = false;
+		}
+	}
+}
+
+
+
+
+
+
 

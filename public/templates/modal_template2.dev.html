@@ -1,0 +1,26 @@
+<div class="modal" id="{{:modalContainerId}}" tabindex="-1" aria-labelledby="myModalLabel_{{:modalContainerId}}" data-backdrop="static" aria-hidden="true">
+	<div class="modal-dialog modal-lg" {{if options.isWide }}style="width: 95%" {{/if}} role="document">
+		<div class="modal-content">
+			<div class="modal-header bg-primary">
+				<button type="button" class="close" aria-label="Закрыть" onclick="app.core.modal.colseModal('{{:modalContainerId}}');"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title" id="myModalLabel_{{:modalContainerId}}">{{:options.title}}</h4>
+			</div>
+			<div class="modal-body">
+				<div class="container-fluid">
+					<div class="row">
+						<div class="pull-right">
+							{{if options.targetContainerId}}<button type="button" class="btn btn-primary" onclick="linkSelectedRows('{{:options.targetContainerId}}');">Выбрать</button>{{/if}}
+							<!--<button type="button" class="btn btn-default" data-dismiss="modal" onclick="app.core.modal2.colseModal('{{:modalContainerId}}');">Отмена</button>-->
+							<button type="button" class="btn btn-default" onclick="app.core.modal.close('{{:modalContainerId}}');">Отмена</button>
+							<div>&nbsp;</div>
+						</div>
+					</div>
+					<div class="row">
+						{{:html}}
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer"></div>
+		</div>
+	</div>
+</div>

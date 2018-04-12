@@ -85,6 +85,10 @@ $di->setShared('email', function(){
 	return new Emailer();
 });
 
+$di->setShared('translator', function(){
+	return new Translator();
+});
+
 /**
  * Определяем консольные аргументы
  */

@@ -4,7 +4,6 @@ use Phalcon\Logger\Adapter\File as FileAdapter;
 
 class SendResponseTask extends Task {
     public function mainAction() {
-        //echo __METHOD__ . PHP_EOL . PHP_EOL;
 		echo __METHOD__ . ". Send responses for organization requests" . PHP_EOL;
 		
 		$curDate = new DateTime('now');
@@ -25,7 +24,8 @@ class SendResponseTask extends Task {
 		echo __METHOD__ . ". rows count = " . count($rows) . ' ' . PHP_EOL;
 		
 		foreach($rows as $row) {
-			echo __METHOD__ . '. row id: ' . $row->id . PHP_EOL;
+			echo __METHOD__ . "//////////////////////////////////////////////////" . PHP_EOL . PHP_EOL;
+			echo __METHOD__ . '. OrganizationRequest row->id: ' . $row->id . PHP_EOL;
 			$id = $row->id;
 			$expenseTypeName = null;
 			$expenseName = null;

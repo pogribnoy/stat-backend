@@ -3,14 +3,6 @@ class UserlistController extends ControllerList {
 	public $entityName = 'User';
 	public $controllerName = "Userlist";
 	
-	public function initialize() {
-		parent::initialize();
-	}
-	
-	/* 
-	* Заполняет (инициализирует) свойство colmns
-	* Переопределяемый метод.
-	*/
 	public function initColumns() {
 		// описатель таблицы
 		$this->columns = array(
@@ -26,9 +18,9 @@ class UserlistController extends ControllerList {
 				'filter' => 'bool',
 				"sortable" => "DESC",
 			),
-			'email' => array(
-				'id' => 'email',
-				'name' => $this->controller->t->_("text_entity_property_email"),
+			'login' => array(
+				'id' => 'login',
+				'name' => $this->controller->t->_("text_entity_property_login"),
 				'filter' => 'text',
 				"sortable" => "DESC",
 			),
@@ -40,9 +32,9 @@ class UserlistController extends ControllerList {
 				'filterLinkEntityName' => 'UserRole',
 				'filterFillConditions' => function() { 
 					$userRoleID = $this->controller->userData['role_id'];
-					$conditions = ''; 
-
-					if($userRoleID == $this->controller->config->application->orgAdminRoleID) $conditions .= "id IN (" . $this->config->application->orgOperatorRoleID . ", " . $this->config->application->orgAdminRoleID . ")";
+					$conditions = '1=1'; 
+					$this->logger->log(__METHOD__ . '. userRoleID=' . $userRoleID);
+					if($userRoleID == $this->controller->config->application->orgAdminRoleID) $conditions = "id IN (" . $this->config->application->orgOperatorRoleID . ", " . $this->config->application->orgAdminRoleID . ")";
 					return $conditions; 
 				},
 				"sortable" => "DESC",
@@ -50,6 +42,12 @@ class UserlistController extends ControllerList {
 			'name' => array(
 				'id' => 'name',
 				'name' => $this->controller->t->_("text_entity_property_fio"),
+				'filter' => 'text',
+				"sortable" => "DESC",
+			),
+			'email' => array(
+				'id' => 'email',
+				'name' => $this->controller->t->_("text_entity_property_email"),
 				'filter' => 'text',
 				"sortable" => "DESC",
 			),
@@ -66,33 +64,6 @@ class UserlistController extends ControllerList {
 		);
 	}
 	
-	/* 
-	* Заполняет свойство columns данными списков из связанных таблиц
-	* Переопределяемый метод.
-	*/
-	/**/public function fillColumnsWithLists() {
-		$userRoleID = $this->controller->userData['role_id'];
-		
-		// роли пользователей для фильтрации
-		$conditions = '';
-		//$this->logger->log(__METHOD__ . '. userRoleID=' . $userRoleID . ", orgAdminRoleID=" . $this->controller->config->application->orgAdminRoleID);
-		if($userRoleID == $this->controller->config->application->orgAdminRoleID) $conditions .= "id IN (" . $this->config->application->orgOperatorRoleID . ", " . $this->config->application->orgAdminRoleID . ")";
-		$user_role_rows = UserRole::find(['conditions' => $conditions, 'order' => 'name ASC']);
-		$user_roles = array();
-		foreach ($user_role_rows as $row) {
-			// наполняем массив
-			$user_roles[] = array(
-				'id' => $row->id,
-				"name" => $row->name
-			);
-		}
-		$this->columns['user_role']['filter_values'] = $user_roles;
-	}
-	
-	/* 
-	* Предоставляет базовый текст запроса к БД
-	* Переопределяемый метод.
-	*/
 	public function getPhqlSelect() {
 		$userRoleID = $this->controller->userData['role_id'];
 		$userID = $this->controller->userData['id'];
@@ -109,7 +80,7 @@ class UserlistController extends ControllerList {
 			else $phql .= " JOIN UserOrganization AS uo1 ON uo1.user_id=<TableName>.id AND uo1.user_id=" . $userID;
 		}
 		
-		$phql .= " WHERE 1=1";
+		$phql .= " WHERE <TableName>.deleted_at IS NULL";
 		
 		// если у пользователя роль "Администратор муниципалитета", то у пользователя из списка должна быть роль "Оператор" или "Администратор муниципалитета"
 		if($userRoleID == $this->config->application->orgAdminRoleID) $phql .= " AND <TableName>.user_role_id IN (" . $this->config->application->orgOperatorRoleID . ", " . $this->config->application->orgAdminRoleID . ")";
@@ -117,22 +88,22 @@ class UserlistController extends ControllerList {
 		return $phql;
 	}
 	
-	/* 
-	* Добавляет текст запроса к БД параметры фильтрации
-	* Расширяемый метод
-	*/
 	public function addFilterValuesToPhql($phql) {
 		$phql = parent::addFilterValuesToPhql($phql);
 		
 		if(isset($this->filter_values["user_role_id"])) $phql .= " AND UserRole.id = '" . $this->filter_values["user_role_id"] . "'";
 		
+		$phql .= ' GROUP BY User.id ';
+		
 		return $phql;
 	}
 	
-	/* 
-	* Заполняет свойство items['fields'] данными, полученными после выборки из БД
-	* Переопределяемый метод.
-	*/
+	protected function addSpecificSortLimitToPhql($phql, $id) {
+		
+		if ($id == 'user_role') return $phql .= ' ORDER BY UserRole.name ' . $this->filter_values['order'];
+		return null;
+	}
+	
 	public function fillFieldsFromRow($row) {
 		$item = [
 			"fields" => [
@@ -144,13 +115,9 @@ class UserlistController extends ControllerList {
 					'id' => 'active',
 					'value' =>  $row->user->active
 				],
-				"phone" => [
-					'id' => 'phone',
-					'value' =>  $row->user->phone
-				],
-				"email" => [
-					'id' => 'email',
-					'value' =>  $row->user->email
+				"login" => [
+					'id' => 'login',
+					'value' =>  $row->user->login
 				],
 				"name" => [
 					'id' => 'name',
@@ -160,14 +127,16 @@ class UserlistController extends ControllerList {
 					'id' => $row->user_role_id ? $row->user_role_id : '',
 					'value' => $row->user_role_name ? $row->user_role_name : ''
 				],
+				"email" => [
+					'id' => 'email',
+					'value' =>  $row->user->email
+				],
+				"phone" => [
+					'id' => 'phone',
+					'value' =>  $row->user->phone
+				],
 			]
 		];
 		$this->items[] = $item;
 	}
-	
-	protected function addSpecificSortLimitToPhql($phql, $id) {
-		if ($id == 'user_role') return $phql .= ' ORDER BY UserRole.name ' . $this->filter_values['order'];
-		return null;
-	}
-	
 }

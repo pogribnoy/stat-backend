@@ -3,14 +3,6 @@ class NewslistController extends ControllerList {
 	public $entityName = 'News';
 	public $controllerName = "Newslist";
 	
-	public function initialize() {
-		parent::initialize();
-	}
-	
-	/* 
-	* Заполняет (инициализирует) свойство colmns
-	* Переопределяемый метод.
-	*/
 	public function initColumns() {
 		// описатель таблицы
 		$this->columns = array(
@@ -50,24 +42,15 @@ class NewslistController extends ControllerList {
 		);
 	}
 	
-	
-	/* 
-	* Предоставляет базовый текст запроса к БД
-	* Переопределяемый метод.
-	*/
 	public function getPhqlSelect() {
 		$userRoleID = $this->controller->userData['role_id'];
 		
 		// строим запрос к БД на выборку данных
-		$phql = "SELECT <TableName>.*, User.id AS created_by_id, User.name AS created_by_name FROM <TableName> JOIN User on User.id=<TableName>.created_by";
-		$phql .= " WHERE 1=1";
+		$phql = "SELECT <TableName>.*, User.id AS created_by_id, User.name AS created_by_name FROM <TableName> LEFT JOIN User on User.id=<TableName>.created_by";
+		$phql .= " WHERE <TableName>.deleted_at IS NULL";
 		return $phql;
 	}
 	
-	/* 
-	* Заполняет свойство items['fields'] данными, полученными после выборки из БД
-	* Переопределяемый метод.
-	*/
 	public function fillFieldsFromRow($row) {
 		$this->items[] = array(
 			"fields" => array(

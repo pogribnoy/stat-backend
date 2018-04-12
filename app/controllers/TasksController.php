@@ -1,7 +1,7 @@
 <?php
 class TasksController extends ControllerBase {
 	
-	private $tmpCrontabFile = APP_PATH . "app/common/tasks/crontab.txt";
+	private $tmpCrontabFile = APP_PATH . "app/common/tasks/templates/crontab.txt";
 	
 	public $tasks = [
 		// очистка непривязанных расходов
@@ -35,6 +35,38 @@ class TasksController extends ControllerBase {
 			"logFile" => APP_PATH . "app/common/tasks/send_response.log",
 			"disabled" => 0,
 			"command" => " php " . APP_PATH . "app/common/tasks/cli.php send_response",
+		],
+		// генерация sitemap.xml
+		"generate_sitemap" => [
+			"nameCode" => "name_tasks_index_generate_sitemap",
+			"schedule" => "30 0 * * *",
+			"logFile" => APP_PATH . "app/common/tasks/generate_sitemap.log",
+			"disabled" => 0,
+			"command" => " php " . APP_PATH . "app/common/tasks/cli.php generate_sitemap",
+		],
+		// минификация JS
+		"minify_js" => [
+			"nameCode" => "name_tasks_index_minify_js",
+			"schedule" => "*/1 * * * *",
+			"logFile" => "/var/www/stat-backend/minificator/minify_js.log",
+			"disabled" => 0,
+			"command" => " /var/www/stat-backend/minificator/minify_js.sh",
+		],
+		// генератор клиентских переводов
+		"generate_client_translator" => [
+			"nameCode" => "name_tasks_index_generate_client_translator",
+			"schedule" => "*/1 * * * *",
+			"logFile" => APP_PATH . "app/common/tasks/generate_client_translator.log",
+			"disabled" => 0,
+			"command" => " php " . APP_PATH . "app/common/tasks/cli.php generate_client_translator",
+		],
+		// минификация HTTP
+		"minify_html" => [
+			"nameCode" => "name_tasks_index_minify_html",
+			"schedule" => "*/1 * * * *",
+			"logFile" => "/var/www/stat-backend/minificator/minify_html.log",
+			"disabled" => 0,
+			"command" => " /var/www/stat-backend/minificator/minify_html.sh",
 		],
 	];
 	
@@ -124,8 +156,8 @@ class TasksController extends ControllerBase {
 						$line = substr_replace($line, $newSchedule, 0, $cmdPos);
 						if($rq->$code->disabled == 1) $line = "# " . $line;
 						
-						$this->logger->log(__METHOD__ . ". line = " . $line);
 						$this->logger->log(__METHOD__ . ". newSchedule = " . $newSchedule);
+						$this->logger->log(__METHOD__ . ". line = " . $line);
 						
 						break;
 					}

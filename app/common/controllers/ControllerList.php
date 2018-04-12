@@ -37,6 +37,9 @@ class ControllerList extends ControllerBase {
 	// шаблон по умолчанию
 	public $templateName = "scroller_template";
 	
+	// контроллер (сущность), в котором размещается данный контроллер
+	public $parentController = null;
+	
 	public function indexAction() {
 		$this->createDescriptor();
 		
@@ -45,7 +48,7 @@ class ControllerList extends ControllerBase {
 			$this->response->setContentType('application/json', 'UTF-8');
 			
 			// TODO. Удалить, используется только для отладки спиннера
-			if(isset($this->filter_values['id'])) sleep(10);
+			//if(isset($this->filter_values['id'])) sleep(10);
 			
 			//$this->logger->log(__METHOD__ . '. descriptor = ' . json_encode($this->descriptor));
 			return json_encode($this->descriptor);
@@ -107,6 +110,7 @@ class ControllerList extends ControllerBase {
 			else $this->actionName = $controller->actionName;
 			$this->actionNameLC = strtolower($this->actionName);
 			$this->entityNameLC = strtolower($this->entityName);
+			$this->parentController = $controller;
 			
 			$this->namespace = __NAMESPACE__;
 			
@@ -147,18 +151,18 @@ class ControllerList extends ControllerBase {
 		//$this->logger->log(__METHOD__ . ". phql=" . $phql);
 		$rows = $this->modelsManager->executeQuery($phql);
 		
-		// считаем количество записей
-		$count = 0;
-		if($rows) $count = count($rows);
 		
 		// наполняем $fields
 		$this->fillItemsFromRows($rows);
 		
 		$this->createDescriptorObject();
 		
-		// TODO. Возвращать реальное количество страниц
-		$this->descriptor["pager"]["total_pages"] = $count/$this->descriptor["filter_values"]["page_size"]+1;
-		//$this->descriptor["pager"]["total_pages"] = 4;
+		// считаем количество записей
+		$count = 0;
+		if($rows) $count = count($rows);
+		
+		$this->descriptor["pager"]["total_pages"] = intdiv($count, $this->descriptor["filter_values"]["page_size"]) + 1 + ((integer)$this->descriptor["filter_values"]['page'] - 1);
+		//$this->descriptor["pager"]["total_pages"] = 1;
 		$this->descriptor["items"] = $this->items;
 		$this->descriptor["count"] = $count;
 		
@@ -174,7 +178,7 @@ class ControllerList extends ControllerBase {
 		$this->pager['page_sizes'] = json_decode($this->config->application->tablePageSizes);
 		// если для админа настроено отдельно максимальное значение, то используем его
 		if($this->max_page_size > 0) {
-			if(!in_array($this->max_page_size, $this->pager['page_sizes'])) $this->pager['page_sizes'][] = $this->max_page_size;
+			if(!in_array($this->max_page_size, $this->pager['page_sizes'])) $this->pager['page_sizes'][] = (int)$this->max_page_size;
 			sort($this->pager['page_sizes']);
 		}
 		//$this->logger->log(json_encode($this->settings));
@@ -211,7 +215,7 @@ class ControllerList extends ControllerBase {
 		$exludeOps = $this->getExludeOps();
 		
 		// получаем действия, доступные пользователю
-		$this->operations = $this->getScrollerOperations($this->controller, $this->entityNameLC, $this->actionNameLC);
+		$this->getScrollerOperations();
 	}
 	
 	/* 
@@ -227,6 +231,7 @@ class ControllerList extends ControllerBase {
 			if(isset($column['filter'])) $publicColumn['filter'] = $column['filter'];
 			if(isset($column['filter_style'])) $publicColumn['filter_style'] = $column['filter_style'];
 			if(isset($column['filter_values'])) $publicColumn['filter_values'] = $column['filter_values'];
+			if(isset($column['filter_value'])) $publicColumn['filter_value'] = $column['filter_value'];
 			if(isset($column['sortable'])) $publicColumn['sortable'] = $column['sortable'];
 			if(isset($column['nullSubstitute'])) $publicColumn['nullSubstitute'] = $column['nullSubstitute'];
 			if(isset($column['hideble'])) $publicColumn['hideble'] = $column['hideble'];
@@ -255,6 +260,8 @@ class ControllerList extends ControllerBase {
 			"edit_style" => 'modal', //url
 			//"template" => $this->getTmpl(),
 			"newCount" => $this->newCount,
+			"newCountTitleNonZero" => $this->controller->t->_("text_" . $this->controllerNameLC . "_newCountTitleNonZero"),
+			"newCountTitleZero" => $this->controller->t->_("text_" . $this->controllerNameLC . "_newCountTitleZero"),
 		);
 		if(isset($this->templateName)) $this->descriptor['templateName'] = $this->templateName;
 		if(isset($this->notCollapsible)) $this->descriptor["notCollapsible"] = $this->notCollapsible;
@@ -273,7 +280,8 @@ class ControllerList extends ControllerBase {
 		$phql = $this->addFilterValuesToPhql($phql);
 		
 		// добавляем условия сортировки и лимита
-		$phql = $this->addSortLimitToPhql($phql);
+		$phql = $this->addSortToPhql($phql);
+		$phql = $this->addLimitToPhql($phql);
 		
 		$phql = str_replace("<TableName>", $this->entityName, $phql);
 		
@@ -306,10 +314,11 @@ class ControllerList extends ControllerBase {
 				$filterID = "filter_" . $columnID;
 				//$this->logger->log(__METHOD__ . '. columnID = ' . $columnID);
 				// если поле есть в фильтре
-				if(isset($_REQUEST[$filterID]) && ($column['filter'] == 'text' || $column['filter'] == 'period')) {
+				if(isset($_REQUEST[$filterID]) && ($column['filter'] == 'text' || $column['filter'] == 'period' || $column['filter'] == 'email')) {
 					$filterID = "filter_" . $columnID;
 					$val = $this->filter->sanitize(urldecode($_REQUEST[$filterID]), ['trim', "string"]);
 					if($val != '') $this->filter_values[$columnID] =  $val;
+					//$this->logger->log(__METHOD__ . '. columnID = ' . $columnID . ' val=' . $val);
 				}
 				else if(isset($_REQUEST[$filterID]) && ($column['filter'] == 'number' || $column['filter'] == 'bool')) {
 					$filterID = "filter_" . $columnID;
@@ -328,7 +337,7 @@ class ControllerList extends ControllerBase {
 				}
 				
 				if(isset($this->filter_values[$columnID])) $column['filter_value'] = $this->filter_values[$columnID];
-				//$this->logger->log(__METHOD__ . '. columnID = ' . $columnID . '' . );
+				//$this->logger->log(__METHOD__ . '. columnID = ' . $columnID . ' filter_values=' . json_encode($this->filter_values));
 			}
 		}
 		
@@ -359,13 +368,21 @@ class ControllerList extends ControllerBase {
 				if (!$newPhql) {
 					// если код - спецслово СУБД, то его надо заключить в квадратные скобки
 					$field = $id;
+					// прибавление _id сделано тут, т.к. потом выполняется проверка на "служебные слова"
 					if($column['filter'] == 'select' && isset($column['filter_style']) && $column['filter_style'] == "id") $field .= '_id';
-					if($id == 'group') $field = '[' . $id . ']';
+					if($field == 'group') $field = '[' . $field . ']';
 					
 					if(isset($column["nullSubstitute"]) && $value == '**') $phql .= " AND (<TableName>." . $field . " IS NULL OR <TableName>." . $field . " = '' OR <TableName>." . $field . " = '" . $column["nullSubstitute"] . "')";
-					else if ($column['filter'] == 'select' && isset($column['filter_style']) && $column['filter_style'] == "id") $phql .= " AND <TableName>." . $field . " = " . $value;
+					else if ($column['filter'] == 'select' && isset($column['filter_style']) && $column['filter_style'] == "id") {
+						//if($column['filter'])
+						$phql .= " AND <TableName>." . $field . " = " . $value;
+					}
 					else if ($column['filter'] == 'bool') $phql .= " AND <TableName>." . $field . " = " . $value;
-					else  $phql .= " AND <TableName>." . $field . " LIKE '%" . $value . "%'";
+					else  {
+					$this->logger->log(__METHOD__ . '. field = ' . $field . ' filterLinkEntityName=' . $column['filterLinkEntityName']);
+						if(isset($column['filterLinkEntityName'])) $phql .= " AND " . $column['filterLinkEntityName'] . "." . $field . " LIKE '%" . $value . "%'";
+						else $phql .= " AND <TableName>." . $field . " LIKE '%" . $value . "%'";
+					}
 				}
 				else $phql = $newPhql;
 			}
@@ -390,12 +407,16 @@ class ControllerList extends ControllerBase {
 		return $phql;
 	}
 	
+	/* 
+	* Добавляет  в текст запроса к БД нестандартные параметры сортировки и лимита. Например, вопрос организации связан с типом улицы через расход, в стандартном варианте Система не знает о промежуточной зависимости
+	*/
 	protected function addSpecificFilterValuesToPhql($phql, $id) { return null; }
 	
 	/* 
 	* Добавляет  в текст запроса к БД параметры сортировки и лимита
 	*/
-	protected function addSortLimitToPhql($phql) {
+	protected function addSortToPhql($phql) {
+	//protected function addSortLimitToPhql($phql) {
 		$filter_values = $this->filter_values;
 		
 		foreach($this->columns as $id => $column) {
@@ -410,6 +431,13 @@ class ControllerList extends ControllerBase {
 			}
 		}
 		
+		//$start = ((integer)$filter_values['page'] - 1) * (integer)$filter_values["page_size"] ;
+		//$phql .= ' LIMIT '. $start . ', ' . $filter_values["page_size"];
+		return $phql;
+	}
+	
+	protected function addLimitToPhql($phql) {
+		$filter_values = $this->filter_values;
 		$start = ((integer)$filter_values['page'] - 1) * (integer)$filter_values["page_size"] ;
 		$phql .= ' LIMIT '. $start . ', ' . $filter_values["page_size"];
 		return $phql;
@@ -437,7 +465,9 @@ class ControllerList extends ControllerBase {
 	* Предоставляет базовый текст запроса к БД
 	* Переопределяемый метод.
 	*/
-	public function getPhqlSelect() {}
+	public function getPhqlSelect() {
+		return "SELECT <TableName>.* FROM <TableName> WHERE 1=1";//<TableName>.deleted_at IS NULL";
+	}
 	
 	/* 
 	* Заполняет свойство items['fields'] данными, полученными после выборки из БД
@@ -456,7 +486,8 @@ class ControllerList extends ControllerBase {
 	* Переопределяемый метод.
 	*/
 	public function fillColumnsWithLists() {
-		$cacheKey = $this->controllerNameLC . "_" . $this->actionNameLC . "_filter_lists.php";
+		$userRoleID = $this->controller->userData['role_id'];
+		$cacheKey = $this->controllerNameLC . "_" . $this->actionNameLC . "_filter_lists_" . $userRoleID . ".php";
 		$cachedData = $this->dataCache->get($cacheKey);
 		
 		if ($cachedData === null) {
@@ -468,9 +499,19 @@ class ControllerList extends ControllerBase {
 					$filterLinkEntityFieldID = 'name';
 					
 					if(isset($column['filterLinkEntityFieldID']) && $column['filterLinkEntityFieldID'] != null) $filterLinkEntityFieldID = $column['filterLinkEntityFieldID'];
+					
+					$isCodedValues = 0;
+					$search = "_code";
+					$val = $filterLinkEntityFieldID;
+					// если это справочник с кодами вместо наименования, то наименования надо брать из модуля переводчика
+					if(strcmp(substr($val, strlen($val) - strlen($search)), $search) == 0) $isCodedValues = 1;
+					//$this->logger->log(__METHOD__ . '. substr=' . substr($val, strlen($val) - strlen($search)));
 						
-					$params = ['order' => $filterLinkEntityFieldID . ' ASC'];
-					if(isset($column['filterFillConditions']) && $column['filterFillConditions'] != null && is_object($column['filterFillConditions'])) $params['conditions'] = $column['filterFillConditions']();
+					$params = [
+						'conditions' => $filterLinkEntityName . '.deleted_at IS NULL',
+						'order' => $filterLinkEntityFieldID . ' ASC'
+					];
+					if(isset($column['filterFillConditions']) && $column['filterFillConditions'] != null && is_object($column['filterFillConditions'])) $params['conditions'] .= ' AND ' . $column['filterFillConditions']();
 					
 					$rows = $filterLinkEntityName::find($params);
 					
@@ -478,9 +519,14 @@ class ControllerList extends ControllerBase {
 					$filterValues = array();
 					foreach ($rows as $row) {
 						// наполняем массив
+						if($isCodedValues == 1) $name = $this->controller->t->_($row->$filterLinkEntityFieldID);
+						else $name = $row->$filterLinkEntityFieldID;
+						//$this->logger->log(__METHOD__ . '. filterLinkEntityFieldID=' . $row->$filterLinkEntityFieldID);
+						//$this->logger->log(__METHOD__ . '. isCodedValues=' . $isCodedValues);
+						
 						$filterValues[] = array(
 							'id' => $row->id,
-							"name" => $row->$filterLinkEntityFieldID,
+							"name" => $name,
 						);
 					}
 					//$this->data['asd'] = json_encode($rows);
@@ -502,12 +548,11 @@ class ControllerList extends ControllerBase {
 		}
 	}
 	
-	public function getScrollerOperations($controller, $entityNameLC, $actionName="show") {
+	public function getScrollerOperations() {
 		//$entityName = strtolower($entityName);
-		$role_id = $controller->userData['role_id'];
-		$acl = $controller->acl;
-		$t = $controller->t;
-		
+		$userRoleID = $this->controller->userData['role_id'];
+		$acl = $this->controller->acl;
+		$t = $this->controller->t;
 		
 		$showOp = null;
 		$editOp = null;
@@ -515,51 +560,69 @@ class ControllerList extends ControllerBase {
 		$deleteOp = null;
 		$addOp = null;
 		
-		if($acl->isAllowed($role_id, $entityNameLC, 'show')) {
+		if($acl->isAllowed($userRoleID, $this->entityNameLC, 'show')) {
 			$showOp = $this->createButtonDescriptor('show');
 		}
-		if($acl->isAllowed($role_id, $entityNameLC, 'edit')) {
+		if($acl->isAllowed($userRoleID, $this->entityNameLC, 'edit')) {
 			$editOp = $this->createButtonDescriptor('edit');
 		}
-		if($acl->isAllowed($role_id, $entityNameLC, 'delete')) {
+		if($acl->isAllowed($userRoleID, $this->entityNameLC, 'delete')) {
 			$deleteOp = $this->createButtonDescriptor('delete');
 		}
-		if($acl->isAllowed($role_id, $entityNameLC, 'add')) {
+		/*if($acl->isAllowed($userRoleID, $this->entityNameLC, 'add')) {
+			$addOp = $this->createButtonDescriptor('add');
+		}*/
+		//$this->logger->log(__METHOD__ . ". parentController=" . $this->parentController);
+		if($this->parentController != null && $this->parentController->actionNameLC != "show") {
+			$this->logger->log(__METHOD__ . ". parentController_controllerNameLC=" . $this->parentController->controllerNameLC . ", controllerNameLC=" . $this->controllerNameLC . ", actionNameLC=" . $this->parentController->actionNameLC);
+			$resource = $this->parentController->controllerNameLC . "_" . $this->controllerNameLC;
+			if($acl->isAllowed($userRoleID, $resource, 'add')) {
+				if($this->parentController->scrollers[$this->controllerNameLC]["addStyle"] == 'scroller') $addOp = $this->createButtonDescriptor('select');
+				else if($acl->isAllowed($userRoleID, $this->entityNameLC, 'add')) $addOp = $this->createButtonDescriptor('add');
+			}
+		}
+		//else if($acl->isAllowed($userRoleID, $this->entityNameLC, 'add')) {
+		else if($this->isAllowedResource($userRoleID, $this->entityNameLC, 'add')) {
 			$addOp = $this->createButtonDescriptor('add');
 		}
 		
-		$operations = array();
+		$this->operations = array();
 		
 		// массив операций на основе разрешений, привязанных к одной сущности
-		$operations["item_operations"] = array();
-		if($showOp) $operations["item_operations"][] = $showOp;
+		$this->operations["item_operations"] = array();
+		if($showOp) $this->operations["item_operations"][] = $showOp;
 		
-		if($actionName !== "show") {
-			if($editOp) $operations["item_operations"][] = $editOp;
-			if($sendOp) $operations["item_operations"][] = $sendOp;
-			if($deleteOp) $operations["item_operations"][] = $deleteOp;
+		if($this->actionNameLC !== "show") {
+			if($editOp) $this->operations["item_operations"][] = $editOp;
+			if($sendOp) $this->operations["item_operations"][] = $sendOp;
+			if($deleteOp) $this->operations["item_operations"][] = $deleteOp;
 		}
 		
-		// массив операций на основе разрешений, не привязанных к одной сущности
-		$operations["common_operations"] = array();
-		if($addOp && $actionName != "show") {
-			// для скроллера
-			$operations["common_operations"][] = $addOp;
-			// для грида
-			$operations["common_operations"][] = $this->createButtonDescriptor('select');
+		// массив операций на основе разрешений, не привязанных к конкретной сущности
+		$this->operations["common_operations"] = array();
+		// добавление записи
+		//$this->logger->log(__METHOD__ . ". entityNameLC=" . $this->entityNameLC . ", parentController=" . json_encode($this->parentController) . ", actionNameLC=" . $this->actionNameLC . ", addOp=" . json_encode($addOp));
+		if($addOp && ($this->actionNameLC != "show")) {
+			//$this->logger->log(__METHOD__ . ". if=" . json_encode($addOp && ($this->actionNameLC != "show")));
+			$this->operations["common_operations"][] = $addOp;
+			//$this->operations["common_operations"][] = $this->createButtonDescriptor('select');
 		}
+		//$this->logger->log(__METHOD__ . ". common_operations=" . json_encode($this->operations["common_operations"]));
 		
 		// массив групповых операций
-		$operations["group_operations"] = array();
-		if($deleteOp && $actionName != "show") {
-			$operations["group_operations"][] = $deleteOp;
+		$this->operations["group_operations"] = array();
+		if($deleteOp && $this->actionNameLC != "show") {
+			$this->operations["group_operations"][] = $deleteOp;
 		}
 		
 		// массив операций для фильтра
-		$operations["filter_operations"] = [
+		$this->operations["filter_operations"] = [
 			$this->createButtonDescriptor('apply'),
 			$this->createButtonDescriptor('clear'),
 		];
-		return $operations;
+	}
+	
+	public function getFieldValueFromModel($modelFieldValue, $field) {
+		return ($modelFieldValue && !(isset($field["nullSubstitute"]) && $modelFieldValue == $field["nullSubstitute"])) ? $modelFieldValue : '';
 	}
 }

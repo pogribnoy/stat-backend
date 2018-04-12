@@ -1,58 +1,20 @@
 <?php
 use Phalcon\Mvc\Model;
-use Phalcon\Db\RawValue;
+use Phalcon\Mvc\Model\Behavior\Timestampable;
+use Phalcon\Mvc\Model\Behavior\SoftDelete;
 
 class User extends Model {
-	/**
-	* @var integer
-	*/
 	public $id;
-	
-	/**
-	* @var string
-	*/
+	public $login;
 	public $password;
-	
-	/**
-	* @var string
-	*/
 	public $phone;
-	
-	/**
-	* @var string
-	*/
 	public $email;
-	
-	/**
-	* @var string
-	*/
 	public $name;
-	
-	/**
-	* @var integer
-	*/
-	public $points;
-	
-	/**
-	* @var integer
-	*/
 	public $user_role_id;
-	
-	/**
-	* @var integer
-	*/
 	public $active;
-	
-	/**
-	* @var datetime
-	*/
 	public $created_at;
+	public $deleted_at;
 	
-	public function beforeCreate() {
-		$this->created_at = new RawValue('now()');
-		$this->points = 0;
-		//$this->active = "1";
-	}
 	
 	public function validation() {
 		// валидируем номер-телефона
@@ -86,6 +48,7 @@ class User extends Model {
 		}
 	}
 	public function initialize() {
+		$this->hasMany("id", "Audit", "user_id");
 		//$this->hasMany("id", "Poll", "created_by");
 		//$this->hasMany("id", "News", "created_by");
 		//$this->hasMany("id", "Result", "created_by");
@@ -98,5 +61,21 @@ class User extends Model {
 		//$this->skipAttributes(array('created_at'));
 		//Пропуск только при добавлении
 		//$this->skipAttributesOnCreate(array('points'));
-  }
+		
+		$this->addBehavior(
+			new Timestampable([
+				'beforeCreate' => [
+					'field'  => 'created_at',
+					'format' => 'Y-m-d H:i:s',
+				]
+			])
+        );
+		
+		$this->addBehavior(
+			new SoftDelete([
+				'field' => 'deleted_at',
+				'value' => (new DateTime())->format("Y-m-d H:i:s"),
+			])
+        );
+	}
 }

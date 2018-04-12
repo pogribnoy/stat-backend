@@ -66,6 +66,7 @@ class OrganizationController extends ControllerEntity {
 				'name' => $this->t->_("text_entity_property_name"),
 				'type' => 'text',
 				'required' => 2,
+				'max' => 255,
 				'newEntityValue' => null,
 			), 
 			'region' =>	array(
@@ -81,19 +82,21 @@ class OrganizationController extends ControllerEntity {
 				'id' => 'contacts',
 				'name' => $this->t->_("text_entity_property_contacts"),
 				'type' => 'text',
+				'max' => 500,
 				'newEntityValue' => null,
 			), 
 			'email' => array(
 				'id' => 'email',
 				'name' => $this->t->_("text_entity_property_email"),
 				'type' => 'email',
+				'max' => 255,
 				'newEntityValue' => null,
 			), 
 			'img' => array(
 				'id' => 'img',
 				'name' => $this->t->_("text_entity_property_image"),
 				'type' => 'img',
-				'max_count' => 2,
+				'max_count' => 1,
 				'min_count' => 0,
 				'newEntityValue' => null,
 			)

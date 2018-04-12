@@ -3,14 +3,6 @@ class ExpenselistController extends ControllerList {
 	public $entityName = 'Expense';
 	public $controllerName = "Expenselist";
 	
-	public function initialize() {
-		parent::initialize();
-	}
-	
-	/* 
-	* Заполняет (инициализирует) свойство colmns
-	* Переопределяемый метод.
-	*/
 	public function initColumns() {
 		// описатель таблицы
 		$this->columns = array(
@@ -41,14 +33,14 @@ class ExpenselistController extends ControllerList {
 				'filter' => 'text',
 				"sortable" => "DESC",
 			),
-			'street_type' => array(
+			/*'street_type' => array(
 				'id' => 'street_type',
 				'name' => $this->controller->t->_("text_entity_property_street_type"),
 				'filter' => 'select',
 				'filter_style' => 'id',
 				'filterLinkEntityName' => 'StreetType',
 				"sortable" => "DESC",
-			),
+			),*/
 			'street' => array(
 				'id' => 'street',
 				'name' => $this->controller->t->_("text_entity_property_street"),
@@ -88,7 +80,7 @@ class ExpenselistController extends ControllerList {
 				'id' => 'target_date',
 				'name' => $this->controller->t->_("text_expenselist_target_date"),
 				'filter' => 'text',
-				'hideble' => 1,
+				//'hideble' => 1,
 			),
 			'operations' => array(
 				'id' => 'operations',
@@ -97,10 +89,6 @@ class ExpenselistController extends ControllerList {
 		);
 	}
 	
-	/* 
-	* Предоставляет базовый текст запроса к БД
-	* Переопределяемый метод.
-	*/
 	public function getPhqlSelect() {
 		$userRoleID = $this->controller->userData['role_id'];
 		
@@ -108,7 +96,7 @@ class ExpenselistController extends ControllerList {
 		$phql = "SELECT <TableName>.*, ExpenseType.id AS expense_type_id, ExpenseType.name AS expense_type_name, ExpenseStatus.id AS expense_status_id, ExpenseStatus.name AS expense_status_name, StreetType.id AS street_type_id, StreetType.name AS street_type_name FROM <TableName> LEFT JOIN ExpenseType on ExpenseType.id=<TableName>.expense_type_id LEFT JOIN ExpenseStatus ON ExpenseStatus.id = <TableName>.expense_status_id LEFT JOIN StreetType ON StreetType.id = <TableName>.street_type_id";
 		if($userRoleID != 1) $phql .= ' JOIN Organization ON Organization.id = <TableName>.organization_id INNER JOIN UserOrganization ON UserOrganization.organization_id = <TableName>.organization_id AND UserOrganization.user_id = ' . $this->controller->userData['id'];
 		
-		$phql .= " WHERE 1=1";
+		$phql .= " WHERE <TableName>.deleted_at IS NULL";
 		
 		// уточняем выборку, если переданы доп. фильтры, которые могут навязывать внешние контроллеры
 		if(isset($this->add_filter["organization_id"])) {
@@ -118,10 +106,33 @@ class ExpenselistController extends ControllerList {
 		return $phql;
 	}
 	
-	/* 
-	* Заполняет свойство items['fields'] данными, полученными после выборки из БД
-	* Переопределяемый метод.
-	*/
+	protected function addSpecificFilterValuesToPhql($phql, $id) { 
+		$filter_values = $this->filter_values;
+		$column =  $this->columns[$id];
+		if ($id == 'target_date') {
+			if(isset($column["nullSubstitute"]) && $filter_values[$id] == $column["nullSubstitute"]) return $phql .= " AND (<TableName>." . $id . "_from IS NULL OR <TableName>." . $id . "_from = '' OR <TableName>." . $id . "_from = '" . $column["nullSubstitute"] . "' OR (<TableName>." . $id . "_to IS NULL OR <TableName>." . $id . "_to = '' OR <TableName>." . $id . "_to = '" . $column["nullSubstitute"] . "'))";
+			else return $phql .= " AND (<TableName>." . $id . "_from LIKE '%" . $filter_values[$id] . "%' OR <TableName>." . $id . "_to LIKE '%" . $filter_values[$id] . "%')";
+		}
+		return null; 
+	}
+
+	
+	protected function addSpecificSortLimitToPhql($phql, $id) {
+		$filter_values = $this->filter_values;
+		if($id == 'expense_status') return $phql .= ' ORDER BY ExpenseStatus.name ' . $filter_values['order'];
+		else if($id == 'expense_type') return $phql .= ' ORDER BY ExpenseType.name ' . $filter_values['order'];
+		//else if ($id == 'street_type') return $phql .= ' ORDER BY StreetType.name ' . $filter_values['order'];
+		return null;
+	}
+	
+	protected function addSortToPhql($phql) {
+		$phql = parent::addSortToPhql($phql);
+		$phql .= ', Expense.street ' . $this->filter_values['order'];
+		return $phql;
+	}
+	
+	
+	
 	public function fillFieldsFromRow($row) {
 		$item = [
 			"fields" => [
@@ -142,14 +153,20 @@ class ExpenselistController extends ControllerList {
 					'id' => 'settlement',
 					'value' =>  $row->expense->settlement ? $row->expense->settlement : '',
 				],
-				"street_type" => [
+				/*"street_type" => [
 					'id' => 'street_type',
 					'value_id' => $row->street_type_id ? $row->street_type_id : '',
 					'value' => $row->street_type_name ? $row->street_type_name : '',
-				],
+				],*/
 				"street" => [
 					'id' => 'street',
-					'value' =>  $row->expense->street ? $row->expense->street : '',
+					'value' => $this->getFieldValueFromModel($row->expense->street, $this->columns["street"]),//($row->expense->street && !($this->columns["street"]["nullSubstitute"] && $row->expense->street == $this->columns["street"]["nullSubstitute"])) ? $row->expense->street : '',
+					'values' => [
+						'street_type' => [
+							'value_id' => $row->street_type_id ? $row->street_type_id : '',
+							'value' => $row->street_type_name ? $row->street_type_name : '',
+						],
+					],
 				],
 				"house" => [
 					'id' => 'house',
@@ -180,21 +197,4 @@ class ExpenselistController extends ControllerList {
 		$this->items[] = $item;
 	}
 	
-	protected function addSpecificSortLimitToPhql($phql, $id) {
-		$filter_values = $this->filter_values;
-		if ($id == 'street_type') return $phql .= ' ORDER BY StreetType.name ' . $filter_values['order'];
-		else if($id == 'expense_type') return $phql .= ' ORDER BY ExpenseType.name ' . $filter_values['order'];
-		else if($id == 'expense_status') return $phql .= ' ORDER BY ExpenseStatus.name ' . $filter_values['order'];
-		return null;
-	}
-	
-	protected function addSpecificFilterValuesToPhql($phql, $id) { 
-		$filter_values = $this->filter_values;
-		$column =  $this->columns[$id];
-		if ($id == 'target_date') {
-			if(isset($column["nullSubstitute"]) && $filter_values[$id] == $column["nullSubstitute"]) return $phql .= " AND (<TableName>." . $id . "_from IS NULL OR <TableName>." . $id . "_from = '' OR <TableName>." . $id . "_from = '" . $column["nullSubstitute"] . "' OR (<TableName>." . $id . "_to IS NULL OR <TableName>." . $id . "_to = '' OR <TableName>." . $id . "_to = '" . $column["nullSubstitute"] . "'))";
-			else return $phql .= " AND (<TableName>." . $id . "_from LIKE '%" . $filter_values[$id] . "%' OR <TableName>." . $id . "_to LIKE '%" . $filter_values[$id] . "%')";
-		}
-		return null; 
-	}
 }

@@ -2,20 +2,16 @@
 class ExpenseController extends ControllerEntity {
 	public $entityName  = 'Expense';
 	
+	public $access = [
+		"edit" => [
+			"created_at" => self::readonlyAccess, //hiddenAccess,
+		],
+	];
+	
 	public function initialize() {
 		parent::initialize();
 	}
 	
-	/*protected $access = [
-		'edit' => [
-			//'created_at' => self::readonlyAccess,
-		]
-	];*/
-	
-	/* 
-	* Заполняет (инициализирует) свойство fields
-	* Переопределяемый метод.
-	*/
 	public function initFields() {
 		$this->fields = [
 			'id' => array(
@@ -49,6 +45,7 @@ class ExpenseController extends ControllerEntity {
 				'name' => $this->t->_("text_entity_property_name"),
 				'type' => 'text',
 				'required' => 2,
+				'max' => 255,
 				'newEntityValue' => null,
 			), 
 			'amount' => array(
@@ -65,6 +62,7 @@ class ExpenseController extends ControllerEntity {
 				'name' => $this->t->_("text_expense_settlement"),
 				'type' => 'text',
 				//'required' => 1,
+				'max' => 255,
 				'newEntityValue' => null,
 			),
 			'street_type' =>	array(
@@ -82,18 +80,21 @@ class ExpenseController extends ControllerEntity {
 				'name' => $this->t->_("text_entity_property_street"),
 				'type' => 'text',
 				//'required' => 1,
+				'max' => 255,
 				'newEntityValue' => null,
 			),
 			'house' =>	array(
 				'id' => 'house',
 				'name' => $this->t->_("text_entity_property_house_building"),
 				'type' => 'text',
+				'max' => 10,
 				'newEntityValue' => null,
 			),
 			'executor' =>	array(
 				'id' => 'executor',
 				'name' => $this->t->_("text_entity_property_executor"),
 				'type' => 'text',
+				'max' => 255,
 				'newEntityValue' => null,
 			),
 			'target_date' =>	array(
@@ -114,6 +115,7 @@ class ExpenseController extends ControllerEntity {
 				'name' => $this->t->_("text_entity_property_created_at"),
 				'type' => 'text',
 				'newEntityValue' => null,
+				'nullSubstitute' => '-',
 				//'access' => $this->readonlyAccess,
 			),
 		];
@@ -121,10 +123,7 @@ class ExpenseController extends ControllerEntity {
 		parent::initFields();
 	}
 	
-	/* 
-	* Наполняет модель сущности из запроса при сохранении
-	* Переопределяемый метод.
-	*/
+	
 	protected function fillModelFieldsFromSaveRq() {
 		//$this->entity->id получен ранее при select из БД или будет присвоен при создании записи в БД
 		$this->entity->expense_type_id = $this->fields['expense_type']['value_id'];
@@ -138,23 +137,18 @@ class ExpenseController extends ControllerEntity {
 		$this->entity->executor = $this->fields['executor']['value'];
 		$this->entity->target_date_from = $this->fields['target_date']['value1'];
 		$this->entity->target_date_to = $this->fields['target_date']['value2'];
-		$this->entity->created_at = (new DateTime('now'))->format("Y-m-d");
+		//$this->entity->created_at = (new DateTime('now'))->format("Y-m-d");
+		//$this->entity->created_at = (new DateTime())->format("Y-m-d H:i:s");
 		$this->logger->log(__METHOD__ . ". created_at = " . $this->entity->created_at);
 	}
 	
-	/* 
-	* Предоставляет текст запроса к БД
-	* Переопределяемый метод.
-	*/
+	
 	public function getPhql() {
 		// строим запрос к БД на выборку данных
 		return "SELECT Expense.*, ExpenseType.id AS expense_type_id, ExpenseType.name AS expense_type_name, StreetType.id AS street_type_id, StreetType.name AS street_type_name, ExpenseStatus.id AS expense_status_id, ExpenseStatus.name AS expense_status_name FROM Expense JOIN ExpenseType ON ExpenseType.id=Expense.expense_type_id LEFT JOIN ExpenseStatus ON ExpenseStatus.id=Expense.expense_status_id LEFT JOIN StreetType ON StreetType.id=Expense.street_type_id WHERE Expense.id = '" . $this->filter_values["id"] . "' LIMIT 1";
 	}
 	
-	/* 
-	* Заполняет свойство fields данными, полученными после выборки из БД
-	* Переопределяемый метод.
-	*/
+	
 	public function fillFieldsFromRow($row) {
 		//$this->logger->log(json_encode($row));
 		$this->fields["expense_type"]["value"] = $row->expense_type_name;
@@ -175,10 +169,7 @@ class ExpenseController extends ControllerEntity {
 		$this->fields["created_at"]["value"] = $row->expense->created_at;
 	}
 	
-	/* 
-	* Обновляет данные сущности после сохранения в БД (например, проставляется дата создания записи)
-	* Переопределяемый метод.
-	*/
+	
 	protected function updateEntityFieldsFromModelAfterSave() {
 		$this->fields["id"]["value"] = $this->entity->id;
 		$this->fields["created_at"]["value"] = $this->entity->created_at;

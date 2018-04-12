@@ -1,0 +1,146 @@
+<!--<div class="row">
+	<div class="col-lg-12"><button type="button" class="btn btn-default" name="" onclick="sendEmail();"><span class="glyphicon glyphicon-email">Отправить</span></button></div>
+</div> /.row -->
+<div class="row">
+	<div class="col-lg-12">
+		<button type="button" class="btn btn-primary" aria-label="<?php echo $t->_('button_save'); ?>" onclick="saveTasks();"><?php echo $t->_('button_save'); ?></button>
+	</div>
+	<div class="col-lg-12">
+		<?php if(isset($_REQUEST["DEBUG"])) { ?>
+			<button type="button" class="btn btn-primary" aria-label="Отладка" onclick="debugReDev();">Отладка</button>
+		<?php } else { echo "Для открытия функционала отладки добавьте параметр 'DEBUG'"; } ?>
+	</div>
+	
+</div><!-- /.row -->
+<div class="row">
+	<?php if(count($tasks) > 0) { ?>
+		<?php foreach($tasks as $code => $task) { ?>
+			<div class="col-lg-4">
+				<div class="panel panel-default" id="task_<?php echo $code; ?>_container">
+					<div class="panel-heading" data-toggle="collapse" data-target="#panel_body_<?php echo $code; ?>">
+						<h1 class="panel-title"><?php echo $controller->t->_($task["nameCode"]); ?><span class="pull-right "><button type="button" class="btn btn-default btn-xs"><i class="glyphicon glyphicon-minus"></i></button></span></h1>
+					</div>
+					<div id="panel_body_<?php echo $code; ?>" class="panel-body collapse in">
+						<div class="row">
+							<div class="col-lg-2">
+								<label for="task_<?php echo $code; ?>_enabled"><?php echo $controller->t->_("text_tasks_index_enabled"); ?></label>
+							</div>
+							<div class="col-lg-10">
+								<input type="checkbox" <?php if($task["disabled"] == 0) { ?>checked="checked"<?php } ?>id="task_<?php echo $code; ?>_enabled"/>
+							</div>
+						</div><!-- /.row -->
+						<div class="row">
+							<div class="col-lg-2">
+								<label for="task_<?php echo $code; ?>_schedule"><?php echo $controller->t->_("text_tasks_index_schedule"); ?></label>
+							</div>
+							<div class="col-lg-10">
+								<input value="<?php echo $task['schedule']; ?>" id="task_<?php echo $code; ?>_schedule"/>
+							</div>
+						</div><!-- /.row -->
+					</div>
+				</div>
+			</div>
+		<?php } ?>
+	<?php } ?>
+</div><!-- /.row -->
+<!--<div class="row" style="display: flex; align-items: center;">
+	<div class="col-lg-12 bg-warning">
+		<button class="btn btn-default center-block"><span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span> Обработка запроса</button>
+	</div>
+</div> /.row -->
+
+<div class="row">
+	<div class="col-lg-1">
+		<label for="tasks_crontab">Файл crontab</label>
+	</div>
+	<div class="col-lg-11">
+		<textarea id="tasks_crontab" style="width:100%;height:100px;"><?php echo $crontab; ?></textarea>
+	</div>
+</div><!-- /.row -->
+
+<div class="row">
+	<div class="col-lg-1">
+		<label for="tasks_crontab_debug">Debug</label>
+	</div>
+	<div class="col-lg-11">
+		<textarea id="tasks_crontab_debug" style="width:100%;height:100px;"><?php echo $debug; ?></textarea>
+	</div>
+</div><!-- /.row -->
+<?php //var_dump( $user); ?>
+<?php //var_dump( $tasks); ?>
+
+
+
+<script type="text/javascript"><!--
+
+function debugReDev() {
+	app.isDEBUG = true;
+	app.core.entity.save('asd');
+	app.core.scroller.showModal('organizationlist');
+	
+}
+
+var tasks = <?php echo json_encode( $tasks); ?>;
+
+document.addEventListener("DOMContentLoaded", function(event) { 
+  $(".panel-heading[data-toggle='collapse']").each(function(indx, element) {
+		$(this).on('click', function(e) {
+			var icon = $(this).find('i');
+			if(icon.hasClass('glyphicon-minus')) icon.removeClass('glyphicon-minus').addClass('glyphicon-plus');
+			else icon.removeClass('glyphicon-plus').addClass('glyphicon-minus');
+		});
+	});
+});
+
+function saveTasks() {
+	if(tasks) {
+		var jqObj = null;
+		var rq = {};
+		for(var code in tasks) {
+			var task = tasks[code];
+			var schedule = $('#task_' + code + '_schedule');
+			var enabled = $('#task_' + code + '_enabled');
+			rq[code] = {
+				schedule: schedule.val(),
+				disabled: (enabled.length==1 && enabled.is(':checked')) ? 0 : 1,
+			};
+		}
+		
+		
+		$.ajax({
+			url: '/tasks/save',
+			dataType: 'json',
+			data: JSON.stringify(rq),
+			method: 'post',
+			beforeSend: function() {
+					// показываем прогрессбар
+			},
+			complete: function() {
+				// скрываем прогрессбар
+			},			
+			success: function(json) {
+				console.log(json);
+				handleAjaxSuccess(json.success)
+				if(!handleAjaxError(json.error)) {
+					//if(json.success.redirect) document.location = json.success.redirect;
+					if(json.debug) $('#tasks_crontab_debug').val(json.debug);
+					if(json.crontab) $('#tasks_crontab').val(json.crontab);
+				}
+				
+			},
+			error: function(xhr, ajaxOptions, thrownError) {
+				console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+				handleAjaxError({
+					messages: [{
+						title: 'Ошибка обмена данными',
+						msg: 'Ошибка обработки запроса на стороне сервера. Обратитесь в службу поддержки',
+					}],
+				});
+			}
+		});
+	}
+}
+
+
+//--></script>
+

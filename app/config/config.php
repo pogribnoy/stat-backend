@@ -34,7 +34,7 @@ $config = new Config(array(
 	"email" => array(
 		// rashodygoroda@yandex.ru|refaliu
 		"username" => 'info@rashodygoroda.org',
-		"password" => "s4df\$G3d", // s4df$G3d
+		"password" => "refaliu", // s4df$G3d
 		"from" => 'info@rashodygoroda.org',
 		"charset" => "utf-8",
 		"SMTP" => [
@@ -52,12 +52,16 @@ $config = new Config(array(
 			"secure" => "SSL",
 			"port" => "993",
 		],
+		"infoEmail" => 'info@rashodygoroda.org',
+		"adminEmail" => 'admin@rashodygoroda.org',
     ),
     "application" => array(
 		"version" => "0.3",
 		"module" => "backend",
 		//"host" => "vhost.dlinkddns.com:81",
-		"host" => "rashodygoroda.org",
+		"host" => "admin.rashodygoroda.org",
+		"publicHost" => "rashodygoroda.org",
+		"publicHostDir" => "/var/www/stat-frontend/",
 		//"host" => "rgor-b.ddns.net",
 		//"commonHost" => "http://vhost.dlinkddns.com:81",
 		"commonHost" => "http://rs.rashodygoroda.org",
@@ -66,7 +70,7 @@ $config = new Config(array(
 		"commonLibraryDir" => "app/common/library/",
 		"commonModelsDir" => "app/common/models/",
 		//"commonTemplatesDir" => "app/views/templates/",
-		"commonPartialsDir" => "partials/common/",
+		//"commonPartialsDir" => "partials/common/",
 		"commonTemplatesDir" => "/public/templates/",
 		"noImage" => "no_image.jpg",
 		"cacheACL" => 0, // кешировать ACL из БД

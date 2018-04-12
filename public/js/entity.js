@@ -22,7 +22,7 @@ function entitySave(container_id) {
 		});
 	}
 	else {
-		console.error("Function:" + arguments.callee.name + "parameter container_id not defined");
+		console.error("Function: entitySave. Parameter container_id not defined");
 		def.reject();
 	}
 	return def;
@@ -42,7 +42,7 @@ function entitySend(container_id) {
 			else alert("Сущность не отправлена, т.к. не сохранена на сервер");
 		});
 	}
-	else console.error("Function:" + arguments.callee.name + "parameter container_id not defined");
+	else console.error("Function: entitySend. Parameter container_id not defined");
 }
 
 /* Cохраняет данные сущности с ЭФ локально, а затем на сервер, даже если есть предупреждения. Предварительно проверяет данные
@@ -61,7 +61,18 @@ function mandatorySave(container_id) {
 			}
 		});
 	}
-	else console.error("Function:" + arguments.callee.name + "parameter container_id not defined");
+	else console.error("Function: mandatorySave. Parameter container_id not defined");
+}
+
+function checksHasError(checkResult) {
+	if(checkResult) {
+		var checkResultLength = checkResult.length;
+		for(var i=0; i< checkResultLength; i++) {
+			//console.log(checkResult[i].type);
+			if(checkResult[i].type == "error") return true;
+		}
+	}
+	return false;
 }
 
 function checkedEntitySave(descriptor)  {
@@ -562,44 +573,51 @@ function entitySaveToServer(descriptor) {
 			// скрываем прогрессбар
 		},			
 		success: function(json) {
-			//console.log("Сущность сохранена на сервер");
-			console.log(json);
-			if(!descriptor.local_data.relationType || descriptor.local_data.relationType != 'n') handleAjaxSuccess(json.success);
-			// если нет ошибок
-			if(!handleAjaxError(json.error)) {
-				if(json.newID) {
-					descriptor.fields.id.value = json.newID;
-					entities[descriptor.entityNameLC][json.newID] = entities[descriptor.entityNameLC][descriptor.local_data.eid];
-					delete entities[descriptor.entityNameLC][descriptor.local_data.eid];
-					descriptor.local_data.eid = json.newID;
-				}
-				descriptor.local_data.status = 'actual';
-				
-				// очищаем локальные списки добавленных/удаленных элементов
-				if(descriptor.scrollers) {
-					for(var key in descriptor.scrollers) {
-						var scroller = descriptor.scrollers[key];
-						if(scroller.local_data.added_items) {
-							var len = scroller.local_data.added_items.length;
-							for (var i = len-1; i>=0; i--) {
-								scroller.items.unshift(scroller.local_data.added_items[i]);
-							}
-							delete scroller.local_data.added_items;
-						}
-						var len = scroller.items.length;
-						for (var i = 0; i<len; i++) {
-							scroller.items[i].local_data.status = 'actual';
-						}
-						delete scroller.local_data.deleted_items;
-						
-						// и перерисовываем скроллеры
-						renderScroller(scroller, false);
+			if(true /*!json.checkResult || (json.checkResult && !checksHasError(json.checkResult))*/) {
+			
+				//console.log("Сущность сохранена на сервер");
+				console.log(json);
+				if(!descriptor.local_data.relationType || descriptor.local_data.relationType != 'n') handleAjaxSuccess(json.success);
+				// если нет ошибок
+				if(!handleAjaxError(json.error)) {
+					if(json.newID) {
+						descriptor.fields.id.value = json.newID;
+						entities[descriptor.entityNameLC][json.newID] = entities[descriptor.entityNameLC][descriptor.local_data.eid];
+						delete entities[descriptor.entityNameLC][descriptor.local_data.eid];
+						descriptor.local_data.eid = json.newID;
 					}
+					descriptor.local_data.status = 'actual';
+					
+					// очищаем локальные списки добавленных/удаленных элементов
+					if(descriptor.scrollers) {
+						for(var key in descriptor.scrollers) {
+							var scroller = descriptor.scrollers[key];
+							if(scroller.local_data.added_items) {
+								var len = scroller.local_data.added_items.length;
+								for (var i = len-1; i>=0; i--) {
+									scroller.items.unshift(scroller.local_data.added_items[i]);
+								}
+								delete scroller.local_data.added_items;
+							}
+							var len = scroller.items.length;
+							for (var i = 0; i<len; i++) {
+								scroller.items[i].local_data.status = 'actual';
+							}
+							delete scroller.local_data.deleted_items;
+							
+							// и перерисовываем скроллеры
+							renderScroller(scroller, false);
+						}
+					}
+					
+					entityDef.resolve({descriptor: descriptor, container: container});
 				}
-				
-				entityDef.resolve({descriptor: descriptor, container: container});
+				else entityDef.reject();
 			}
-			else entityDef.reject();
+			else {
+				showChecksModal({descriptor:descriptor, json:json});
+				entityDef.reject();
+			}
 		},
 		error: function(xhr, ajaxOptions, thrownError) {
 			console.log(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);

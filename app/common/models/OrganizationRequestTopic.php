@@ -1,27 +1,31 @@
 <?php
 use Phalcon\Mvc\Model;
-use Phalcon\Db\RawValue;
+use Phalcon\Mvc\Model\Behavior\Timestampable;
+use Phalcon\Mvc\Model\Behavior\SoftDelete;
 
 class OrganizationRequestTopic extends Model {
-	/**
-	* @var integer
-	*/
 	public $id;
-	
-	/**
-	* @var string
-	*/
 	public $name;
-	
-	/**
-	* @var datetime
-	*/
 	public $created_at;
+	public $deleted_at;
 	
-	public function beforeCreate() {
-		$this->created_at = new RawValue('now()');
-	}
 	public function initialize() {
 		$this->hasMany("id", "OrganizationRequest", "topic_id");
+		
+		$this->addBehavior(
+			new Timestampable([
+				'beforeCreate' => [
+					'field'  => 'created_at',
+					'format' => 'Y-m-d H:i:s',
+				]
+			])
+        );
+		
+		$this->addBehavior(
+			new SoftDelete([
+				'field' => 'deleted_at',
+				'value' => (new DateTime())->format("Y-m-d H:i:s"),
+			])
+        );
 	}
 }

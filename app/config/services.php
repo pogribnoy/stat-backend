@@ -29,6 +29,11 @@ $di->setShared('security', function(){
 	return $security;
 });
 
+$di->setShared('audit', function(){
+	$audit = new AuditPlugin();
+	return $audit;
+});
+
 // Регистрация диспетчера
 // Настраиваем и регистрируем менеджер событий
 $di->setShared('dispatcher', function() use ($di) {
@@ -71,7 +76,7 @@ $di->setShared('db', function() use ($config) {
 		"charset"	=> $config->database->charset
 	));
 	
-	/*$eventsManager = new EventsManager();
+	$eventsManager = new EventsManager();
 	$logger = new FileAdapter(APP_PATH . "/app/logs/db.log", array('mode' => 'a'));
 	
 	// Слушаем все события БД
@@ -81,7 +86,7 @@ $di->setShared('db', function() use ($config) {
         }
     });
 	 // Привзываем eventsManager к адаптеру БД
-    $connection->setEventsManager($eventsManager);*/
+    $connection->setEventsManager($eventsManager);/**/
 	
 	return $connection;
 });

@@ -3,14 +3,6 @@ class UserrolelistController extends ControllerList{
 	public $entityName = 'UserRole';
 	public $controllerName = "Userrolelist";
 	
-	public function initialize() {
-		parent::initialize();
-	}
-	
-	/* 
-	* Заполняет (инициализирует) свойство colmns
-	* Переопределяемый метод.
-	*/
 	public function initColumns() {
 		// описатель таблицы
 		$this->columns = array(
@@ -39,13 +31,9 @@ class UserrolelistController extends ControllerList{
 		);
 	}
 	
-	/* 
-	* Предоставляет базовый текст запроса к БД
-	* Переопределяемый метод.
-	*/
 	public function getPhqlSelect() {
 		// строим запрос к БД на выборку данных
-		$phql = "SELECT <TableName>.* FROM <TableName> WHERE 1=1";
+		$phql = "SELECT <TableName>.* FROM <TableName> WHERE <TableName>.deleted_at IS NULL";
 		
 		$userRoleID = $this->controller->userData['role_id'];
 		//$this->logger->log('getPhqlSelect    this->filter_values["user_role_id"])=' . $this->filter_values["user_role_id"]);
@@ -58,10 +46,6 @@ class UserrolelistController extends ControllerList{
 		return $phql;
 	}
 	
-	/* 
-	* Заполняет свойство items['fields'] данными, полученными после выборки из БД
-	* Переопределяемый метод.
-	*/
 	public function fillFieldsFromRow($row) {
 		$this->items[] = array(
 			"fields" => array(

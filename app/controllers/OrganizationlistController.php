@@ -9,14 +9,6 @@ class OrganizationlistController extends ControllerList {
 		"order" => "asc",
 	];
 	
-	public function initialize() {
-		parent::initialize();
-	}
-	
-	/* 
-	* Заполняет (инициализирует) свойство colmns
-	* Переопределяемый метод.
-	*/
 	public function initColumns() {
 		// описатель таблицы
 		$this->columns = [
@@ -58,10 +50,6 @@ class OrganizationlistController extends ControllerList {
 		];
 	}
 	
-	/* 
-	* Предоставляет базовый текст запроса к БД
-	* Переопределяемый метод.
-	*/
 	public function getPhqlSelect() {
 		$userRoleID = $this->controller->userData['role_id'];
 		$userID = $this->controller->userData['id'];
@@ -79,15 +67,11 @@ class OrganizationlistController extends ControllerList {
 			else $phql .= " JOIN UserOrganization AS uo1 ON uo1.organization_id=<TableName>.id AND uo1.user_id=" . $userID;
 		}
 		
-		$phql .= " WHERE 1=1";
+		$phql .= " WHERE <TableName>.deleted_at IS NULL";
 		
 		return $phql;// . ' GROUP BY <TableName>.id';
 	}
 	
-	/* 
-	* Заполняет свойство items['fields'] данными, полученными после выборки из БД
-	* Переопределяемый метод.
-	*/
 	public function fillFieldsFromRow($row) {
 		$item = [
 			"fields" => [
@@ -121,5 +105,29 @@ class OrganizationlistController extends ControllerList {
 		
 		if ($id == 'region') return $phql .= ' ORDER BY Region.name ' . $this->filter_values['order'];
 		return null;
+	}
+	
+	public function getScrollerOperations() {
+		parent::getScrollerOperations();
+		
+		$orgUserGenerateOp = $this->createButtonDescriptor('orgUserGenerate');
+		$orgEmailGenerateOp = $this->createButtonDescriptor('orgEmailGenerate');
+		//$orgRegistrationGroup = array();
+		// массив групповых операций
+		if(($orgUserGenerateOp || $orgEmailGenerateOp) && $this->actionNameLC != "show") {
+			if(!isset($this->operations["group_operations"])) $this->operations["group_operations"] = array();
+			//$orgRegistrationGroup = $this->createButtonDescriptor('orgRegistration');
+			//$orgRegistrationGroup['buttons'] = array();
+			
+			if($orgUserGenerateOp) {
+				$this->operations["group_operations"][] =  $orgUserGenerateOp;
+			}
+			if($orgEmailGenerateOp) {
+				$this->operations["group_operations"][] =  $orgEmailGenerateOp;
+			}
+			
+			//$this->operations["group_operations"][] = $orgRegistrationGroup;
+			
+		}
 	}
 }

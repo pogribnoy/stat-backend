@@ -31,7 +31,7 @@ class ErrorsController extends ControllerBase {
 		$this->logger->log("Ошибка 404: " . $this->controllerName . " \\ " . $this->actionName);
     }
 
-    public function show401Action($sourceURL) {
+    public function show401Action($sourceURL=null) {
 		// Getting a request instance
 		if($this->request->isAjax()) {
 			$this->view->disable();

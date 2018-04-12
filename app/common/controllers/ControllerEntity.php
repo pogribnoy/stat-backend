@@ -30,7 +30,7 @@ class ControllerEntity extends ControllerBase {
 	protected $exludeOps = null;
 	
 	// скроллеры сущности
-	protected $scrollers = null;
+	public $scrollers = null;
 	
 	// описатель скроллера
 	public $descriptor = null;
@@ -100,6 +100,18 @@ class ControllerEntity extends ControllerBase {
 	*/
 	public function editAction() {
 		$this->createDescriptor();
+		
+		//if($this->entityName == 'Organization') {
+		//if(!isset($field['max'])) {
+			//$org = new Organization();
+			//$metadata = $org->getModelsMetaData();
+			//$dataTypes = $metadata->getDataTypes($org);
+			//$attributes = $metadata->getAttributes($org);
+			
+			//$this->descriptor['data']['dbg'] = "Длина поля в БД: qweasd" . json_encode ($attributes);
+			//$this->descriptor['data']['dbg'] = "Длина поля в БД: ";
+		//}
+		//}
 		
 		if($this->request->isAjax()) {
 			$this->view->disable();
@@ -236,6 +248,9 @@ class ControllerEntity extends ControllerBase {
 						$this->db->commit();
 						$this->updateEntityFieldsFromModelAfterSave();
 						if($id<0) $this->data['newID'] = $this->entity->id;
+						$this->audit->audit(AuditPlugin::entitySave, [
+							'newEntity' => $this->entity,
+						]);
 						$this->success['messages'][] = [
 							'title' => $this->t->_("msg_success_title"),
 							'msg' => $this->t->_("msg_success_entity_saved") . ". ID = " . $this->entity->id,
@@ -244,6 +259,8 @@ class ControllerEntity extends ControllerBase {
 					else $this->db->rollback();
 				}
 			}
+			/*if(!isset($_REQUEST["check_only"]) && $res==2 ) {
+			}*/
 		}
 		else {
 			$this->error['messages'][] = [
@@ -303,6 +320,10 @@ class ControllerEntity extends ControllerBase {
 					'title' => "Операция успешна",
 					'msg' => "Запись с идентификатором " . $this->entity->id ." удалена"
 				];
+				
+				$this->audit->audit(AuditPlugin::entityDelete, [
+					'oldEntity' => $this->entity,
+				]);
 			}
 			else $this->db->rollback();
 		}
@@ -338,6 +359,11 @@ class ControllerEntity extends ControllerBase {
 					'title' => 'Ошибка',
 					'msg' => "Ошибка удаления:<ul>" . $dbMessages . "</ul>",
 				];
+			}
+			else {
+				$this->audit->audit(AuditPlugin::entityDelete, [
+					'oldEntity' => $entity,
+				]);
 			}
 		}
 		else {
@@ -375,6 +401,7 @@ class ControllerEntity extends ControllerBase {
 			// наполняем $fields
 			//$this->fillFieldsFromRows($rows);
 			if(count($rows)==1) {
+				$this->entity = $rows[0];
 				$this->fillFieldsFromRow($rows[0]);
 				
 				// если значнение id не заполнено (не нашли единственную запись в БД)
@@ -408,6 +435,8 @@ class ControllerEntity extends ControllerBase {
 			$this->fillNewEntityFields();
 			//$this->logger->log(json_encode($this->fields));
 		}
+		
+		//$this->logger->log(__METHOD__ . '. asd');
 			
 		$this->fillScrollers();
 		
@@ -531,6 +560,7 @@ class ControllerEntity extends ControllerBase {
 			if(isset($field['files'])) $publicField['files'] = $field['files'];	// используется в изображениях организации
 			if(isset($field['nullSubstitute'])) $publicField['nullSubstitute'] = $field['nullSubstitute'];
 			if(isset($field['access'])) $publicField['access'] = $field['access'];
+			if(isset($field['nullSubstitute'])) $publicField['nullSubstitute'] = $field['nullSubstitute'];
 			
 			// TODO. На клиенте испольщуется только в полях link. Надо убрать
 			if(isset($field['controllerName'])) $publicField['controllerName'] = $field['controllerName'];
@@ -626,11 +656,15 @@ class ControllerEntity extends ControllerBase {
 									} 
 								}
 							}
+							
+							$entities = null;
 							// проверяем, чтобы ВСЕ привязываемые сущности существовали
-							$entities = $linkEntityName::find(["conditions" => "id IN ({added_items:array})", "bind" => [
-								'added_items' => $this->scrollers[$scrollerName]['added_items'],
-							]]);
-							if(!$entities || count($entities) < count($this->scrollers[$scrollerName]['added_items'])) {
+							if(count($this->scrollers[$scrollerName]['added_items']) > 0) {
+								$entities = $linkEntityName::find(["conditions" => "id IN ({added_items:array})", "bind" => [
+									'added_items' => $this->scrollers[$scrollerName]['added_items'],
+								]]);
+							}
+							if(count($entities) < count($this->scrollers[$scrollerName]['added_items'])) {
 								$this->error['messages'][] = [
 									'title' => $this->t->_("msg_error_title"),
 									'msg' => $scrollerName . ". Не найдены добавляемые записи1"
@@ -741,6 +775,13 @@ class ControllerEntity extends ControllerBase {
 					];
 					return false;
 				}
+				else {
+					$this->audit->audit(AuditPlugin::entityDelete, [
+						//'oldEntity' => (($linkedEntity != null && $linkedEntity != false) ? $linkedEntity[0] : null),
+						'parentEntity' => $this->entity,
+						'msg' => 'oldEntityName=' . $this->scrollers[$scrollerName]['linkEntityName'] . PHP_EOL . 'oldEntityIDs=' . json_encode($this->scrollers[$scrollerName]['deleted_items']),
+					]);
+				}
 			}
 			else if($this->scrollers[$scrollerName]['relationType'] == 'nn') {
 				$linkTableName = $this->scrollers[$scrollerName]['linkTableName'];
@@ -827,10 +868,21 @@ class ControllerEntity extends ControllerBase {
 			// устанавливаем доступы на основе роли из ACL
 			$field['access'] = $this->getFieldAccess($fieldID);
 			
-			// корректируем доступ на основе настроек сущности и действия (независимо от роди)
-			if(isset($this->access) && $this->access != null && isset($this->access[$this->actionNameLC]) && isset($this->access[$this->actionNameLC][$fieldID])) $field['access'] = $this->access[$this->actionNameLC][$fieldID];
+			// корректируем доступ на основе настроек сущности и действия (независимо от роли)
+			if(isset($this->access) && $this->access != null && isset($this->access[$this->actionNameLC]) && isset($this->access[$this->actionNameLC][$fieldID])) {
+				$field['access'] = $this->access[$this->actionNameLC][$fieldID];
+			}
 			
-			// предзаполняем списками, если поля доступно для редактирования
+			//$this->logger->log(__METHOD__ . ". fieldID=" . $fieldID . ', filter_values_id=' . $this->filter_values["id"]); 
+			// если сущность создается, то некоторые поля надо скрывать, т.к. они будут заполнены автоматически
+			// id
+			if($fieldID == 'id' && $this->filter_values["id"] == '') $field['access'] = $this::hiddenAccess;
+			// поле с датой и временем создания
+			if($fieldID == 'created_at' && $this->filter_values["id"] == '') $field['access'] = $this::hiddenAccess;
+			// поле с датой и временем уделания
+			if($fieldID == 'deleted_at' && $this->filter_values["id"] == '') $field['access'] = $this::hiddenAccess;
+			
+			// предзаполняем списком, если поле доступно для редактирования
 			if($field['type'] == 'select' && $field['style'] == 'id' && (!isset($field['access']) || (isset($field['access']) && $field['access'] == $this::editAccess))) {
 				$this->fillFieldWithLists($field);
 			}
@@ -852,14 +904,13 @@ class ControllerEntity extends ControllerBase {
 		
 		if(isset($field['linkEntityName']) && $field['linkEntityName'] != null) {
 			$linkEntityName = $field['linkEntityName'];
-			$alterName = null;
+			$alterName = 'name';
+			$conditions = $linkEntityName . '.deleted_at IS NULL';
 			if(isset($field['linkEntityField']) && $field['linkEntityField'] != null) {
 				$alterName = $field['linkEntityField'];
-				$conditions = '';
-				if($userRoleID == $this->config->application->orgAdminRoleID && strtolower($field['linkEntityName']) == 'userrole') $conditions .= "id IN (" . $this->config->application->orgOperatorRoleID . ", " . $this->config->application->orgAdminRoleID . ")";
-				$rows = $linkEntityName::find(['conditions' => $conditions, 'order' => $alterName . ' ASC']);
+				if($userRoleID == $this->config->application->orgAdminRoleID && strtolower($field['linkEntityName']) == 'userrole') $conditions .= " AND id IN (" . $this->config->application->orgOperatorRoleID . ", " . $this->config->application->orgAdminRoleID . ")";
 			}
-			else $rows = $linkEntityName::find(['order' => 'name ASC']);
+			$rows = $linkEntityName::find(['conditions' => $conditions, 'order' => $alterName . ' ASC']);
 			//$this->logger->log('rows: ' . json_encode($rows));// DEBUG
 			$entities = array();
 			foreach ($rows as $row) {
@@ -972,7 +1023,7 @@ class ControllerEntity extends ControllerBase {
 							$search = "_code";
 							$val = $linkEntityField;
 							//$this->logger->log(__METHOD__ . '. substr = ' . substr($val, strlen($val) - strlen($search)));
-							if(substr($val, strlen($val) - strlen($search)) == $search) $field["value"] = $this->t->_("code_" . $entity->$linkEntityField);
+							if(strcmp(substr($val, strlen($val) - strlen($search)), $search) == 0) $field["value"] = $this->t->_("code_" . $entity->$linkEntityField);
 							else $field["value"] = $entity->$linkEntityField;
 						}
 						else $this->logger->log(__METHOD__ . '. qwe = ');
@@ -1067,6 +1118,7 @@ class ControllerEntity extends ControllerBase {
 	*/
 	protected function fillScrollers() {
 		$userRoleID = $this->userData['role_id'];
+		//$this->logger->log(__METHOD__ . ". resource=$resource");
 		
 		if(isset($this->scrollers)) {
 			foreach($this->scrollers as $scrollerControllerNameLC => $scroller) {
@@ -1080,9 +1132,18 @@ class ControllerEntity extends ControllerBase {
 					$scrollerController["add_style"] = $scroller['addStyle'];
 					$scrollerController["edit_style"]  = $scroller['editStyle'];
 					
+					//$this->logger->log(__METHOD__ . ". action=$action, add_style=" . $scrollerController["add_style"] . " resource=$resource, isAllowed=" . $this->acl->isAllowed($userRoleID, $resource, 'add'));
+					/*if($action=='edit') {
+						if($this->acl->isAllowed($userRoleID, $resource, 'add')) {
+							if($scrollerController["add_style"] == 'scroller') $scrollerController['common_operations'][] = $this->createButtonDescriptor('select');
+							//else $scrollerController->operations["common_operations"][] = $this->createButtonDescriptor('select');
+						}
+					}*/
+					
 					$this->scrollers[$scrollerControllerNameLC] = $scrollerController;
 				}
 				else unset($this->scrollers[$scrollerControllerNameLC]);
+				//$this->logger->log(__METHOD__ . ". resource=$resource");
 			}
 		}
 	}
@@ -1127,11 +1188,11 @@ class ControllerEntity extends ControllerBase {
 	* Переопределяемый метод.
 	*/
 	protected function deleteEntityLinks($entity) { 
-		$this->success['messages'][] = [
+		/*$this->success['messages'][] = [
 			//'title' => $this->t->_("msg_error_title"),
 			'title' => 'deleteEntityLinks',
 			'msg' => "return true",
-		];
+		];*/
 		return true;
 	}
 	
@@ -1355,7 +1416,7 @@ class ControllerEntity extends ControllerBase {
 				$res |= $this->checkBasicEmail($field);
 			}
 			else if($field['type'] == 'text' || $field['type'] == 'textarea') {
-				//$this->logger->log(__METHOD__ . ". fieldID = " . $fieldID . ". type = " . $field['type']);
+				$this->logger->log(__METHOD__ . ". fieldID = " . $fieldID . ". type = " . $field['type'] . ". value = " . $field['value'] . ". value_len = " . mb_strlen($field['value']));
 				// проверка на обязательность
 				$res |= $this->checkBasicRequire($field);
 				
@@ -1432,7 +1493,7 @@ class ControllerEntity extends ControllerBase {
 	
 	protected function checkBasicEmail($field) {
 		$res = 0;
-		if($field['value']!=null && strpos($field['value'], "@") === false) {
+		if($field['value'] != null && strpos($field['value'], "@") === false) {
 			$this->checkResult[] = [
 				'type' => "error",
 				'msg' => $this->t->_("msg_check_field_email_format", ['field_name' => $field['name']]),
@@ -1444,20 +1505,22 @@ class ControllerEntity extends ControllerBase {
 	
 	protected function checkBasicText($field) {
 		$res = 0;
-		if(isset($field['min']) && count($field['value']) < $field['min']) {
+		//$this->logger->log(__METHOD__ . ". fieldID = " . $field['id'] . ". len = " . mb_strlen($field['value']));
+		if(isset($field['min']) && mb_strlen($field['value']) < $field['min']) {
 			$this->checkResult[] = [
 				'type' => "error",
 				'msg' => $this->t->_("msg_check_field_text_min", ['field_name' => $field['name'], 'field_min' => $field['min']]),
 			];
 			$res |= 2;
 		}
-		if(isset($field['max']) && count($field['value']) > $field['max']) {
+		if(isset($field['max']) && (mb_strlen($field['value']) > $field['max'])) {
 			$this->checkResult[] = [
 				'type' => "error",
 				'msg' => $this->t->_("msg_check_field_text_max", ['field_name' => $field['name'], 'field_max' => $field['max']]),
 			];
 			$res |= 2;
 		}
+		
 		return $res;
 	}
 	
@@ -1587,7 +1650,7 @@ class ControllerEntity extends ControllerBase {
 	protected function checkBasicRecaptcha($field) {
 		$res = 0;
 		// сперва определяем, что вприниципе присутствет id
-		if($field['value'] == null || $field['value'] == $this->config['application']['reCaptchaPublicKey']) {
+		if($field['value'] == null || strcmp($field['value'], $this->config->application->reCaptchaPublicKey) == 0) {
 			$this->checkResult[] = [
 				'type' => "error",
 				'msg' => $this->t->_("msg_check_field_mandatory", ['field_name' => $field['name']]),
@@ -1622,7 +1685,7 @@ class ControllerEntity extends ControllerBase {
 				$res |= 2;
 			}
 		}
-		//$this->logger->log(__METHOD__ . ". fieldID = " . $field['id'] . ". value_id = " . $field['value_id'] . ". value = " . $field['value'] . '. required = ' . $field['required']);
+		$this->logger->log(__METHOD__ . ". fieldID = " . $field['id'] . ". value = " . $field['value'] . '. required = ' . $field['required'] . ', strcmp=' . strcmp($field['value'], $this->config->application->reCaptchaPublicKey) . ", res = $res");
 		return $res;
 	}
 
@@ -1674,5 +1737,9 @@ class ControllerEntity extends ControllerBase {
 				'title' => $this->t->exists('button_delete_title') ? $this->t->_('button_delete_title') : null,
 			);
 		}
+		
+		// массив групповых операций
+		$operations["group_operations"] = array();
+		
 	}
 }

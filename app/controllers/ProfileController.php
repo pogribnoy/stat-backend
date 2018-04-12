@@ -3,10 +3,6 @@ class ProfileController extends ControllerEntity{
 	public $entityName  = 'User';
 	public $tableName  = 'user';
 	
-	public function initialize() {
-		parent::initialize();
-	}
-	
 	public function passwordprintAction() {
 		if($this->request->isAjax()) {
 			$this->view->disable();
@@ -31,10 +27,6 @@ class ProfileController extends ControllerEntity{
 		}
 	}
 	
-	/* 
-	* Заполняет (инициализирует) свойство fields
-	* Переопределяемый метод.
-	*/
 	public function initFields() {
 		$this->fields = [
 			'id' => array(
@@ -49,10 +41,12 @@ class ProfileController extends ControllerEntity{
 				'type' => 'bool',
 				'newEntityValue' => 1,
 			), 
-			'email' => array(
-				'id' => 'email',
-				'name' => $this->t->_("text_entity_property_email"),
-				'type' => 'email',
+			'login' => array(
+				'id' => 'login',
+				'name' => $this->t->_("text_entity_property_login"),
+				'type' => 'text',
+				'min' => 1,
+				'max' => 50,
 				'newEntityValue' => null,
 			), 
 			'user_role' => array(
@@ -74,6 +68,12 @@ class ProfileController extends ControllerEntity{
 				'required' => 1,
 				'newEntityValue' => null,
 			), 
+			'email' => array(
+				'id' => 'email',
+				'name' => $this->t->_("text_entity_property_email"),
+				'type' => 'email',
+				'newEntityValue' => null,
+			), 
 			'password' => array(
 				'id' => 'password',
 				'name' => $this->t->_("text_entity_property_password"),
@@ -91,41 +91,30 @@ class ProfileController extends ControllerEntity{
 		parent::initFields();
 	}
 	
-	/* 
-	* Наполняет модель сущности из запроса при сохранении
-	* Переопределяемый метод.
-	*/
 	protected function fillModelFieldsFromSaveRq() {
 		//$this->entity->id получен ранее при select из БД или будет присвоен при создании записи в БД
 		$this->entity->name = $this->fields['name']['value'];
+		$this->entity->email = $this->fields['email']['value'];
 		$this->entity->phone = $this->fields['phone']['value'];
 		if(isset($this->fields['password']['value']) && $this->fields['password']['value'] != null) $this->entity->password = $this->fields['password']['value'];
 	}
 	
-	/* 
-	* Предоставляет текст запроса к БД
-	* Переопределяемый метод.
-	*/
 	public function getPhql() {
 		//$this->logger->log(__METHOD__ . ". Пользователь id=" . $this->userData["id"]);
 		// строим запрос к БД на выборку данных
 		return "SELECT User.*, UserRole.id AS user_role_id, UserRole.name AS user_role_name FROM User JOIN UserRole on UserRole.id=User.user_role_id WHERE User.id = '" . $this->userData["id"] . "'  LIMIT 1";
 	}
 	
-	/* 
-	* Заполняет свойство fields данными, полученными после выборки из БД
-	* Переопределяемый метод.
-	*/
 	public function fillFieldsFromRow($row) {
 		$this->fields["id"]["value"] = $row->user->id;
 		$this->fields["active"]["value"] = $row->user->active;
+		$this->fields["login"]["value"] = $row->user->login;
 		$this->fields["name"]["value"] = $row->user->name;
 		$this->fields["user_role"]["value_id"] = $row->user_role_id;
 		$this->fields["user_role"]["value"] = $row->user_role_name;
 		$this->fields["phone"]["value"] = $row->user->phone;
 		$this->fields["email"]["value"] = $row->user->email;
 	}
-	
 	
 	protected function getEntityFormOperations() {
 		

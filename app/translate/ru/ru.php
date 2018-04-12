@@ -11,35 +11,47 @@ $messages = array(
 "currency_thousand_short"	=> " тыс. р.",
 
 // Text
-"text_home"				=> "Главная",
-"text_yes"				=> "Да",
-"text_no"				=> "Нет",
-"text_none"				=> " --- Не выбрано --- ",
-"text_select"			=> " --- Выберите --- ",
-"text_pagination"		=> "Показано с {start} по {end} из {total} (страниц: {pages})",
-"text_page_sizes"		=> "Показывать по",
-"text_separator"		=> " &raquo; ",
-"text_search"			=> "Поиск",
-"text_active_short"		=> "(акт.)",
-"text_nonactive_short"	=> " (неакт.)",
-"text_site_full_name"	=> "Интернет портал общедоступной информации о расходах муниципальных образований «Расходы города»",
-"text_site_short_name"	=> "Расходы города",
-"text_site_version"		=> "Версия",
+"text_empty"				=> "Пустое значение",
+"text_home"					=> "Главная",
+"text_yes"					=> "Да",
+"text_no"					=> "Нет",
+"text_none"					=> " --- Не выбрано --- ",
+"text_select"				=> " --- Выберите --- ",
+"text_pagination"			=> "Показано с {start} по {end} из {total} (страниц: {pages})",
+"text_page_sizes"			=> "Показывать по",
+"text_separator"			=> " &raquo; ",
+"text_search"				=> "Поиск",
+"text_active_short"			=> "(акт.)",
+"text_nonactive_short"		=> " (неакт.)",
+"text_site_contacts"		=> "Контакты",
+"text_site_contacts_infomail"	=> "Общие вопросы",
+"text_site_contacts_adminmail"	=> "Служба поддержки",
+"text_site_full_name"		=> "Интернет портал общедоступной информации о расходах муниципальных образований «Расходы города»",
+"text_site_full_name_federal_project"	=> "Федеральный проект",
+"text_site_short_name"		=> "Расходы города",
+"text_site_version"			=> "Версия",
+"text_site_work_time"		=> "Профилактические работы на сайте",
+"text_site_work_time_value"	=> "23:00 - 07:00, время московское",
 
 
 // Scrollers and pages
 // Password recover
 "text_password_recover_title"			=> "Укажите адрес электронной почты",
-"text_password_recover_annotation"		=> "На указанный адрес электронной почты будет направлено письмо с Вашим текущим паролем. Поменять пароль всегда можно вличном кабинете сайта",
+"text_password_recover_annotation"		=> "На указанный адрес электронной почты будет направлено письмо с Вашим текущим паролем. Поменять пароль всегда можно в личном кабинете сайта",
 "text_password_recover_success"			=> "Письмо с Вашим паролем поставлено в очередь на отправку",
 
 // Page. Login
 "text_login_authorization"				=> "Авторизация", // page title
-"text_login_password_placeholder"		=> "Пароль", // page title
+//"text_login_subtitle"					=> "Авторизация", // page subtitle
+"text_login_password_placeholder"		=> "Пароль",
+"text_login_login_placeholder"			=> "Логин",
 
 // Page. Index
-"text_index_title"						=> 'Административная панель сайта "Расходы города"', // page title
-"index_index_my_organizations"			=> "Мои муниципалитеты",
+"text_index_title"											=> 'Административная панель сайта "Расходы города"', // page title
+"text_index_index_my_organizations"							=> "Мои муниципалитеты",
+"text_index_index_manual"									=> "Руководство пользователя можно скачать по ссылке: %link%",
+"text_index_organizationrequestlist_newCountTitleNonZero"	=> "Имеются не обработанные комментарии граждан",
+"text_index_organizationrequestlist_newCountTitleZero"		=> "Не обработанных комментариев граждан нет",
 
 // Page. Error
 "text_errors_title"						=> "Ошибка",  // page title
@@ -61,7 +73,11 @@ $messages = array(
 "name_tasks_index_clear"				=> "Удаление непривязанных расходов",
 "name_tasks_index_backup"				=> "Резервное копирование БД",
 "name_tasks_index_backup_files"			=> "Резервное копирование файлов",
-"name_tasks_index_response_sent"		=> "Отправка гражданам ответов на вопросы организациям",
+"name_tasks_index_response_sent"		=> "Отправка гражданам ответов на комментарии",
+"name_tasks_index_generate_sitemap"		=> "Генерация sitemap.xml",
+"name_tasks_index_minify_js"			=> "Минификация JS",
+"name_tasks_index_generate_client_translator"	=> "Генератор клиентского перевода",
+"name_tasks_index_minify_html"			=> "Минификация HTML",
 
 // Scroller. Organization list
 "text_organizationlist_title"			=> "Муниципалитеты", // scroller|page title
@@ -85,24 +101,27 @@ $messages = array(
 "text_user_new_entity_title"	=> "Новый пользователь", // new entity form|page title
 
 // Scroller. Organization request list
-"text_organizationrequestlist_title"			=> "Вопросы", // scroller|page title
-"text_organizationrequestlist_expense"			=> "Расход",
-"text_organizationrequestlist_request"			=> "Вопрос",
-"text_organizationrequestlist_organization"		=> "Муниципалитет",
-"text_organizationrequestlist_request"			=> "Вопрос",
-"text_organizationrequestlist_response"			=> "Ответ",
-"text_organizationrequestlist_response_email"	=> "E-mail для ответа",
+"text_organizationrequestlist_title"				=> "Комментарии", // scroller|page title
+"text_organizationrequestlist_newCountTitleNonZero"	=> "Имеются не обработанные комментарии граждан",
+"text_organizationrequestlist_newCountTitleZero"	=> "Не обработанных комментариев граждан нет",
+"text_organizationrequestlist_expense_type"			=> "Тип расхода",
+"text_organizationrequestlist_expense_name"			=> "Наименование расхода",
+"text_organizationrequestlist_expense_settlement"	=> "Наименование нас. пункта",
+"text_organizationrequestlist_organization"			=> "Муниципалитет",
+//"text_organizationrequestlist_request"			=> "Комментарий",
+//"text_organizationrequestlist_response"			=> "Ответ",
+"text_organizationrequestlist_response_email"		=> "E-mail для ответа",
 
 "text_organizationrequest_topic" => "Тема",
-"text_organizationrequest_request" => "Вопрос",
+"text_organizationrequest_request" => "Комментарий",
 "text_organizationrequest_response" => "Ответ",
 "text_organizationrequest_response_email" => "Email для ответа",
 
 // Entity. Organization request
-"text_organizationrequest_title"			=> "Задайте вопрос", //entity|page title
+"text_organizationrequest_title"			=> "Комментарий гражданина", //entity|page title
 "text_organizationrequest_expense"			=> "Расход",
 "text_organizationrequest_topic"			=> "Тема",
-"text_organizationrequest_request"			=> "Вопрос",
+"text_organizationrequest_request"			=> "Комментарий",
 "text_organizationrequest_response"			=> "Ответ",
 "text_organizationrequest_response_email"	=> "Email для ответа",
 
@@ -216,6 +235,7 @@ $messages = array(
 "text_entity_property_created_at"		=> "Создано",
 "text_entity_property_created_by"		=> "Автор",
 "text_entity_property_date"				=> "Дата",
+"text_entity_property_deleted_at"		=> "Удалено",
 "text_entity_property_description"		=> "Описание",
 "text_entity_property_email"			=> "Email",
 "text_entity_property_executor"			=> "Подрядчик",
@@ -274,11 +294,14 @@ $messages = array(
 "button_filter_clear"		=> "Сброс",
 "button_login"				=> "Войти",
 "button_new_address"		=> "Новый адрес",
+"button_orgRegistration"	=> "Регистрация",
+"button_orgUserGenerate"	=> "Сгенерировать пользователей",
+"button_orgEmailGenerate"	=> "Сгенерировать письмо",
 "button_password_change"	=> "Сменить пароль",
 "button_password_print"		=> "Напечатать пароль",
 "button_password_recover"	=> "Напомнить пароль",
-"button_question"			=> "Задать вопрос",
-"button_question_title"		=> "Задать вопрос муниципалитету",
+"button_question"			=> "Оставить комментарий",
+"button_question_title"		=> "Оставить комментарий муниципалитету",
 "button_remove"				=> "Удалить",
 "button_save"				=> "Сохранить",
 "button_save_direct"		=> "Сохранить на сервер",
@@ -325,8 +348,8 @@ $messages = array(
 "msg_error_not_one_rows"				=> '001. Выборка данных из БД либо пуста, либо содержит более 1 записи',
 "msg_error_post_is_expected"			=> '002. Ожидается использование метода POST',
 "msg_error_no_id"						=> '003. Не получен идентификатор сущности',
-"msg_error_file_not_deleted"			=> '004. Файл "{file_name}" не удален',
-"msg_error_file_not_deleted_from_hdd"	=> '005. Файл "{file_name}" не удален из файлового хранилища',
+"msg_error_file_not_deleted"			=> '004. Файл "%file_name%" не удален',
+"msg_error_file_not_deleted_from_hdd"	=> '005. Файл "%file_name%" не удален из файлового хранилища',
 "msg_error_files_not_deleted"			=> '006. Удаление файлов неуспешно',
 "msg_error_delete_fail"					=> '007. Удаление неуспешно',
 

@@ -41,17 +41,28 @@ class UserController extends ControllerEntity{
 				'type' => 'bool',
 				'newEntityValue' => 1,
 			), 
+			'login' => array(
+				'id' => 'login',
+				'name' => $this->t->_("text_entity_property_login"),
+				'type' => 'text',
+				'required' => 2,
+				'max' => 50,
+				'min' => 1,
+				'newEntityValue' => null,
+			), 
 			'name' => array(
 				'id' => 'name',
 				'name' => $this->t->_("text_entity_property_fio"),
 				'type' => 'text',
 				'required' => 1,
+				'max' => 255,
 				'newEntityValue' => null,
 			), 
 			'password' => array(
 				'id' => 'password',
 				'name' => $this->t->_("text_entity_property_password"),
 				'type' => 'password',
+				'max' => 50,
 				'newEntityValue' => null,
 			),
 			'user_role' => array(
@@ -64,7 +75,7 @@ class UserController extends ControllerEntity{
 				'controllerName' => 'userrolelist',
 				'field' => 'name',
 				'linkEntityName' => 'UserRole',
-				'required' => 1,
+				'required' => 2,
 				'newEntityValue' => null,
 			),
 			'email' => array(
@@ -77,6 +88,7 @@ class UserController extends ControllerEntity{
 				'id' => 'phone',
 				'name' => $this->t->_("text_entity_property_phone"),
 				'type' => 'text',
+				'max' => 15,
 				'newEntityValue' => null,
 			)
 		];
@@ -91,6 +103,7 @@ class UserController extends ControllerEntity{
 	protected function fillModelFieldsFromSaveRq() {
 		//$this->entity->id получен ранее при select из БД или будет присвоен при создании записи в БД
 		$this->entity->active = $this->fields['active']['value'];
+		$this->entity->login = $this->fields['login']['value'];
 		$this->entity->name = $this->fields['name']['value'];
 		$this->entity->phone = $this->fields['phone']['value'];
 		if(isset($this->fields['password']['value'])) $this->entity->password = $this->fields['password']['value'];
@@ -114,6 +127,7 @@ class UserController extends ControllerEntity{
 	public function fillFieldsFromRow($row) {
 		$this->fields["id"]["value"] = $row->user->id;
 		$this->fields["active"]["value"] = $row->user->active;
+		$this->fields["login"]["value"] = $row->user->login;
 		$this->fields["name"]["value"] = $row->user->name;
 		$this->fields["user_role"]["value_id"] = $row->user_role_id;
 		$this->fields["user_role"]["value"] = $row->user_role_name;
@@ -125,16 +139,17 @@ class UserController extends ControllerEntity{
 	* Заполняет свойство fields данными при создании новой сущности
 	* Переопределяемый метод.
 	*/
-	public function fillNewEntityFields() {
+	/*public function fillNewEntityFields() {
 		// основные поля
 		$this->fields["id"]["value"] = '-1';
 		$this->fields["active"]["value"] = 1;
+		$this->fields["login"]["value"] = '';
 		$this->fields["name"]["value"] = '';
 		$this->fields["user_role"]["value_id"] = '';
 		$this->fields["user_role"]["value"] = '';
 		$this->fields["phone"]["value"] = '';
 		$this->fields["email"]["value"] = '';
-	}
+	}*/
 	
 	/* 
 	* Заполняет свойство fields данными списков из связанных таблиц

@@ -10,6 +10,7 @@ class IndexController extends ControllerBase {
 		$cacheKey = $this->controllerNameLC . "_" . $this->actionNameLC . "_user_organizations.php";
 		$cachedData = $this->dataCache->get($cacheKey);
 		
+		$dbg = [];
 		if ($cachedData === null) {
 		
 			$userRoleID = $this->userData['role_id'];
@@ -26,10 +27,9 @@ class IndexController extends ControllerBase {
 			catch (Exception $exception) {
 				$this->logger->error(__METHOD__ . $exception->__toString());
 			}
-			$dbg = [];
 			
+			$orgs = [];
 			if($rows) {
-				$orgs = [];
 				foreach($rows as $row) {
 					$collection = null;
 					$file = null;
@@ -62,12 +62,14 @@ class IndexController extends ControllerBase {
 							];*/
 						}
 						// выбираем вопросы к организации, если пользователь имеет к ним доступ
-						if($this->acl->isAllowed($userRoleID, 'organization_organizationrequestlist', 'index')) {
+						if($userRoleID == $this->config->application->adminRoleID || $this->acl->isAllowed($userRoleID, 'organization_organizationrequestlist', 'index')) {
 							$rows = OrganizationRequest::find([
 								'conditions' => "organization_id = ?1 AND status_id = ?2",
 								'bind' => [1 => $row->id, 2 => $this->config['application']['requestStatus']['newStatusID']],
 							]);
 							$org['organizationRequestCount'] = count($rows);
+							$org['organizationRequestCountTitleNonZero'] = $this->t->_("text_index_organizationrequestlist_newCountTitleNonZero");
+							$org['organizationRequestCountTitleZero'] = $this->t->_("text_index_organizationrequestlist_newCountTitleZero");
 						}
 					}
 					catch(Exception  $exception) {

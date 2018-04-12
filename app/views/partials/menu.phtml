@@ -1,17 +1,4 @@
-<!--<br>layouts\menu-->
-<nav class="navbar navbar-default" role="navigation">
-	<div class="container-fluid">
-		<!-- Brand and toggle get grouped for better mobile display -->
-		<div class="navbar-header">
-			<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
-				<span class="sr-only"><?php echo $t->_("main_menu_navigation"); ?></span>
-				<span class="icon-bar"></span>
-				<span class="icon-bar"></span>
-				<span class="icon-bar"></span>
-			</button>
-			<a class="navbar-brand" href="/"><?php echo $controller->t->_("text_site_short_name"); ?></a>
-		</div>
-		<?php
+<nav class="navbar navbar-default"> <div class="container-fluid"> <div class="navbar-header"> <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false"> <span class="sr-only"><?php echo $t->_("main_menu_navigation"); ?></span> <span class="icon-bar"></span> <span class="icon-bar"></span> <span class="icon-bar"></span> </button> <a class="navbar-brand" href="/"><img alt="<?php echo $controller->t->_("text_site_short_name"); ?>" src="<?php echo $controller->config->application->commonHost . '/img/logo_40.png'; ?>"/></a> </div> <?php
 		$access = [];
 		if($controller->acl->isAllowed($controller->userData['role_id'], 'organizationlist', 'index')) $access['organizationlist_index'] = 1;
 		if($controller->acl->isAllowed($controller->userData['role_id'], 'newslist', 'index')) $access['newslist_index'] = 1;
@@ -27,49 +14,5 @@
 		
 		if($controller->acl->isAllowed($controller->userData['role_id'], 'profile', 'index')) $access['profile_index'] = 1;
 		//var_dump($access);
-		?>
-		<!-- Collect the nav links, forms, and other content for toggling -->
-		<div class="collapse navbar-collapse navbar-left" id="bs-example-navbar-collapse-1">
-			<ul class="nav navbar-nav">
-				<?php if(isset($access['organizationlist_index']) || isset($access['newslist_index'])) { ?>
-					<li class="dropdown">
-						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><?php echo $t->_("main_menu_content"); ?> <span class="caret"></span></a>
-						<ul class="dropdown-menu">
-							<?php if(isset($access['organizationlist_index'])) { ?><li><a href="/organizationlist"><?php echo $t->_("main_menu_organizationlist"); ?></a></li><?php } ?>
-							<!--<li role="separator" class="divider"></li>-->
-							<?php if(isset($access['newslist_index'])) { ?><li><a href="/newslist"><?php echo $t->_("main_menu_newslist"); ?></a></li><?php } ?>
-						</ul>
-					</li>
-				<?php } ?>
-				<?php if(isset($access['userlist_index']) || isset($access['userrolelist_index']) || isset($access['resourcelist_index']) || isset($access['streettypelist_index']) || isset($access['expensetypelist_index']) || isset($access['regionlist_index']) || isset($access['expensestatuslist_index']) || isset($access['tasks_index'])) { ?>
-					<li>
-						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><?php echo $t->_("main_menu_settings"); ?> <span class="caret"></span></a>
-						<ul class="dropdown-menu">
-							<?php if(isset($access['userlist_index'])) { ?><li><a href="/userlist"><?php echo $t->_("main_menu_userlist"); ?></a></li><?php } ?>
-							<?php if(isset($access['userrolelist_index'])) { ?><li><a href="/userrolelist"><?php echo $t->_("main_menu_userrolelist"); ?></a></li><?php } ?>
-							<?php if(isset($access['resourcelist_index'])) { ?><li><a href="/resourcelist"><?php echo $t->_("main_menu_resourcelist"); ?></a></li><?php } ?>
-							<?php if(isset($access['streettypelist_index'])) { ?><li><a href="/streettypelist"><?php echo $t->_("main_menu_streettypelist"); ?></a></li><?php } ?>
-							<?php if(isset($access['expensetypelist_index'])) { ?><li><a href="/expensetypelist"><?php echo $t->_("main_menu_expensetypelist"); ?></a></li><?php } ?>
-							<?php if(isset($access['regionlist_index'])) { ?><li><a href="/regionlist"><?php echo $t->_("main_menu_regionlist"); ?></a></li><?php } ?>
-							<?php if(isset($access['expensestatuslist_index'])) { ?><li><a href="/expensestatuslist"><?php echo $t->_("main_menu_expensestatuslist"); ?></a></li><?php } ?>
-							<?php if(isset($access['tasks_index'])) { ?><li><a href="/tasks"><?php echo $t->_("main_menu_tasks"); ?></a></li><?php } ?>
-						</ul>
-					</li>
-				<?php } ?>
-				<?php if(isset($access['profile_index'])) { ?><li><a href="/profile/edit?id=<?php echo $controller->userData['id']; ?>"><?php echo $t->_("main_menu_profile"); ?></a></li><?php } ?>
-			</ul>
-		</div><!-- /.navbar-collapse -->
-		<ul class="nav navbar-nav navbar-right">
-			<li>
-				<p class="navbar-text">
-					<?php if(isset($controller->userData['name'])) { 
-						echo $controller->userData['name']; ?> (<a href="/session/end" class="navbar-link"><?php echo $t->_("main_menu_exit_link"); ?></a>)
-						<?php if(isset($controller->userData['email']) && mb_strpos(mb_strtolower($controller->userData['email']), "@" . $controller->config->application->host)) {  ?>
-							<a href="https://mail.yandex.ru/?pdd_domain=<?php echo $controller->config->application->host; ?>" class="navbar-link"><?php echo "Перейти в почту"; ?></a>
-						<?php } ?>
-					<?php } else echo "Гость"; ?>
-				</p>
-			</li>
-		</ul>
-	</div><!-- /.container-fluid -->
-</nav>
+		?> <div class="collapse navbar-collapse navbar-left" id="bs-example-navbar-collapse-1"> <ul class="nav navbar-nav"> <?php if(isset($access['organizationlist_index']) || isset($access['newslist_index'])) { ?> <li class="dropdown"> <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><?php echo $t->_("main_menu_content"); ?> <span class="caret"></span></a> <ul class="dropdown-menu"> <?php if(isset($access['organizationlist_index'])) { ?><li><a href="/organizationlist"><?php echo $t->_("main_menu_organizationlist"); ?></a></li><?php } ?> <?php if(isset($access['newslist_index'])) { ?><li><a href="/newslist"><?php echo $t->_("main_menu_newslist"); ?></a></li><?php } ?> </ul> </li> <?php } ?> <?php if(isset($access['userlist_index']) || isset($access['userrolelist_index']) || isset($access['resourcelist_index']) || isset($access['streettypelist_index']) || isset($access['expensetypelist_index']) || isset($access['regionlist_index']) || isset($access['expensestatuslist_index']) || isset($access['tasks_index'])) { ?> <li> <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><?php echo $t->_("main_menu_settings"); ?> <span class="caret"></span></a> <ul class="dropdown-menu"> <?php if(isset($access['userlist_index'])) { ?><li><a href="/userlist"><?php echo $t->_("main_menu_userlist"); ?></a></li><?php } ?> <?php if(isset($access['userrolelist_index'])) { ?><li><a href="/userrolelist"><?php echo $t->_("main_menu_userrolelist"); ?></a></li><?php } ?> <?php if(isset($access['resourcelist_index'])) { ?><li><a href="/resourcelist"><?php echo $t->_("main_menu_resourcelist"); ?></a></li><?php } ?> <?php if(isset($access['streettypelist_index'])) { ?><li><a href="/streettypelist"><?php echo $t->_("main_menu_streettypelist"); ?></a></li><?php } ?> <?php if(isset($access['expensetypelist_index'])) { ?><li><a href="/expensetypelist"><?php echo $t->_("main_menu_expensetypelist"); ?></a></li><?php } ?> <?php if(isset($access['regionlist_index'])) { ?><li><a href="/regionlist"><?php echo $t->_("main_menu_regionlist"); ?></a></li><?php } ?> <?php if(isset($access['expensestatuslist_index'])) { ?><li><a href="/expensestatuslist"><?php echo $t->_("main_menu_expensestatuslist"); ?></a></li><?php } ?> <?php if(isset($access['tasks_index'])) { ?><li><a href="/tasks"><?php echo $t->_("main_menu_tasks"); ?></a></li><?php } ?> </ul> </li> <?php } ?> <?php if(isset($access['profile_index'])) { ?><li><a href="/profile/edit?id=<?php echo $controller->userData['id']; ?>"><?php echo $t->_("main_menu_profile"); ?></a></li><?php } ?> </ul> </div> <ul class="nav navbar-nav navbar-right"> <li> <p class="navbar-text"> <?php if(isset($controller->userData['name'])) { 
+						echo $controller->userData['name']; ?> (<a href="/session/end" class="navbar-link"><?php echo $t->_("main_menu_exit_link"); ?></a>) <?php if(isset($controller->userData['email']) && mb_stripos(mb_strtolower($controller->userData['email']), "@" . $controller->config->application->publicHost)) { ?> <a href="https://mail.yandex.ru/?pdd_domain=<?php echo $controller->config->application->publicHost; ?>" class="navbar-link"><small><?php echo "Перейти в почту"; ?></small></a> <?php } ?> <?php } else echo "Гость"; ?> </p> </li> </ul> </div> </nav>

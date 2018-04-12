@@ -109,17 +109,23 @@ class FileController extends ControllerBase {
 											];
 										}
 										else {
-											// файл удален, БД почищена, теперь удаляем файл на диске
+											// файл удален из БД, БД почищена, теперь удаляем файл на диске
+											$key = true;
+											$asd = 1;
 											try {
 												$res = array_map("unlink", glob(__DIR__ . '/../../public/' . $file->directory . $file->name));
-												$key = 1;
-												foreach($res as $r) { if(!$r) $key = 0; break; }
+												foreach($res as $r) { 
+													if(!$r) {
+														$key = false; 
+														break;
+													}
+												}
 											}
 											catch (Exception $e) {
-												$this->error['messages'][] = [
+												/*$this->error['messages'][] = [
 													'title' => $this->t->_("msg_error_title"),
-													'msg' => $this->t->_("msg_error_file_not_deleted_from_hdd"),
-												];
+													'msg' => $this->t->_("msg_error_file_not_deleted_from_hdd", ['file_name' => $file->name]),
+												];*/
 												$key = false;
 											}
 											if($key) {

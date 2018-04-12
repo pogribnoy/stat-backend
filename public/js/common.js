@@ -1,4 +1,32 @@
-var app = {};
+var app = {
+	recaptcha: {
+		fields:[], // массив полей recaptcha, ожидающих загрузку библиотеки
+		onloadCallback: function() {
+			console.log("app. grecaptcha is ready!");
+			for (var i=0, fieldsLength = this.fields.length; i<fieldsLength; i++) {
+				this.initField(this.fields[i]);
+			}
+		},
+		initField: function(field) {
+			field.verifyCallback = function(response) {
+				console.log('app. recaptcha response = ' + response);
+				field.value = response;
+			};
+			field.expiredCallback = function(response) {
+				console.log('app. recaptcha expired');
+				field.value = null;
+			};
+			
+			field.value_id = grecaptcha.render(document.getElementById(field.id), {
+				'sitekey': field.value,
+				'theme': 'light',
+				'callback': field.verifyCallback,
+				'expired-callback':field.expiredCallback,
+			});
+		},
+	},
+};
+
 var containers = {};
 var entities = {};
 //var dbg = 0;
@@ -37,7 +65,7 @@ $(document).ready(function() {
 			// сохраняем полученные данные
 			// здесь только сохранение данных, отрисовки и создания контейнеров нет
 			var entity = saveFullServerEntity(descriptor);
-			delete descriptor;
+			//delete descriptor;
 			
 			// присваиваем идентификаторы скролерам, чтобы при выводе основных данных сущности оставить метки для их размещения
 			initEntityScrollers(entity);
@@ -404,14 +432,16 @@ function copyDescriptor(fromObj, toObj) {
 	// если описатель сущности
 	// fromObj.type = "entity" или fromObj.type нет, т.е. сущность - запись скроллера
 	else {
-		if(!toObj) toObj = {};
+		if(!toObj && key != "fields") toObj = {};
 		
 		for (var key in fromObj) {
-			if(key=="scrollers"){
+			// если свойство = null
+			if(fromObj[key] == null) toObj[key] = null;
+			else if(key=="scrollers"){
 				//console.log("key='scrollers'");
 				if(!toObj.scrollers && fromObj.scrollers) toObj.scrollers = {};
-				for (var key in fromObj.scrollers) {
-					toObj.scrollers[key] = copyDescriptor(fromObj.scrollers[key]);
+				for (var key2 in fromObj.scrollers) {
+					toObj.scrollers[key2] = copyDescriptor(fromObj.scrollers[key2]);
 				}
 				continue;
 			}
@@ -419,9 +449,15 @@ function copyDescriptor(fromObj, toObj) {
 				// пропускаем, у каждого объекта свой local_data
 				continue;
 			}
+			else if(key=="fields" && toObj.fields) {
+				for (var key2 in fromObj.fields) {
+					if(toObj.fields[key2]) toObj.fields[key2] = copyDescriptor(fromObj.fields[key2], toObj.fields[key2]);
+					else toObj.fields[key2] = copyDescriptor(fromObj.fields[key2]);
+				}
+				//toObj[key] = copyDescriptor(fromObj[key], toObj[key]);
+				//continue;
+			}/**/
 			
-			// если свойство = null
-			if(fromObj[key] == null) toObj[key] = null;
 			// если свойство - объект или массив
 			else if (typeof fromObj[key] == "object") {
 				// если массив
@@ -446,7 +482,7 @@ function copyDescriptor(fromObj, toObj) {
 	return toObj;
 }
 
-/* Копирует объекты
+/* Копирует объекты слепо (без учета бизнес-смысла)
 * @fromObj - объект, который надо скопировать
 * @toObj - объект, в который надо скопировать. Не обязательный
 */
@@ -484,9 +520,7 @@ function deepCopy(fromObj, toObj) {
     return toObj;
 };
 
-/* Создает уникальный локальный числовой идентификатор
-* @descriptor - описатель, для которого необходимо создать уникальный идентификатор
-*/
+/* Создает уникальный локальный числовой идентификатор*/
 function createID() {
 	return Math.random() * 1000000000000000000;
 }
@@ -621,6 +655,36 @@ function getTemplate(descriptor) {
 	return deferred.promise();
 }
 
+/* Загружает скрипт с сервера
+*/
+app.getScript = function (url, async) {
+	var request = new XMLHttpRequest();
+	request.open('GET', url, async);
+
+	request.onload = function (e) {
+		if (request.readyState === 4) {
+
+			// Check if the get was successful.
+
+			if (request.status === 200) {
+				console.log(request.responseText);
+			} else {
+				console.error(request.statusText);
+			}
+		}
+	};
+
+	// Catch errors:
+
+	request.onerror = function (e) {
+		console.error(request.statusText);
+	};
+	
+	request.setRequestHeader('Access-Control-Allow-Origin', '*')
+
+	request.send(null);
+}
+
 /* Открывает модалку со скроллером для заполнения поля/грида/скроллера
 * @container_id - контейнер, в котором размещено поле/грид/скроллер
 * @controllerName - контроллер скроллера, если заполнение делается для грида/скроллера
@@ -683,7 +747,7 @@ function link_entity(container_id, controllerName, field_id, select_style) {
 		url: url,
 		dataType: 'json',
 		method: 'post',
-		data: rq,
+		data: JSON.stringify(rq),
 		beforeSend: function() {
 			// показываем прогрессбар
 		},
@@ -1066,33 +1130,44 @@ function initEntityScripts(container_id) {
 		
 		// для полей recaptcha
 		else if(field.type == 'recaptcha') {
+			/*var verifyCallback2 = function() {
+				console.log('recaptcha field = ' + field.id);
+			};
 			var verifyCallback = function(response) {
 				console.log('recaptcha response = ' + response);
 				field.value = response;
+				verifyCallback2();
 			};
 			var expiredCallback = function(response) {
 				console.log('recaptcha expired');
 				//grecaptcha.reset(field.value_id);
 				field.value = null;
-			};
-			var widgetId1;
+			};*/
+			
+			//app.getScript('https://www.google.com/recaptcha/api.js?onload=app.onloadCallback&render=explicit', true);
+			
 			
 			// Renders the HTML element with id 'example1' as a reCAPTCHA widget.
-			// The id of the reCAPTCHA widget is assigned to 'widgetId1'.
-			field.value_id = grecaptcha.render(document.getElementById(field.id), {
-				'sitekey' : field.value,
-				'theme' : 'light',
-				//'type'
-				'callback' : verifyCallback,
-				'expired-callback' : expiredCallback,
-			});
-			//grecaptcha.reset(widgetId1);
-			
+			if(grecaptcha) {
+				app.recaptcha.initField(field);
+				/*field.value_id = grecaptcha.render(document.getElementById(field.id), {
+					'sitekey': field.value,
+					'theme': 'light',
+					//'callback': verifyCallback,
+					'callback': app.recaptcha.verifyCallback,
+					//'expired-callback': expiredCallback,
+					'expired-callback': app.recaptcha.expiredCallback,
+				});*/
+			}
+			else {
+				app.recaptcha.fields.push(field);
+			}
 		}
 	}
 }
-function onloadCallback() {
+function onRecaptchaLoadCallback() {
 	console.log("grecaptcha is ready!");
+	app.recaptcha.onloadCallback();
 	//dbg = 1;
 }
 

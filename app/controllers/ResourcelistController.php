@@ -3,14 +3,6 @@ class ResourcelistController extends ControllerList {
 	public $entityName = 'Resource';
 	public $controllerName = "Resourcelist";
 	
-	public function initialize() {
-		parent::initialize();
-	}
-	
-	/* 
-	* Заполняет (инициализирует) свойство colmns
-	* Переопределяемый метод.
-	*/
 	public function initColumns() {
 		// описатель таблицы
 		$this->columns = array(
@@ -61,10 +53,6 @@ class ResourcelistController extends ControllerList {
 		);
 	}
 	
-	/* 
-	* Предоставляет базовый текст запроса к БД
-	* Переопределяемый метод.
-	*/
 	public function getPhqlSelect() {
 		// строим запрос к БД на выборку данных
 		$phql = "SELECT <TableName>.* FROM <TableName>";
@@ -81,10 +69,6 @@ class ResourcelistController extends ControllerList {
 		return $phql;
 	}
 	
-	/* 
-	* Заполняет свойство items['fields'] данными, полученными после выборки из БД
-	* Переопределяемый метод.
-	*/
 	public function fillFieldsFromRow($row) {
 		//$this->logger->log(__METHOD__ . 'row=' . json_encode($row));
 		$this->items[] = array(

@@ -6,26 +6,20 @@ use Phalcon\Mvc\User\Component;
  */
 class Translator extends Component {
 	
-	public function getTranslation($language/*, $functionalityCode*/) {
+	public function getTranslation($language, $dir = null) {
+		if($dir == null) $dir = APP_PATH . "app/translate/";
 		//$functionalityCode = strtolower($functionalityCode);
 		$language = explode('-', $language)[0];
 		
 		// Проверка существования файла с переводом общего функционала
-		if (file_exists(APP_PATH . "app/translate/".$language."/".$language.".php")) {
-			 require APP_PATH . "app/translate/".$language."/".$language.".php";
+		if (file_exists($dir . $language . "/" . $language . ".php")) {
+			 require $dir . $language . "/" . $language . ".php";
 		} else {
 			 // Переключение на язык по умолчанию
-			 require APP_PATH . "app/translate/ru/ru.php";
 			 $language = 'ru';
-		}
-			
-		// Проверка существования файла с переводом конкретного компонента
-		/*if (file_exists(APP_PATH . "app/translate/".$language."/".$functionalityCode.".php")) {
-			 require APP_PATH . "app/translate/".$language."/".$functionalityCode.".php";
-		} else {
-			 // Переключение на язык по умолчанию
-			 if (file_exists(APP_PATH . "app/translate/ru/".$functionalityCode.".php")) require APP_PATH . "app/translate/ru/".$functionalityCode.".php";
-		}*/
+			 require $dir . $language . "/" . $language . ".php";
+		}	
+		
 		if(!isset($messages)) $messages = [];
 		// TODO. Необходимо сделать вывод ошибки в лог
 			

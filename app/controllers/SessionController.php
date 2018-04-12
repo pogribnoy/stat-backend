@@ -8,6 +8,7 @@ class SessionController extends ControllerBase {
     private function _registerSession(User $user) {
         $this->session->set('auth', array(
             'id' => $user->id,
+			'login' => $user->login,
             'name' => $user->name,
             'email' => $user->email,
 			'sessionLastUpdate' => new DateTime('now'),
@@ -21,7 +22,7 @@ class SessionController extends ControllerBase {
 		$request = $this->request;
 		//$this->logger->log('requestURI = ' . json_encode($request->getURI ()));
 		if (!$request->isAjax()) {
-			$this->logger->log("Not AJAX login");
+			$this->logger->log(__METHOD__ . ". Not AJAX login");
 			$data = array(
 				'error' => [
 					'messages' => [[
@@ -33,7 +34,7 @@ class SessionController extends ControllerBase {
 			);
 		}
 		else {
-			if(isset($_REQUEST["email"])) $email = $this->filter->sanitize(urldecode($_REQUEST["email"]), ['trim', "string"]); else $email = "";
+			if(isset($_REQUEST["login"])) $login = $this->filter->sanitize(urldecode($_REQUEST["login"]), ['trim', "string"]); else $login = "";
 			if(isset($_REQUEST["password"])) $password = $this->filter->sanitize(urldecode($_REQUEST["password"]), ['trim', "string"]); else $password = "";
 			
 			$auth = $this->session->get('auth');
@@ -54,13 +55,14 @@ class SessionController extends ControllerBase {
 			else {
 				$user = false;
 				$user = User::findFirst(array(
-					"email = :email: AND password = :password: AND active = 1",
-					'bind' => array('email' => $email, 'password' => $password)//sha1($password))
+					"login = :login: AND password = :password: AND active = 1",
+					'bind' => array('login' => $login, 'password' => $password)//sha1($password))
 				));
 				if($user != false) {
 					$this->_registerSession($user);
+					$this->session->regenerateId();
 					//$role = $user->user_role_id;
-					$this->logger->log("Вошел пользователь " . $user->id . '(' . $user->name . ')');
+					$this->logger->log(__METHOD__ . ". Вошел пользователь " . $user->id . '(' . $user->name . ')');
 					
 					$data = array(
 						'success' => [
@@ -74,7 +76,7 @@ class SessionController extends ControllerBase {
 					);
 				}
 				else {
-					$this->logger->log("Пользователь (email=" . $email . ", password=" . $password . ") НЕ найден");
+					$this->logger->log(__METHOD__ . ". Пользователь (login=" . $login . ", password=" . $password . ") НЕ найден");
 					$data = array(
 						'error' => [
 							'messages' => [[
@@ -103,12 +105,13 @@ class SessionController extends ControllerBase {
 				$this->logger->log("Вышел пользователь " . $user->id . '(' . $user->name . ')');
 			}
 			$this->session->remove('auth');
+			//$this->session->destroy(true);
 		}
 		
 		if ($this->request->isAjax()) {
 			$this->view->disable();
 			$this->response->setContentType('application/json', 'UTF-8');
-			$this->logger->log("Not AJAX delogin");
+			$this->logger->log("AJAX delogin");
 			$data = array(
 				'success' => [
 					'messages' => [[
