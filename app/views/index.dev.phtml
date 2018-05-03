@@ -35,14 +35,14 @@
 			
 			<div class="row-fluid text-center">
 				<hr>
-				<div class="col-lg-offset-3 col-lg-3 text-left">
+				<div class="col-lg-offset-4 col-lg-3 text-left">
 					<p class="text-uppercase"><?php echo $controller->t->_("text_site_contacts"); ?></p>
 					<p><?php echo $controller->t->_("text_site_contacts_infomail"); ?>: <a href="mailto:<?php echo $controller->config->email->infoEmail; ?>"> <?php echo $controller->config->email->infoEmail; ?></a></p>
 					<p><?php echo $controller->t->_("text_site_contacts_adminmail"); ?>: <a href="mailto:<?php echo $controller->config->email->adminEmail; ?>"> <?php echo $controller->config->email->adminEmail; ?></a></p>
-					<p><?php echo $controller->t->_("text_site_work_time"); ?>: <?php echo $controller->t->_("text_site_work_time_value"); ?></p>
+					<!--<p><?php //echo $controller->t->_("text_site_work_time"); ?>: <?php //echo $controller->t->_("text_site_work_time_value"); ?></p>-->
 				</div>
 				<div class="col-lg-2 text-left">
-					<a href="/"><?php echo $controller->t->_("text_site_short_name"); ?></a> &copy; 2017<br /><?php echo $controller->t->_("text_site_version") . " " . $controller->config['application']['version']; ?>
+					<p><a href="/"><?php echo $controller->t->_("text_site_short_name"); ?></a> &copy; 2017</p><p><?php echo $controller->t->_("text_site_version") . " " . $controller->config['application']['version']; ?></p>
 				</div>
 			</div>
 		</div><!-- /.container-fluid -->

@@ -99,13 +99,18 @@ class TasksController extends ControllerBase {
 				if($cmdPos !== FALSE) {
 					$isFound = true;
 					
-					$task["schedule"] = substr($line, 0, $cmdPos);
+					$task["schedule"] = trim(substr($line, 0, $cmdPos));
 					//$debug .= "|" . strlen($line);
 					
 					break;
 				}
 			}
 			if(!$isFound) $task["disabled"] = 1;
+			else if(substr($line, 0, 1) == '#') {
+				$task["disabled"] = 1;
+				$task["schedule"] = trim(substr($task["schedule"], 1, mb_strlen($task["schedule"])));
+			}
+			else $task["schedule"] = trim($task["schedule"]);
 		}
 		
 		$this->view->tasks = $this->tasks;

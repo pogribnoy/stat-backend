@@ -1,8 +1,8 @@
-*/5 * * * * php /var/www/stat-backend/app/common/tasks/cli.php clear > /var/www/stat-backend/app/common/tasks/clear.log
-1 12 * * * /var/www/stat-backend/backups/backup.sh > /var/www/stat-backend/backups/backup.log
-5 12 * * * /var/www/stat-backend/backups/backup_files.sh > /var/www/stat-backend/backups/backup_files.log
-*/1 * * * * php /var/www/stat-backend/app/common/tasks/cli.php send_response > /var/www/stat-backend/app/common/tasks/send_response.log
-10 12 * * * php /var/www/stat-backend/app/common/tasks/cli.php generate_sitemap > /var/www/stat-backend/app/common/tasks/generate_sitemap.log
-*/1 * * * * /var/www/stat-backend/minificator/minify_js.sh > /var/www/stat-backend/minificator/minify_js.log
-*/1 * * * * php /var/www/stat-backend/app/common/tasks/cli.php generate_client_translator > /var/www/stat-backend/app/common/tasks/generate_client_translator.log
-*/1 * * * * /var/www/stat-backend/minificator/minify_html.sh > /var/www/stat-backend/minificator/minify_html.log
+30 0 * * * php /var/www/stat-backend/app/common/tasks/cli.php clear > /var/www/stat-backend/app/common/tasks/clear.log
+35 0 * * * /var/www/stat-backend/backups/backup.sh > /var/www/stat-backend/backups/backup.log
+40 0 * * * /var/www/stat-backend/backups/backup_files.sh > /var/www/stat-backend/backups/backup_files.log
+*/5 * * * * php /var/www/stat-backend/app/common/tasks/cli.php send_response > /var/www/stat-backend/app/common/tasks/send_response.log
+# 50 0 * * * php /var/www/stat-backend/app/common/tasks/cli.php generate_sitemap > /var/www/stat-backend/app/common/tasks/generate_sitemap.log
+# */1 * * * * /var/www/stat-backend/minificator/minify_js.sh > /var/www/stat-backend/minificator/minify_js.log
+# */1 * * * * php /var/www/stat-backend/app/common/tasks/cli.php generate_client_translator > /var/www/stat-backend/app/common/tasks/generate_client_translator.log
+# */1 * * * * /var/www/stat-backend/minificator/minify_html.sh > /var/www/stat-backend/minificator/minify_html.log
